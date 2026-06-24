@@ -1,9 +1,10 @@
-import { ScrollView, Text, View, Pressable } from "react-native";
+import { ScrollView, Text, View, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
+import { startOAuthLogin } from "@/constants/oauth";
 
 const MENU_ITEMS = [
   { id: "products", label: "내 상품", icon: "tag.fill" as const, badge: null },
@@ -24,8 +25,15 @@ export default function MyPageScreen() {
   const router = useRouter();
   const { user, isAuthenticated, loading, logout } = useAuth();
 
-  const handleLogin = () => {
-    router.push("/oauth/callback" as any);
+  const handleLogin = async () => {
+    try {
+      const result = await startOAuthLogin();
+      if (!result.success && result.error) {
+        Alert.alert("로그인 오류", result.error);
+      }
+    } catch (error) {
+      Alert.alert("로그인 오류", "로그인 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
