@@ -9,6 +9,10 @@ export type User = {
   email: string | null;
   loginMethod: string | null;
   lastSignedIn: Date;
+  role?: "user" | "admin";
+  userType?: "buyer" | "seller";
+  isVerified?: boolean;
+  sellerStatus?: "pending" | "approved" | "rejected" | "suspended" | null;
 };
 
 export async function getSessionToken(): Promise<string | null> {

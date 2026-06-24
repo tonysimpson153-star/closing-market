@@ -267,6 +267,85 @@ export const appRouter = router({
           input.rejectionReason
         );
       }),
+
+    // 통계
+    stats: adminProcedure.query(() => {
+      return db.getAdminStats();
+    }),
+
+    // 전체 상품 목록
+    allProducts: adminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(30),
+        offset: z.number().min(0).default(0),
+        status: z.string().optional(),
+      }).optional())
+      .query(({ input }) => {
+        return db.getAdminProducts(input);
+      }),
+
+    // 상품 삭제
+    deleteProduct: adminProcedure
+      .input(z.object({ productId: z.number() }))
+      .mutation(({ input }) => {
+        return db.adminDeleteProduct(input.productId);
+      }),
+
+    // 신고 목록
+    allReports: adminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(30),
+        offset: z.number().min(0).default(0),
+        status: z.string().optional(),
+      }).optional())
+      .query(({ input }) => {
+        return db.getAdminReports(input);
+      }),
+
+    // 신고 처리
+    resolveReport: adminProcedure
+      .input(z.object({
+        reportId: z.number(),
+        status: z.enum(["resolved", "dismissed"]),
+      }))
+      .mutation(({ input }) => {
+        return db.updateReportStatus(input.reportId, input.status);
+      }),
+
+    // 회원 목록
+    allUsers: adminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional())
+      .query(({ input }) => {
+        return db.getAdminUsers(input);
+      }),
+
+    // 공지사항 목록 (공개)
+    notices: publicProcedure
+      .input(z.object({ limit: z.number().default(20), offset: z.number().default(0) }).optional())
+      .query(({ input }) => {
+        return db.getNotices(input);
+      }),
+
+    // 공지사항 작성
+    createNotice: adminProcedure
+      .input(z.object({
+        title: z.string().min(1).max(255),
+        content: z.string().min(1),
+        isPinned: z.boolean().default(false),
+      }))
+      .mutation(({ ctx, input }) => {
+        return db.createNotice({ authorId: ctx.user.id, ...input });
+      }),
+
+    // 공지사항 삭제
+    deleteNotice: adminProcedure
+      .input(z.object({ noticeId: z.number() }))
+      .mutation(({ input }) => {
+        return db.deleteNotice(input.noticeId);
+      }),
   }),
 
   // ─── Reviews (거래 후기) ────────────────────────────────────
@@ -328,5 +407,6 @@ export const appRouter = router({
       return db.getMyReviews(ctx.user.id);
     }),
   }),
+
 });
 export type AppRouter = typeof appRouter;

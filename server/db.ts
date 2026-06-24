@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -11,6 +11,8 @@ import {
   notifications,
   sellerApplications,
   reviews,
+  notices,
+  reports,
   InsertProduct,
   InsertUser,
   InsertSellerApplication,
@@ -221,7 +223,7 @@ export async function markNotificationRead(id: number, userId: number) {
 // ─── Chats ───────────────────────────────────────────────────
 
 import { chatRooms, chatMessages, users as usersTable, products as productsTable } from "../drizzle/schema";
-import { or, sql, lt, isNull } from "drizzle-orm";
+import { or, lt, isNull } from "drizzle-orm";
 
 // ─── Seller Applications ─────────────────────────────────────
 
@@ -624,4 +626,162 @@ export async function getMyReviews(userId: number) {
     .where(eq(reviews.userId, userId))
     .orderBy(desc(reviews.createdAt))
     .limit(50);
+}
+
+// ─── Admin Functions ──────────────────────────────────────────
+
+export async function getAdminStats() {
+  const db = await getDb();
+  if (!db) return { totalUsers: 0, totalProducts: 0, totalReports: 0, pendingReports: 0, pendingSellers: 0 };
+
+  const [userCount, productCount, reportCount, pendingReportCount, pendingSellerCount] = await Promise.all([
+    db.select({ count: sql`COUNT(*)` }).from(users),
+    db.select({ count: sql`COUNT(*)` }).from(products),
+    db.select({ count: sql`COUNT(*)` }).from(reports),
+    db.select({ count: sql`COUNT(*)` }).from(reports).where(eq(reports.status, "pending")),
+    db.select({ count: sql`COUNT(*)` }).from(sellerApplications).where(eq(sellerApplications.status, "pending")),
+  ]);
+
+  return {
+    totalUsers: Number((userCount[0] as any)?.count ?? 0),
+    totalProducts: Number((productCount[0] as any)?.count ?? 0),
+    totalReports: Number((reportCount[0] as any)?.count ?? 0),
+    pendingReports: Number((pendingReportCount[0] as any)?.count ?? 0),
+    pendingSellers: Number((pendingSellerCount[0] as any)?.count ?? 0),
+  };
+}
+
+export async function getAdminProducts(input?: { limit?: number; offset?: number; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: any[] = [];
+  if (input?.status) conditions.push(eq(products.status, input.status as any));
+
+  const query = db
+    .select({
+      id: products.id,
+      title: products.title,
+      price: products.price,
+      category: products.category,
+      status: products.status,
+      viewCount: products.viewCount,
+      createdAt: products.createdAt,
+      sellerName: users.name,
+      sellerId: users.id,
+    })
+    .from(products)
+    .leftJoin(users, eq(products.userId, users.id))
+    .orderBy(desc(products.createdAt))
+    .limit(input?.limit ?? 30)
+    .offset(input?.offset ?? 0);
+
+  if (conditions.length > 0) {
+    return query.where(and(...conditions));
+  }
+  return query;
+}
+
+export async function adminDeleteProduct(productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(products).where(eq(products.id, productId));
+  return { success: true };
+}
+
+export async function getAdminReports(input?: { limit?: number; offset?: number; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: any[] = [];
+  if (input?.status) conditions.push(eq(reports.status, input.status as any));
+
+  const query = db
+    .select({
+      id: reports.id,
+      targetType: reports.targetType,
+      targetId: reports.targetId,
+      reason: reports.reason,
+      status: reports.status,
+      createdAt: reports.createdAt,
+      reporterName: users.name,
+    })
+    .from(reports)
+    .leftJoin(users, eq(reports.reporterId, users.id))
+    .orderBy(desc(reports.createdAt))
+    .limit(input?.limit ?? 30)
+    .offset(input?.offset ?? 0);
+
+  if (conditions.length > 0) {
+    return query.where(and(...conditions));
+  }
+  return query;
+}
+
+export async function updateReportStatus(reportId: number, status: "resolved" | "dismissed") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(reports).set({ status }).where(eq(reports.id, reportId));
+  return { success: true };
+}
+
+export async function getAdminUsers(input?: { limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      userType: users.userType,
+      isVerified: users.isVerified,
+      sellerStatus: users.sellerStatus,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt))
+    .limit(input?.limit ?? 50)
+    .offset(input?.offset ?? 0);
+}
+
+export async function getNotices(input?: { limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select({
+      id: notices.id,
+      title: notices.title,
+      content: notices.content,
+      isPinned: notices.isPinned,
+      viewCount: notices.viewCount,
+      createdAt: notices.createdAt,
+      authorName: users.name,
+    })
+    .from(notices)
+    .leftJoin(users, eq(notices.authorId, users.id))
+    .orderBy(desc(notices.isPinned), desc(notices.createdAt))
+    .limit(input?.limit ?? 20)
+    .offset(input?.offset ?? 0);
+}
+
+export async function createNotice(data: { authorId: number; title: string; content: string; isPinned?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(notices).values({
+    authorId: data.authorId,
+    title: data.title,
+    content: data.content,
+    isPinned: data.isPinned ?? false,
+  });
+  return { id: result[0].insertId };
+}
+
+export async function deleteNotice(noticeId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(notices).where(eq(notices.id, noticeId));
+  return { success: true };
 }

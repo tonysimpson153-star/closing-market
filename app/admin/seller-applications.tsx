@@ -41,14 +41,14 @@ export default function AdminSellerApplicationsScreen() {
     filterStatus ? { status: filterStatus } : {}
   );
 
-  const reviewMutation = trpc.admin.reviewApplication.useMutation({
+  const reviewMutation = (trpc.admin as any).reviewApplication.useMutation({
     onSuccess: () => {
       Alert.alert("처리 완료", "신청이 처리되었습니다.");
       setSelectedId(null);
       setRejectionReason("");
       refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       Alert.alert("오류", error.message);
     },
   });
@@ -228,7 +228,7 @@ export default function AdminSellerApplicationsScreen() {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 8, paddingBottom: 40 }}>
-          {applications.map((app) => {
+          {applications.map((app: any) => {
             const statusInfo = STATUS_LABELS[app.status];
             return (
               <View

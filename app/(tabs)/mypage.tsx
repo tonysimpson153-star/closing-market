@@ -304,6 +304,47 @@ export default function MyPageScreen() {
           </View>
         </View>
 
+        {/* 관리자 메뉴 */}
+        {isAuthenticated && (user as any)?.role === "admin" && (
+          <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>관리자</Text>
+            <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+              <Pressable
+                style={({ pressed }) => [{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  padding: 16,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+                onPress={() => router.push("/admin/dashboard" as any)}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "#3B82F620", justifyContent: "center", alignItems: "center", marginRight: 12 }}>
+                  <Text style={{ fontSize: 18 }}>⚙️</Text>
+                </View>
+                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>관리자 대시보드</Text>
+                <IconSymbol name="chevron.right" size={16} color={colors.muted} />
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  padding: 16,
+                  borderTopWidth: 0.5,
+                  borderTopColor: colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+                onPress={() => router.push("/admin/seller-applications" as any)}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "#8B5CF620", justifyContent: "center", alignItems: "center", marginRight: 12 }}>
+                  <Text style={{ fontSize: 18 }}>🏪</Text>
+                </View>
+                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>판매자 신청 관리</Text>
+                <IconSymbol name="chevron.right" size={16} color={colors.muted} />
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* 앱 버전 */}
         <View style={{ alignItems: "center", marginTop: 32 }}>
           <Text style={{ fontSize: 12, color: colors.muted }}>클로징마켓 v1.0.0</Text>

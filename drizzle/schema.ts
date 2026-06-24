@@ -233,3 +233,20 @@ export const sellerApplications = mysqlTable("seller_applications", {
 
 export type SellerApplication = typeof sellerApplications.$inferSelect;
 export type InsertSellerApplication = typeof sellerApplications.$inferInsert;
+
+/**
+ * Notices (공지사항) table
+ */
+export const notices = mysqlTable("notices", {
+  id: int("id").autoincrement().primaryKey(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  isPinned: boolean("isPinned").default(false).notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Notice = typeof notices.$inferSelect;
+export type InsertNotice = typeof notices.$inferInsert;
