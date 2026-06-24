@@ -107,11 +107,87 @@ export const appRouter = router({
       }),
   }),
 
+  // 채팅 이미지 업로드
+  upload: router({
+    chatImage: protectedProcedure
+      .input(z.object({
+        base64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+        fileName: z.string().default("photo.jpg"),
+      }))
+      .mutation(async ({ input }) => {
+        const { storagePut } = await import("./storage");
+        const buffer = Buffer.from(input.base64, "base64");
+        const ext = input.mimeType.split("/")[1] ?? "jpg";
+        const result = await storagePut(`chat/images/${input.fileName.replace(/\.[^.]+$/, "")}.${ext}`, buffer, input.mimeType);
+        return { url: result.url };
+      }),
+  }),
+
   chats: router({
     // 채팅 목록 (인증 필요)
     list: protectedProcedure.query(({ ctx }) => {
       return db.getChatList(ctx.user.id);
     }),
+
+    // 채팅방 생성 또는 기존 채팅방 조회
+    getOrCreate: protectedProcedure
+      .input(z.object({
+        sellerId: z.number(),
+        productId: z.number().optional(),
+      }))
+      .mutation(({ ctx, input }) => {
+        return db.getOrCreateChatRoom(ctx.user.id, input.sellerId, input.productId);
+      }),
+
+    // 채팅방 상세 (메시지 포함)
+    room: protectedProcedure
+      .input(z.object({ roomId: z.number() }))
+      .query(({ ctx, input }) => {
+        return db.getChatRoomDetail(input.roomId, ctx.user.id);
+      }),
+
+    // 메시지 목록 조회
+    messages: protectedProcedure
+      .input(z.object({
+        roomId: z.number(),
+        limit: z.number().min(1).max(100).default(50),
+        beforeId: z.number().optional(),
+      }))
+      .query(({ ctx, input }) => {
+        return db.getChatMessages(input.roomId, ctx.user.id, input.limit, input.beforeId);
+      }),
+
+    // 메시지 전송
+    send: protectedProcedure
+      .input(z.object({
+        roomId: z.number(),
+        content: z.string().optional(),
+        imageUrl: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => {
+        if (!input.content && !input.imageUrl) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "내용 또는 이미지가 필요합니다." });
+        }
+        return db.sendChatMessage(input.roomId, ctx.user.id, input.content, input.imageUrl);
+      }),
+
+    // 읽음 처리
+    markRead: protectedProcedure
+      .input(z.object({ roomId: z.number() }))
+      .mutation(({ ctx, input }) => {
+        return db.markMessagesRead(input.roomId, ctx.user.id);
+      }),
+
+    // 거래 완료 / 취소
+    updateStatus: protectedProcedure
+      .input(z.object({
+        roomId: z.number(),
+        status: z.enum(["completed", "cancelled"]),
+      }))
+      .mutation(({ ctx, input }) => {
+        return db.updateChatRoomStatus(input.roomId, ctx.user.id, input.status);
+      }),
   }),
 
   notifications: router({

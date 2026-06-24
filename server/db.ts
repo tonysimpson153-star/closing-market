@@ -204,8 +204,8 @@ export async function markNotificationRead(id: number, userId: number) {
 
 // ─── Chats ───────────────────────────────────────────────────
 
-import { chatRooms, users as usersTable } from "../drizzle/schema";
-import { or, sql } from "drizzle-orm";
+import { chatRooms, chatMessages, users as usersTable, products as productsTable } from "../drizzle/schema";
+import { or, sql, lt, isNull } from "drizzle-orm";
 
 // ─── Seller Applications ─────────────────────────────────────
 
@@ -329,24 +329,174 @@ export async function getChatList(userId: number) {
     .orderBy(desc(chatRooms.lastMessageAt))
     .limit(50);
 
-  // 상대방 이름 조회
   const result = await Promise.all(
     rooms.map(async (room) => {
       const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
-      const otherUser = await db
-        .select({ name: usersTable.name })
-        .from(usersTable)
-        .where(eq(usersTable.id, otherUserId))
-        .limit(1);
 
-      // 읽지 않은 메시지 수 (간단히 0으로 처리)
+      const [otherUser, unreadRows, product] = await Promise.all([
+        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+          .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
+        db.select({ id: chatMessages.id })
+          .from(chatMessages)
+          .where(and(
+            eq(chatMessages.roomId, room.id),
+            eq(chatMessages.isRead, false),
+            eq(chatMessages.senderId, otherUserId)
+          )),
+        room.productId
+          ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl })
+              .from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
+          : Promise.resolve([]),
+      ]);
+
       return {
         ...room,
-        otherUserName: otherUser[0]?.name ?? "사용자",
-        unreadCount: 0,
+        otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null },
+        unreadCount: unreadRows.length,
+        product: (product as any[])[0] ?? null,
       };
     })
   );
 
   return result;
+}
+
+export async function getOrCreateChatRoom(buyerId: number, sellerId: number, productId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // 기존 채팅방 확인
+  const conditions = [
+    eq(chatRooms.buyerId, buyerId),
+    eq(chatRooms.sellerId, sellerId),
+  ];
+  if (productId) conditions.push(eq(chatRooms.productId, productId));
+
+  const existing = await db.select().from(chatRooms).where(and(...conditions)).limit(1);
+  if (existing[0]) return existing[0];
+
+  // 새 채팅방 생성
+  const result = await db.insert(chatRooms).values({
+    buyerId,
+    sellerId,
+    productId: productId ?? null,
+    status: "active",
+  });
+  const newRoom = await db.select().from(chatRooms).where(eq(chatRooms.id, result[0].insertId)).limit(1);
+  return newRoom[0];
+}
+
+export async function getChatRoomDetail(roomId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const room = rooms[0];
+  if (!room) return null;
+
+  // 접근 권한 확인
+  if (room.buyerId !== userId && room.sellerId !== userId) return null;
+
+  const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
+  const [otherUser, product] = await Promise.all([
+    db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
+      .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
+    room.productId
+      ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl, price: productsTable.price, status: productsTable.status })
+          .from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    ...room,
+    otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
+    product: (product as any[])[0] ?? null,
+    myRole: room.buyerId === userId ? "buyer" : "seller",
+  };
+}
+
+export async function getChatMessages(roomId: number, userId: number, limit = 50, beforeId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // 접근 권한 확인
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const room = rooms[0];
+  if (!room || (room.buyerId !== userId && room.sellerId !== userId)) return [];
+
+  const conditions: any[] = [eq(chatMessages.roomId, roomId)];
+  if (beforeId) conditions.push(lt(chatMessages.id, beforeId));
+
+  const messages = await db
+    .select()
+    .from(chatMessages)
+    .where(and(...conditions))
+    .orderBy(desc(chatMessages.createdAt))
+    .limit(limit);
+
+  return messages.reverse();
+}
+
+export async function sendChatMessage(roomId: number, senderId: number, content?: string, imageUrl?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // 접근 권한 확인
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const room = rooms[0];
+  if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
+    throw new Error("채팅방에 접근할 수 없습니다.");
+  }
+
+  const result = await db.insert(chatMessages).values({
+    roomId,
+    senderId,
+    content: content ?? null,
+    imageUrl: imageUrl ?? null,
+    isRead: false,
+  });
+
+  // 채팅방 마지막 메시지 업데이트
+  await db.update(chatRooms).set({
+    lastMessage: content ?? (imageUrl ? "[사진]" : ""),
+    lastMessageAt: new Date(),
+  }).where(eq(chatRooms.id, roomId));
+
+  const newMsg = await db.select().from(chatMessages).where(eq(chatMessages.id, result[0].insertId)).limit(1);
+  return newMsg[0];
+}
+
+export async function markMessagesRead(roomId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  // 내가 받은 메시지(상대방이 보낸 것)를 읽음 처리
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const room = rooms[0];
+  if (!room) return;
+
+  const senderId = room.buyerId === userId ? room.sellerId : room.buyerId;
+
+  await db.update(chatMessages).set({ isRead: true }).where(
+    and(
+      eq(chatMessages.roomId, roomId),
+      eq(chatMessages.senderId, senderId),
+      eq(chatMessages.isRead, false)
+    )
+  );
+  return { success: true };
+}
+
+export async function updateChatRoomStatus(roomId: number, userId: number, status: "completed" | "cancelled") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const room = rooms[0];
+  if (!room || (room.buyerId !== userId && room.sellerId !== userId)) {
+    throw new Error("채팅방에 접근할 수 없습니다.");
+  }
+
+  await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
+  return { success: true };
 }
