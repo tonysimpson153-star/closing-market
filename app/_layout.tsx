@@ -102,6 +102,8 @@ export default function RootLayout() {
             <Stack.Screen name="business/[id]" />
             <Stack.Screen name="search/index" />
             <Stack.Screen name="notifications/index" />
+            <Stack.Screen name="settings/account" />
+            <Stack.Screen name="settings/notifications" />
           </Stack>
           <StatusBar style="auto" />
         </QueryClientProvider>

@@ -113,3 +113,11 @@
 - [x] 서버 auth.register에 userType 파라미터 추가
 - [x] 판매자 가입 시 가입 완료 후 판매자 인증 페이지로 자동 이동
 - [x] 관리자 테스트 계정 생성 (admin@closingmarket.com)
+
+## 계정설정 / 알림설정
+
+- [x] 계정설정 화면 구현 (이름/전화번호 수정, 비밀번호 변경)
+- [x] 알림설정 화면 구현 (채팅/찜가격변동/거래/마케팅 항목별 ON/OFF 토글)
+- [x] DB users 테이블에 notifChat/notifPriceDrop/notifTrade/notifMarketing 컬럼 추가
+- [x] 서버 user.updateProfile, user.changePassword, user.getNotificationSettings, user.updateNotificationSettings API 구현
+- [x] 마이페이지 설정 메뉴에 onPress 핸들러 연결

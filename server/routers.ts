@@ -111,6 +111,65 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── 사용자 설정 ───
+  user: router({
+    // 프로필 수정 (이름, 전화번호)
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(50).optional(),
+        phone: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const updated = await db.updateUserProfile(ctx.user.id, input);
+        if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
+        return { id: updated.id, name: updated.name, phone: updated.phone, email: updated.email };
+      }),
+    // 비밀번호 변경
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string(),
+        newPassword: z.string().min(6),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user || !user.password) throw new TRPCError({ code: "BAD_REQUEST", message: "비밀번호를 변경할 수 없는 계정입니다." });
+        const valid = await bcrypt.compare(input.currentPassword, user.password);
+        if (!valid) throw new TRPCError({ code: "UNAUTHORIZED", message: "현재 비밀번호가 올바르지 않습니다." });
+        const hashed = await bcrypt.hash(input.newPassword, 10);
+        await db.updateUserPassword(ctx.user.id, hashed);
+        return { success: true };
+      }),
+    // 알림설정 조회
+    getNotificationSettings: protectedProcedure
+      .query(async ({ ctx }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+        return {
+          chatNotification: user.notifChat ?? true,
+          priceDropNotification: user.notifPriceDrop ?? true,
+          tradeNotification: user.notifTrade ?? true,
+          marketingNotification: user.notifMarketing ?? false,
+        };
+      }),
+    // 알림설정 저장
+    updateNotificationSettings: protectedProcedure
+      .input(z.object({
+        chatNotification: z.boolean().optional(),
+        priceDropNotification: z.boolean().optional(),
+        tradeNotification: z.boolean().optional(),
+        marketingNotification: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateNotificationSettings(ctx.user.id, {
+          notifChat: input.chatNotification,
+          notifPriceDrop: input.priceDropNotification,
+          notifTrade: input.tradeNotification,
+          notifMarketing: input.marketingNotification,
+        });
+        return { success: true };
+      }),
+  }),
+
   products: router({
     // 최신 상품 목록 (공개)
     list: publicProcedure

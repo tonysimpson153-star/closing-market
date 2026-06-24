@@ -840,3 +840,25 @@ export async function updateUserProfile(userId: number, data: { name?: string; p
   await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
   return getUserById(userId);
 }
+
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+export async function updateNotificationSettings(userId: number, data: {
+  notifChat?: boolean;
+  notifPriceDrop?: boolean;
+  notifTrade?: boolean;
+  notifMarketing?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateData: Record<string, boolean | Date> = { updatedAt: new Date() };
+  if (data.notifChat !== undefined) updateData.notifChat = data.notifChat;
+  if (data.notifPriceDrop !== undefined) updateData.notifPriceDrop = data.notifPriceDrop;
+  if (data.notifTrade !== undefined) updateData.notifTrade = data.notifTrade;
+  if (data.notifMarketing !== undefined) updateData.notifMarketing = data.notifMarketing;
+  await db.update(users).set(updateData as any).where(eq(users.id, userId));
+}

@@ -11,6 +11,7 @@ export interface AuthUser {
   sellerStatus: "pending" | "approved" | "rejected" | null;
   profileImageUrl: string | null;
   phone?: string | null;
+  loginMethod?: string | null;
 }
 
 interface AuthState {

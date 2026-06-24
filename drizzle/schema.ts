@@ -21,6 +21,11 @@ export const users = mysqlTable("users", {
   phone: varchar("phone", { length: 20 }),
   password: varchar("password", { length: 256 }),
   kakaoId: varchar("kakaoId", { length: 64 }),
+  // 알림 설정
+  notifChat: boolean("notifChat").default(true).notNull(),
+  notifPriceDrop: boolean("notifPriceDrop").default(true).notNull(),
+  notifTrade: boolean("notifTrade").default(true).notNull(),
+  notifMarketing: boolean("notifMarketing").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

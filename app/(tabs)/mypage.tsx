@@ -323,6 +323,17 @@ export default function MyPageScreen() {
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    Alert.alert("로그인 필요", "로그인 후 이용할 수 있습니다.", [
+                      { text: "취소", style: "cancel" },
+                      { text: "로그인", onPress: handleLogin },
+                    ]);
+                    return;
+                  }
+                  if (item.id === "notification") router.push("/settings/notifications" as any);
+                  if (item.id === "account") router.push("/settings/account" as any);
+                }}
               >
                 <View
                   style={{
