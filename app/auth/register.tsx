@@ -14,9 +14,12 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 
+type UserType = "buyer" | "seller";
+
 export default function RegisterScreen() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const [userType, setUserType] = useState<UserType>("buyer");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,8 +29,20 @@ export default function RegisterScreen() {
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: (data) => {
       setAuth(data.token, data.user);
-      Alert.alert("가입 완료", `${data.user.name}님, 환영합니다!`, [
-        { text: "확인", onPress: () => router.replace("/(tabs)/" as any) },
+      const msg = data.user.userType === "seller"
+        ? `${data.user.name}님, 환영합니다!\n판매자 인증을 완료하면 상품을 등록할 수 있습니다.`
+        : `${data.user.name}님, 환영합니다!`;
+      Alert.alert("가입 완료", msg, [
+        {
+          text: "확인",
+          onPress: () => {
+            if (data.user.userType === "seller") {
+              router.replace("/seller/apply" as any);
+            } else {
+              router.replace("/(tabs)/" as any);
+            }
+          },
+        },
       ]);
     },
     onError: (err) => {
@@ -53,6 +68,7 @@ export default function RegisterScreen() {
       email: email.trim(),
       password,
       phone: phone.trim() || undefined,
+      userType,
     });
   };
 
@@ -66,6 +82,41 @@ export default function RegisterScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>회원가입</Text>
           <Text style={styles.subtitle}>클로징마켓에 오신 것을 환영합니다</Text>
+        </View>
+
+        {/* 회원 유형 선택 */}
+        <View style={styles.typeSection}>
+          <Text style={styles.typeLabel}>회원 유형 선택 <Text style={styles.required}>*</Text></Text>
+          <View style={styles.typeRow}>
+            <TouchableOpacity
+              style={[styles.typeCard, userType === "buyer" && styles.typeCardActive]}
+              onPress={() => setUserType("buyer")}
+            >
+              <Text style={styles.typeEmoji}>🛒</Text>
+              <Text style={[styles.typeTitle, userType === "buyer" && styles.typeTitleActive]}>구매자</Text>
+              <Text style={[styles.typeDesc, userType === "buyer" && styles.typeDescActive]}>
+                사업 정리 물품을{"\n"}구매합니다
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.typeCard, userType === "seller" && styles.typeCardActive]}
+              onPress={() => setUserType("seller")}
+            >
+              <Text style={styles.typeEmoji}>🏪</Text>
+              <Text style={[styles.typeTitle, userType === "seller" && styles.typeTitleActive]}>판매자</Text>
+              <Text style={[styles.typeDesc, userType === "seller" && styles.typeDescActive]}>
+                사업 정리 물품을{"\n"}판매합니다
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {userType === "seller" && (
+            <View style={styles.sellerNotice}>
+              <Text style={styles.sellerNoticeText}>
+                판매자로 가입 후 사업자 인증을 완료해야 상품을 등록할 수 있습니다.
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* 입력 폼 */}
@@ -134,7 +185,9 @@ export default function RegisterScreen() {
             {registerMutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.registerBtnText}>가입하기</Text>
+              <Text style={styles.registerBtnText}>
+                {userType === "seller" ? "판매자로 가입하기" : "구매자로 가입하기"}
+              </Text>
             )}
           </TouchableOpacity>
 
@@ -159,7 +212,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   backBtn: {
     marginBottom: 16,
@@ -178,6 +231,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
     marginTop: 4,
+  },
+  typeSection: {
+    marginBottom: 8,
+  },
+  typeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 10,
+  },
+  typeRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  typeCard: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  typeCardActive: {
+    borderColor: "#3B82F6",
+    backgroundColor: "#EFF6FF",
+  },
+  typeEmoji: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  typeTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  typeTitleActive: {
+    color: "#1D4ED8",
+  },
+  typeDesc: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  typeDescActive: {
+    color: "#3B82F6",
+  },
+  sellerNotice: {
+    marginTop: 10,
+    backgroundColor: "#FEF3C7",
+    borderRadius: 10,
+    padding: 12,
+  },
+  sellerNoticeText: {
+    fontSize: 12,
+    color: "#92400E",
+    lineHeight: 18,
   },
   form: {
     gap: 4,

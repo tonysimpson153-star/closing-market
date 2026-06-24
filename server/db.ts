@@ -811,6 +811,7 @@ export async function createUserByEmail(data: {
   loginMethod: string;
   kakaoId?: string | null;
   profileImageUrl?: string | null;
+  userType?: "buyer" | "seller";
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -824,7 +825,7 @@ export async function createUserByEmail(data: {
     kakaoId: data.kakaoId ?? undefined,
     profileImageUrl: data.profileImageUrl ?? undefined,
     role: "user",
-    userType: "buyer",
+    userType: data.userType ?? "buyer",
     isVerified: false,
     lastSignedIn: new Date(),
   });

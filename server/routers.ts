@@ -20,6 +20,7 @@ export const appRouter = router({
         password: z.string().min(6),
         name: z.string().min(1).max(50),
         phone: z.string().optional(),
+        userType: z.enum(["buyer", "seller"]).optional().default("buyer"),
       }))
       .mutation(async ({ input }) => {
         const existing = await db.getUserByEmail(input.email);
@@ -35,6 +36,7 @@ export const appRouter = router({
           name: input.name,
           phone: input.phone,
           loginMethod: "email",
+          userType: input.userType,
         });
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };

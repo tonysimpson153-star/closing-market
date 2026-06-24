@@ -106,3 +106,10 @@
 - [x] app/product/[id].tsx - useAuthStore로 교체
 - [x] app/notifications/index.tsx - useAuthStore로 교체
 - [x] app/admin/dashboard.tsx - useAuthStore로 교체
+
+## 회원가입 개선
+
+- [x] 회원가입 화면에 구매자/판매자 유형 선택 UI 추가 (카드 선택 방식)
+- [x] 서버 auth.register에 userType 파라미터 추가
+- [x] 판매자 가입 시 가입 완료 후 판매자 인증 페이지로 자동 이동
+- [x] 관리자 테스트 계정 생성 (admin@closingmarket.com)
