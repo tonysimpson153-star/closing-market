@@ -221,6 +221,49 @@ export default function ProductDetailScreen() {
             </View>
           </View>
 
+          {/* 판매자 정보 카드 */}
+          <Pressable
+            style={({ pressed }) => [{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              padding: 14,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              marginBottom: 20,
+              opacity: pressed ? 0.8 : 1,
+            }]}
+            onPress={() =>
+              router.push({
+                pathname: "/seller/profile" as any,
+                params: {
+                  userId: product.userId?.toString() ?? "",
+                  userName: product.sellerName ?? "판매자",
+                },
+              })
+            }
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + "20", justifyContent: "center", alignItems: "center" }}>
+              <Text style={{ fontSize: 22 }}>👤</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>
+                  {product.sellerName ?? "판매자"}
+                </Text>
+                {product.isSellerVerified && (
+                  <View style={{ backgroundColor: "#22C55E20", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>✓ 인증판매자</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>후기 보기 ›</Text>
+            </View>
+            <IconSymbol name="chevron.right" size={16} color={colors.muted} />
+          </Pressable>
+
           {/* 상품 설명 */}
           {product.description ? (
             <View style={{ marginBottom: 24 }}>

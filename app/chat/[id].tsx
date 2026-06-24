@@ -226,6 +226,25 @@ export default function ChatRoomScreen() {
             <Text style={{ fontSize: 12, fontWeight: "600", color: "#22C55E" }}>거래완료</Text>
           </View>
         )}
+        {/* 구매자 후기 작성 버튼 */}
+        {room?.status === "completed" && room?.myRole === "buyer" && (
+          <Pressable
+            style={({ pressed }) => [styles.tradeBtn, { backgroundColor: "#F59E0B20", opacity: pressed ? 0.7 : 1 }]}
+            onPress={() =>
+              router.push({
+                pathname: "/review/write" as any,
+                params: {
+                  chatRoomId: roomId.toString(),
+                  targetUserId: room.otherUser?.id?.toString() ?? "",
+                  targetName: room.otherUser?.name ?? "판매자",
+                  productTitle: room.product?.title ?? "",
+                },
+              })
+            }
+          >
+            <Text style={{ fontSize: 12, fontWeight: "600", color: "#F59E0B" }}>⭐ 후기작성</Text>
+          </Pressable>
+        )}
         {room?.status === "cancelled" && (
           <View style={[styles.tradeBtn, { backgroundColor: "#EF444420" }]}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: "#EF4444" }}>거래취소</Text>

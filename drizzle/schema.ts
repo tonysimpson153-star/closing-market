@@ -123,10 +123,11 @@ export type Favorite = typeof favorites.$inferSelect;
  */
 export const reviews = mysqlTable("reviews", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  targetUserId: int("targetUserId").notNull(),
+  userId: int("userId").notNull(),          // 작성자 (구매자)
+  targetUserId: int("targetUserId").notNull(), // 대상 (판매자)
   productId: int("productId"),
-  rating: int("rating").notNull(),
+  chatRoomId: int("chatRoomId"),             // 연결된 채팅방
+  rating: int("rating").notNull(),           // 1~5 별점
   content: text("content"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

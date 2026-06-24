@@ -231,6 +231,18 @@ export default function MyPageScreen() {
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    Alert.alert("로그인 필요", "로그인 후 이용할 수 있습니다.");
+                    return;
+                  }
+                  if (item.id === "reviews") {
+                    router.push({
+                      pathname: "/seller/profile" as any,
+                      params: { userId: (user as any)?.id?.toString() ?? "", userName: (user as any)?.name ?? "나" },
+                    });
+                  }
+                }}
               >
                 <View
                   style={{

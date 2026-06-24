@@ -268,6 +268,65 @@ export const appRouter = router({
         );
       }),
   }),
-});
 
+  // ─── Reviews (거래 후기) ────────────────────────────────────
+  reviews: router({
+    // 후기 작성 (구매자만 가능)
+    create: protectedProcedure
+      .input(
+        z.object({
+          targetUserId: z.number(),
+          productId: z.number().optional(),
+          chatRoomId: z.number().optional(),
+          rating: z.number().min(1).max(5),
+          content: z.string().max(500).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.targetUserId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "자신에게 후기를 남길 수 없습니다." });
+        }
+        return db.createReview({
+          userId: ctx.user.id,
+          targetUserId: input.targetUserId,
+          productId: input.productId,
+          chatRoomId: input.chatRoomId,
+          rating: input.rating,
+          content: input.content,
+        });
+      }),
+
+    // 특정 판매자의 후기 목록 (공개)
+    listBySeller: publicProcedure
+      .input(
+        z.object({
+          targetUserId: z.number(),
+          limit: z.number().min(1).max(50).default(20),
+          offset: z.number().min(0).default(0),
+        })
+      )
+      .query(({ input }) => {
+        return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset);
+      }),
+
+    // 판매자 평균 별점 요약 (공개)
+    ratingSummary: publicProcedure
+      .input(z.object({ targetUserId: z.number() }))
+      .query(({ input }) => {
+        return db.getSellerRatingSummary(input.targetUserId);
+      }),
+
+    // 후기 작성 여부 확인 (채팅방 기준)
+    checkExists: protectedProcedure
+      .input(z.object({ chatRoomId: z.number() }))
+      .query(({ ctx, input }) => {
+        return db.checkReviewExists(ctx.user.id, input.chatRoomId);
+      }),
+
+    // 내가 작성한 후기 목록
+    myReviews: protectedProcedure.query(({ ctx }) => {
+      return db.getMyReviews(ctx.user.id);
+    }),
+  }),
+});
 export type AppRouter = typeof appRouter;

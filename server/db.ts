@@ -10,6 +10,7 @@ import {
   favorites,
   notifications,
   sellerApplications,
+  reviews,
   InsertProduct,
   InsertUser,
   InsertSellerApplication,
@@ -84,13 +85,28 @@ export async function getProductDetail(id: number) {
   const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
   if (!rows[0]) return null;
 
-  const images = await db
-    .select()
-    .from(productImages)
-    .where(eq(productImages.productId, id))
-    .orderBy(productImages.sortOrder);
+  const [images, seller] = await Promise.all([
+    db
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, id))
+      .orderBy(productImages.sortOrder),
+    db
+      .select({ id: users.id, name: users.name, isVerified: users.isVerified })
+      .from(users)
+      .where(eq(users.id, rows[0].userId))
+      .limit(1),
+  ]);
 
-  return { ...rows[0], images };
+  // 조회수 증가
+  await db.update(products).set({ viewCount: (rows[0].viewCount ?? 0) + 1 }).where(eq(products.id, id));
+
+  return {
+    ...rows[0],
+    images,
+    sellerName: seller[0]?.name ?? null,
+    isSellerVerified: seller[0]?.isVerified ?? false,
+  };
 }
 
 export async function createProduct(
@@ -499,4 +515,113 @@ export async function updateChatRoomStatus(roomId: number, userId: number, statu
 
   await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
   return { success: true };
+}
+
+// ─── Reviews (후기) ─────────────────────────────────────────
+
+export async function createReview(data: {
+  userId: number;
+  targetUserId: number;
+  productId?: number;
+  chatRoomId?: number;
+  rating: number;
+  content?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // 중복 후기 방지: 동일 채팅방에 이미 후기가 있으면 에러
+  if (data.chatRoomId) {
+    const existing = await db
+      .select()
+      .from(reviews)
+      .where(and(eq(reviews.userId, data.userId), eq(reviews.chatRoomId, data.chatRoomId)))
+      .limit(1);
+    if (existing[0]) throw new Error("이미 후기를 작성했습니다.");
+  }
+
+  const result = await db.insert(reviews).values({
+    userId: data.userId,
+    targetUserId: data.targetUserId,
+    productId: data.productId ?? null,
+    chatRoomId: data.chatRoomId ?? null,
+    rating: data.rating,
+    content: data.content ?? null,
+  });
+
+  const newReview = await db.select().from(reviews).where(eq(reviews.id, result[0].insertId)).limit(1);
+  return newReview[0];
+}
+
+export async function getReviewsByTargetUser(targetUserId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: reviews.id,
+      rating: reviews.rating,
+      content: reviews.content,
+      createdAt: reviews.createdAt,
+      productId: reviews.productId,
+      reviewerName: users.name,
+      reviewerProfileUrl: users.profileImageUrl,
+    })
+    .from(reviews)
+    .leftJoin(users, eq(reviews.userId, users.id))
+    .where(eq(reviews.targetUserId, targetUserId))
+    .orderBy(desc(reviews.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows;
+}
+
+export async function getSellerRatingSummary(targetUserId: number) {
+  const db = await getDb();
+  if (!db) return { averageRating: 0, totalCount: 0 };
+
+  const rows = await db
+    .select({ rating: reviews.rating })
+    .from(reviews)
+    .where(eq(reviews.targetUserId, targetUserId));
+
+  if (rows.length === 0) return { averageRating: 0, totalCount: 0 };
+
+  const total = rows.reduce((sum, r) => sum + r.rating, 0);
+  return {
+    averageRating: Math.round((total / rows.length) * 10) / 10,
+    totalCount: rows.length,
+  };
+}
+
+export async function checkReviewExists(userId: number, chatRoomId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const existing = await db
+    .select({ id: reviews.id })
+    .from(reviews)
+    .where(and(eq(reviews.userId, userId), eq(reviews.chatRoomId, chatRoomId)))
+    .limit(1);
+  return existing.length > 0;
+}
+
+export async function getMyReviews(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select({
+      id: reviews.id,
+      rating: reviews.rating,
+      content: reviews.content,
+      createdAt: reviews.createdAt,
+      targetName: users.name,
+      targetProfileUrl: users.profileImageUrl,
+    })
+    .from(reviews)
+    .leftJoin(users, eq(reviews.targetUserId, users.id))
+    .where(eq(reviews.userId, userId))
+    .orderBy(desc(reviews.createdAt))
+    .limit(50);
 }
