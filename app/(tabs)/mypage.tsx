@@ -43,7 +43,8 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           await clearAuth();
-          router.replace("/(tabs)/" as any);
+          // 상태 초기화 후 홈 탭으로 이동
+          router.replace("/" as any);
         },
       },
     ]);

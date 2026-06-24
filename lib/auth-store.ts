@@ -18,8 +18,8 @@ interface AuthState {
   token: string | null;
   user: AuthUser | null;
   isLoading: boolean;
-  setAuth: (token: string, user: AuthUser) => void;
-  clearAuth: () => void;
+  setAuth: (token: string, user: AuthUser) => Promise<void>;
+  clearAuth: () => Promise<void>;
   loadFromStorage: () => Promise<void>;
 }
 
@@ -32,15 +32,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   setAuth: async (token: string, user: AuthUser) => {
-    set({ token, user });
     await AsyncStorage.setItem(TOKEN_KEY, token);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    set({ token, user });
   },
 
   clearAuth: async () => {
-    set({ token: null, user: null });
+    // AsyncStorage 먼저 삭제 후 상태 초기화 (순서 중요: 복원 방지)
     await AsyncStorage.removeItem(TOKEN_KEY);
     await AsyncStorage.removeItem(USER_KEY);
+    set({ token: null, user: null });
   },
 
   loadFromStorage: async () => {
