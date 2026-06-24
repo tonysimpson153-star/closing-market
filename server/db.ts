@@ -1,92 +1,239 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
+import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import {
+  users,
+  products,
+  productImages,
+  businesses,
+  favorites,
+  notifications,
+  InsertProduct,
+  InsertUser,
+} from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
-}
-
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
-
+async function getDb() {
+  if (_db) return _db;
+  if (!ENV.databaseUrl) return null;
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = "admin";
-      updateSet.role = "admin";
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+    const pool = mysql.createPool(ENV.databaseUrl);
+    _db = drizzle(pool);
+    return _db;
+  } catch {
+    return null;
   }
 }
+
+// ─── Users ───────────────────────────────────────────────────
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  return rows[0] ?? null;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function upsertUser(data: Partial<InsertUser> & { openId: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await getUserByOpenId(data.openId);
+  if (existing) {
+    await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.openId, data.openId));
+  } else {
+    await db.insert(users).values({ ...data } as InsertUser);
+  }
+}
+
+// ─── Products ───────────────────────────────────────────────
+
+export async function getProducts(input?: {
+  category?: "cafe" | "pcroom" | "restaurant" | "gym" | "office" | "warehouse" | "transfer";
+  status?: "selling" | "reserved" | "sold";
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [];
+  if (input?.category) conditions.push(eq(products.category, input.category));
+  if (input?.status) conditions.push(eq(products.status, input.status));
+
+  const query = db
+    .select()
+    .from(products)
+    .orderBy(desc(products.createdAt))
+    .limit(input?.limit ?? 20)
+    .offset(input?.offset ?? 0);
+
+  if (conditions.length > 0) {
+    return query.where(and(...conditions));
+  }
+  return query;
+}
+
+export async function getProductDetail(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  if (!rows[0]) return null;
+
+  const images = await db
+    .select()
+    .from(productImages)
+    .where(eq(productImages.productId, id))
+    .orderBy(productImages.sortOrder);
+
+  return { ...rows[0], images };
+}
+
+export async function createProduct(
+  data: Omit<InsertProduct, "id" | "createdAt" | "updatedAt">
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(products).values(data);
+  return { id: result[0].insertId };
+}
+
+export async function updateProductStatus(
+  id: number,
+  status: "selling" | "reserved" | "sold",
+  userId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(products)
+    .set({ status })
+    .where(and(eq(products.id, id), eq(products.userId, userId)));
+  return { success: true };
+}
+
+// ─── Businesses ──────────────────────────────────────────────
+
+export async function getBusinesses(input?: {
+  type?: "demolition" | "interior" | "waste" | "sign" | "pos" | "cctv" | "cleaning" | "tax" | "labor";
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [eq(businesses.isAdvertised, true)];
+  if (input?.type) conditions.push(eq(businesses.type, input.type));
+
+  return db
+    .select()
+    .from(businesses)
+    .where(and(...conditions))
+    .orderBy(desc(businesses.createdAt));
+}
+
+export async function getBusinessDetail(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const rows = await db.select().from(businesses).where(eq(businesses.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+// ─── Favorites ───────────────────────────────────────────────
+
+export async function getFavorites(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(favorites).where(eq(favorites.userId, userId)).orderBy(desc(favorites.createdAt));
+}
+
+export async function toggleFavorite(
+  userId: number,
+  productId?: number,
+  businessId?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions = [eq(favorites.userId, userId)];
+  if (productId) conditions.push(eq(favorites.productId, productId));
+  else if (businessId) conditions.push(eq(favorites.businessId, businessId));
+  else throw new Error("productId or businessId required");
+
+  const existing = await db.select().from(favorites).where(and(...conditions)).limit(1);
+
+  if (existing.length > 0) {
+    await db.delete(favorites).where(and(...conditions));
+    return { favorited: false };
+  } else {
+    await db.insert(favorites).values({ userId, productId, businessId });
+    return { favorited: true };
+  }
+}
+
+// ─── Notifications ───────────────────────────────────────────
+
+export async function getNotifications(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(50);
+}
+
+export async function markNotificationRead(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  return { success: true };
+}
+
+// ─── Chats ───────────────────────────────────────────────────
+
+import { chatRooms, users as usersTable } from "../drizzle/schema";
+import { or, sql } from "drizzle-orm";
+
+export async function getChatList(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rooms = await db
+    .select()
+    .from(chatRooms)
+    .where(or(eq(chatRooms.buyerId, userId), eq(chatRooms.sellerId, userId)))
+    .orderBy(desc(chatRooms.lastMessageAt))
+    .limit(50);
+
+  // 상대방 이름 조회
+  const result = await Promise.all(
+    rooms.map(async (room) => {
+      const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
+      const otherUser = await db
+        .select({ name: usersTable.name })
+        .from(usersTable)
+        .where(eq(usersTable.id, otherUserId))
+        .limit(1);
+
+      // 읽지 않은 메시지 수 (간단히 0으로 처리)
+      return {
+        ...room,
+        otherUserName: otherUser[0]?.name ?? "사용자",
+        unreadCount: 0,
+      };
+    })
+  );
+
+  return result;
+}
