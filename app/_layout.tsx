@@ -95,6 +95,9 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="oauth/callback" />
+            <Stack.Screen name="auth/login" />
+            <Stack.Screen name="auth/register" />
+            <Stack.Screen name="auth/kakao" />
             <Stack.Screen name="product/[id]" />
             <Stack.Screen name="business/[id]" />
             <Stack.Screen name="search/index" />
