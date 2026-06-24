@@ -36,6 +36,13 @@
       "when": 1782305184190,
       "tag": "0004_nostalgic_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1782307323288,
+      "tag": "0005_fast_sentry",
+      "breakpoints": true
     }
   ]
 }

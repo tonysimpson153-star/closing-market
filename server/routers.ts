@@ -2,10 +2,112 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure, adminProcedure } from "./_core/trpc";
 import * as db from "./db";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "closing-market-secret-2024";
 
 export const appRouter = router({
   // Public routes
   health: publicProcedure.query(() => ({ status: "ok" })),
+
+  // ─── 자체 인증 ───
+  auth: router({
+    // 이메일 회원가입
+    register: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        name: z.string().min(1).max(50),
+        phone: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const existing = await db.getUserByEmail(input.email);
+        if (existing) {
+          throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
+        }
+        const hashedPassword = await bcrypt.hash(input.password, 10);
+        const openId = `email_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const user = await db.createUserByEmail({
+          openId,
+          email: input.email,
+          password: hashedPassword,
+          name: input.name,
+          phone: input.phone,
+          loginMethod: "email",
+        });
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+      }),
+
+    // 이메일 로그인
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const user = await db.getUserByEmail(input.email);
+        if (!user || !user.password) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
+        }
+        const valid = await bcrypt.compare(input.password, user.password);
+        if (!valid) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
+        }
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+      }),
+
+    // 현재 사용자 정보 조회 (토큰 기반)
+    me: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        try {
+          const decoded = jwt.verify(input.token, JWT_SECRET) as { userId: number };
+          const user = await db.getUserById(decoded.userId);
+          if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
+          return { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
+        } catch {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "유효하지 않은 토큰입니다." });
+        }
+      }),
+
+    // 카카오 로그인 (카카오 액세스 토큰으로 사용자 정보 조회 후 로그인/가입)
+    kakaoLogin: publicProcedure
+      .input(z.object({ accessToken: z.string() }))
+      .mutation(async ({ input }) => {
+        // 카카오 API로 사용자 정보 조회
+        const kakaoRes = await fetch("https://kapi.kakao.com/v2/user/me", {
+          headers: { Authorization: `Bearer ${input.accessToken}` },
+        });
+        if (!kakaoRes.ok) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "카카오 인증에 실패했습니다." });
+        }
+        const kakaoData = await kakaoRes.json() as { id: number; kakao_account?: { email?: string; profile?: { nickname?: string; profile_image_url?: string } } };
+        const kakaoId = String(kakaoData.id);
+        const email = kakaoData.kakao_account?.email;
+        const name = kakaoData.kakao_account?.profile?.nickname || "카카오 사용자";
+        const profileImageUrl = kakaoData.kakao_account?.profile?.profile_image_url;
+
+        let user = await db.getUserByKakaoId(kakaoId);
+        if (!user) {
+          const openId = `kakao_${kakaoId}`;
+          user = await db.createUserByEmail({
+            openId,
+            email: email || null,
+            password: null,
+            name,
+            phone: null,
+            loginMethod: "kakao",
+            kakaoId,
+            profileImageUrl: profileImageUrl || null,
+          });
+        }
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+      }),
+  }),
 
   products: router({
     // 최신 상품 목록 (공개)

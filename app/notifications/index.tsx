@@ -4,7 +4,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 
 const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   chat: "채팅",
@@ -29,7 +29,8 @@ const NOTIFICATION_TYPE_ICONS: Record<string, string> = {
 export default function NotificationsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { token } = useAuthStore();
+  const isAuthenticated = !!token;
 
   const { data: notifications, isLoading } = trpc.notifications.list.useQuery(undefined, {
     enabled: isAuthenticated,

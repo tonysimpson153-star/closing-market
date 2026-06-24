@@ -785,3 +785,57 @@ export async function deleteNotice(noticeId: number) {
   await db.delete(notices).where(eq(notices.id, noticeId));
   return { success: true };
 }
+
+// ─── 자체 인증 함수 ───
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getUserByKakaoId(kakaoId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.kakaoId, kakaoId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function createUserByEmail(data: {
+  openId: string;
+  email: string | null;
+  password: string | null;
+  name: string;
+  phone?: string | null;
+  loginMethod: string;
+  kakaoId?: string | null;
+  profileImageUrl?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(users).values({
+    openId: data.openId,
+    email: data.email ?? undefined,
+    password: data.password ?? undefined,
+    name: data.name,
+    phone: data.phone ?? undefined,
+    loginMethod: data.loginMethod,
+    kakaoId: data.kakaoId ?? undefined,
+    profileImageUrl: data.profileImageUrl ?? undefined,
+    role: "user",
+    userType: "buyer",
+    isVerified: false,
+    lastSignedIn: new Date(),
+  });
+  const newUser = await getUserById(result[0].insertId);
+  if (!newUser) throw new Error("Failed to create user");
+  return newUser;
+}
+
+export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
+  return getUserById(userId);
+}

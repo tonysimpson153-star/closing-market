@@ -11,7 +11,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -60,7 +60,8 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useColors();
-  const { user, isAuthenticated } = useAuth();
+  const { user, token } = useAuthStore();
+  const isAuthenticated = !!token;
 
   const { data: product, isLoading } = trpc.products.detail.useQuery({ id: Number(id) });
 

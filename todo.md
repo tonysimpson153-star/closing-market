@@ -63,14 +63,46 @@
 
 ## 관리자 대시보드
 
-- [ ] 관리자 API - 통계 (회원수, 상품수, 거래수, 신고수)
-- [ ] 관리자 API - 전체 상품 목록 조회 및 삭제
-- [ ] 관리자 API - 신고 목록 조회 및 처리 (승인/기각)
-- [ ] 관리자 API - 공지사항 CRUD
-- [ ] 관리자 API - 회원 목록 조회 및 정지
-- [ ] 관리자 대시보드 화면 - 통계 카드 (홈)
-- [ ] 관리자 대시보드 화면 - 상품 관리 탭
-- [ ] 관리자 대시보드 화면 - 신고 관리 탭
-- [ ] 관리자 대시보드 화면 - 회원 관리 탭
-- [ ] 관리자 대시보드 화면 - 공지사항 관리 탭
-- [ ] 마이페이지에서 관리자 전용 메뉴 진입
+- [x] 관리자 API - 통계 (회원수, 상품수, 거래수, 신고수)
+- [x] 관리자 API - 전체 상품 목록 조회 및 삭제
+- [x] 관리자 API - 신고 목록 조회 및 처리 (승인/기각)
+- [x] 관리자 API - 공지사항 CRUD
+- [x] 관리자 API - 회원 목록 조회 및 정지
+- [x] 관리자 대시보드 화면 - 통계 카드 (홈)
+- [x] 관리자 대시보드 화면 - 상품 관리 탭
+- [x] 관리자 대시보드 화면 - 신고 관리 탭
+- [x] 관리자 대시보드 화면 - 회원 관리 탭
+- [x] 관리자 대시보드 화면 - 공지사항 관리 탭
+- [x] 마이페이지에서 관리자 전용 메뉴 진입
+
+## 찜 목록 및 가격 변동 알림
+
+- [ ] 서버 API - 찜 토글 (추가/제거)
+- [ ] 서버 API - 내 찜 목록 조회
+- [ ] 서버 API - 상품 찜 여부 확인
+- [ ] 서버 API - 가격 변동 시 찜한 사용자에게 알림 생성
+- [ ] 마이페이지 찜 목록 화면 구현
+- [ ] 상품 상세 페이지 찜 버튼 실제 동작 연동
+- [ ] 상품 가격 수정 시 찜한 사용자 알림 자동 생성
+
+## 인증 시스템 교체 (JWT + 이메일/카카오)
+
+- [x] DB 스키마 - users 테이블에 password, kakaoId 컬럼 추가 및 마이그레이션
+- [x] 서버 API - auth.register (이메일 회원가입)
+- [x] 서버 API - auth.login (이메일 로그인)
+- [x] 서버 API - auth.me (토큰으로 사용자 정보 조회)
+- [x] 서버 API - auth.kakaoLogin (카카오 액세스 토큰으로 로그인)
+- [x] 서버 context.ts - Authorization 헤더에서 JWT 파싱하여 ctx.user 주입
+- [x] lib/trpc.ts - AsyncStorage의 JWT 토큰을 Authorization 헤더로 전달
+- [x] lib/auth-store.ts - Zustand 기반 JWT 인증 상태 관리 스토어
+- [x] app/auth/login.tsx - 이메일/비밀번호 로그인 화면
+- [x] app/auth/register.tsx - 이메일 회원가입 화면
+- [x] app/auth/kakao.tsx - 카카오 로그인 화면
+- [x] app/_layout.tsx - 앱 시작 시 loadFromStorage() 호출
+- [x] app/(tabs)/mypage.tsx - useAuthStore로 교체, 로그인/로그아웃 버튼 연동
+- [x] app/(tabs)/chat.tsx - useAuthStore로 교체
+- [x] app/(tabs)/register.tsx - useAuthStore로 교체
+- [x] app/chat/[id].tsx - useAuthStore로 교체
+- [x] app/product/[id].tsx - useAuthStore로 교체
+- [x] app/notifications/index.tsx - useAuthStore로 교체
+- [x] app/admin/dashboard.tsx - useAuthStore로 교체

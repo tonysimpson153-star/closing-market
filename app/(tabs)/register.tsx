@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORY_OPTIONS = [
@@ -34,7 +34,8 @@ const TRADE_TYPE_OPTIONS = [
 export default function RegisterScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { token } = useAuthStore();
+  const isAuthenticated = !!token;
 
   // 판매자 프로필 조회 (로그인 시에만)
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {

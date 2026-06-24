@@ -29,6 +29,8 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     isVerified: false,
     profileImageUrl: null,
     phone: null,
+    password: null,
+    kakaoId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),

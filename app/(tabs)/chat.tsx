@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 function formatTime(date: Date | null | string) {
@@ -26,7 +26,8 @@ function formatTime(date: Date | null | string) {
 export default function ChatScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { token } = useAuthStore();
+  const isAuthenticated = !!token;
 
   const { data: chats, isLoading, refetch } = trpc.chats.list.useQuery(undefined, {
     enabled: isAuthenticated,

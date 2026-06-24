@@ -19,6 +19,8 @@ export const users = mysqlTable("users", {
   isVerified: boolean("isVerified").default(false).notNull(),
   profileImageUrl: text("profileImageUrl"),
   phone: varchar("phone", { length: 20 }),
+  password: varchar("password", { length: 256 }),
+  kakaoId: varchar("kakaoId", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

@@ -15,21 +15,21 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 
 type TabType = "overview" | "products" | "reports" | "users" | "notices";
 
 export default function AdminDashboard() {
   const colors = useColors();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeContent, setNoticeContent] = useState("");
   const [noticePinned, setNoticePinned] = useState(false);
 
   // 관리자 권한 체크
-  if (!user || (user as any).role !== "admin") {
+  if (!user || user.role !== "admin") {
     return (
       <ScreenContainer>
         <View style={styles.center}>

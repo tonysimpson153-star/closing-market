@@ -3,8 +3,7 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
-import { startOAuthLogin } from "@/constants/oauth";
+import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 const MENU_ITEMS = [
@@ -24,7 +23,8 @@ const SETTINGS_ITEMS = [
 export default function MyPageScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, token, clearAuth } = useAuthStore();
+  const isAuthenticated = !!token && !!user;
 
   // 판매자 프로필 조회
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
@@ -35,15 +35,22 @@ export default function MyPageScreen() {
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
   const isRejectedSeller = sellerProfile?.sellerStatus === "rejected";
 
-  const handleLogin = async () => {
-    try {
-      const result = await startOAuthLogin();
-      if (!result.success && result.error) {
-        Alert.alert("로그인 오류", result.error);
-      }
-    } catch (error) {
-      Alert.alert("로그인 오류", "로그인 중 오류가 발생했습니다. 다시 시도해주세요.");
-    }
+  const handleLogout = () => {
+    Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "로그아웃",
+        style: "destructive",
+        onPress: async () => {
+          await clearAuth();
+          router.replace("/(tabs)/" as any);
+        },
+      },
+    ]);
+  };
+
+  const handleLogin = () => {
+    router.push("/auth/login" as any);
   };
 
   return (
@@ -191,26 +198,58 @@ export default function MyPageScreen() {
                   opacity: pressed ? 0.8 : 1,
                 },
               ]}
-              onPress={logout}
+              onPress={handleLogout}
             >
               <Text style={{ fontSize: 15, fontWeight: "600", color: colors.muted }}>로그아웃</Text>
             </Pressable>
           ) : (
-            <Pressable
-              style={({ pressed }) => [
-                {
-                  backgroundColor: colors.primary,
-                  borderRadius: 12,
-                  padding: 14,
-                  alignItems: "center",
-                  opacity: pressed ? 0.9 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                },
-              ]}
-              onPress={handleLogin}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>로그인 / 회원가입</Text>
-            </Pressable>
+            <View style={{ gap: 10 }}>
+              <Pressable
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: colors.primary,
+                    borderRadius: 12,
+                    padding: 14,
+                    alignItems: "center",
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  },
+                ]}
+                onPress={handleLogin}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>이메일로 로그인</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: "#FEE500",
+                    borderRadius: 12,
+                    padding: 14,
+                    alignItems: "center",
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+                onPress={() => router.push("/auth/kakao" as any)}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#191919" }}>카카오로 로그인</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: colors.surface,
+                    borderRadius: 12,
+                    padding: 14,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+                onPress={() => router.push("/auth/register" as any)}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>회원가입</Text>
+              </Pressable>
+            </View>
           )}
         </View>
 
@@ -233,13 +272,16 @@ export default function MyPageScreen() {
                 ]}
                 onPress={() => {
                   if (!isAuthenticated) {
-                    Alert.alert("로그인 필요", "로그인 후 이용할 수 있습니다.");
+                    Alert.alert("로그인 필요", "로그인 후 이용할 수 있습니다.", [
+                      { text: "취소", style: "cancel" },
+                      { text: "로그인", onPress: handleLogin },
+                    ]);
                     return;
                   }
                   if (item.id === "reviews") {
                     router.push({
                       pathname: "/seller/profile" as any,
-                      params: { userId: (user as any)?.id?.toString() ?? "", userName: (user as any)?.name ?? "나" },
+                      params: { userId: user?.id?.toString() ?? "", userName: user?.name ?? "나" },
                     });
                   }
                 }}
@@ -305,7 +347,7 @@ export default function MyPageScreen() {
         </View>
 
         {/* 관리자 메뉴 */}
-        {isAuthenticated && (user as any)?.role === "admin" && (
+        {isAuthenticated && user?.role === "admin" && (
           <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
             <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>관리자</Text>
             <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>

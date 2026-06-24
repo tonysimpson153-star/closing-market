@@ -16,7 +16,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import * as ImagePicker from "expo-image-picker";
 
@@ -43,7 +43,8 @@ export default function ChatRoomScreen() {
   const roomId = parseInt(id ?? "0", 10);
   const colors = useColors();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, token } = useAuthStore();
+  const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
