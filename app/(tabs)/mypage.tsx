@@ -1,10 +1,11 @@
-import { ScrollView, Text, View, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
 import { startOAuthLogin } from "@/constants/oauth";
+import { trpc } from "@/lib/trpc";
 
 const MENU_ITEMS = [
   { id: "products", label: "내 상품", icon: "tag.fill" as const, badge: null },
@@ -24,6 +25,15 @@ export default function MyPageScreen() {
   const colors = useColors();
   const router = useRouter();
   const { user, isAuthenticated, loading, logout } = useAuth();
+
+  // 판매자 프로필 조회
+  const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
+  const isPendingSeller = sellerProfile?.sellerStatus === "pending";
+  const isRejectedSeller = sellerProfile?.sellerStatus === "rejected";
 
   const handleLogin = async () => {
     try {
@@ -78,6 +88,55 @@ export default function MyPageScreen() {
                   <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
                     {user.email ?? ""}
                   </Text>
+                  {/* 판매자 인증 배지 */}
+                  {isVerifiedSeller && (
+                    <View style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: "#22C55E20",
+                      borderRadius: 8,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      marginTop: 6,
+                      alignSelf: "flex-start",
+                      gap: 4,
+                    }}>
+                      <Text style={{ fontSize: 11 }}>✅</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>인증 판매자</Text>
+                    </View>
+                  )}
+                  {isPendingSeller && (
+                    <View style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: "#F59E0B20",
+                      borderRadius: 8,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      marginTop: 6,
+                      alignSelf: "flex-start",
+                      gap: 4,
+                    }}>
+                      <Text style={{ fontSize: 11 }}>⏳</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B" }}>심사 중</Text>
+                    </View>
+                  )}
+                  {isRejectedSeller && (
+                    <View style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: "#EF444420",
+                      borderRadius: 8,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      marginTop: 6,
+                      alignSelf: "flex-start",
+                      gap: 4,
+                    }}>
+                      <Text style={{ fontSize: 11 }}>❌</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#EF4444" }}>반려</Text>
+                    </View>
+                  )}
                 </>
               ) : (
                 <>
@@ -92,6 +151,30 @@ export default function MyPageScreen() {
             </View>
           </View>
         </View>
+
+        {/* 판매자 인증 신청 버튼 (로그인 + 미인증 시 표시) */}
+        {isAuthenticated && !isVerifiedSeller && !isPendingSeller && (
+          <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+            <Pressable
+              style={({ pressed }) => [{
+                backgroundColor: "#F59E0B",
+                borderRadius: 12,
+                padding: 14,
+                alignItems: "center",
+                opacity: pressed ? 0.9 : 1,
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: 8,
+              }]}
+              onPress={() => router.push("/seller/apply" as any)}
+            >
+              <Text style={{ fontSize: 15 }}>🏪</Text>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>
+                {isRejectedSeller ? "판매자 재신청하기" : "판매자 인증 신청"}
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* 로그인/로그아웃 버튼 */}
         <View style={{ paddingHorizontal: 16, marginTop: 12 }}>

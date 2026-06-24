@@ -209,3 +209,26 @@ export const reports = mysqlTable("reports", {
 });
 
 export type Report = typeof reports.$inferSelect;
+
+/**
+ * Seller applications (판매자 인증 신청) table
+ */
+export const sellerApplications = mysqlTable("seller_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  sellerType: mysqlEnum("sellerType", ["closing_soon", "closed", "relocating", "inventory", "transfer"]).notNull(),
+  businessNumber: varchar("businessNumber", { length: 20 }).notNull(),
+  businessName: varchar("businessName", { length: 255 }).notNull(),
+  representativeName: varchar("representativeName", { length: 100 }).notNull(),
+  businessCertUrl: text("businessCertUrl").notNull(),
+  businessPhotoUrl: text("businessPhotoUrl"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "suspended"]).default("pending").notNull(),
+  rejectionReason: text("rejectionReason"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: int("reviewedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SellerApplication = typeof sellerApplications.$inferSelect;
+export type InsertSellerApplication = typeof sellerApplications.$inferInsert;

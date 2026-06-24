@@ -1,5 +1,13 @@
-import { ScrollView, Text, View, Pressable, TextInput, Alert } from "react-native";
 import { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -28,6 +36,15 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
+  // 판매자 프로필 조회 (로그인 시에만)
+  const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
+  const isPendingSeller = sellerProfile?.sellerStatus === "pending";
+  const isRejectedSeller = sellerProfile?.sellerStatus === "rejected";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -54,6 +71,17 @@ export default function RegisterScreen() {
   const handleSubmit = () => {
     if (!isAuthenticated) {
       Alert.alert("로그인 필요", "상품 등록을 위해 로그인이 필요합니다.");
+      return;
+    }
+    if (!isVerifiedSeller) {
+      Alert.alert(
+        "판매자 인증 필요",
+        "상품 등록은 인증된 판매자만 가능합니다.\n판매자 인증을 신청하시겠습니까?",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "인증 신청", onPress: () => router.push("/seller/apply" as any) },
+        ]
+      );
       return;
     }
     if (!title.trim()) {

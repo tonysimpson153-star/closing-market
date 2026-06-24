@@ -1,0 +1,500 @@
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColors } from "@/hooks/use-colors";
+import { trpc } from "@/lib/trpc";
+
+// 판매 유형 정의
+const SELLER_TYPES = [
+  {
+    id: "closing_soon" as const,
+    label: "폐업 예정",
+    desc: "폐업을 앞두고 물품을 정리하려는 사업자",
+    icon: "⏰",
+  },
+  {
+    id: "closed" as const,
+    label: "폐업 완료",
+    desc: "이미 폐업한 사업자",
+    icon: "🔒",
+  },
+  {
+    id: "relocating" as const,
+    label: "사업장 이전",
+    desc: "이전으로 인해 물품을 처분하려는 사업자",
+    icon: "🚚",
+  },
+  {
+    id: "inventory" as const,
+    label: "재고 정리",
+    desc: "잉여 재고를 처분하려는 사업자",
+    icon: "📦",
+  },
+  {
+    id: "transfer" as const,
+    label: "사업 양도",
+    desc: "사업 전체를 양도하려는 사업자",
+    icon: "🤝",
+  },
+];
+
+type SellerType = "closing_soon" | "closed" | "relocating" | "inventory" | "transfer";
+
+export default function SellerApplyScreen() {
+  const colors = useColors();
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+
+  // Step 1
+  const [sellerType, setSellerType] = useState<SellerType | null>(null);
+
+  // Step 2
+  const [businessNumber, setBusinessNumber] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [representativeName, setRepresentativeName] = useState("");
+
+  // Step 3
+  const [businessCertUrl, setBusinessCertUrl] = useState("");
+  const [businessPhotoUrl, setBusinessPhotoUrl] = useState("");
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const applyMutation = trpc.seller.submit.useMutation({
+    onSuccess: () => {
+      setStep(4);
+    },
+    onError: (error) => {
+      Alert.alert("신청 오류", error.message);
+    },
+  });
+
+  const formatBusinessNumber = (text: string) => {
+    const digits = text.replace(/\D/g, "");
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5, 10)}`;
+  };
+
+  const uploadImage = async (type: "cert" | "photo") => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("권한 필요", "사진 접근 권한이 필요합니다.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    if (type === "cert") {
+      setUploadingCert(true);
+      // 실제 환경에서는 서버 스토리지에 업로드 후 URL 저장
+      // 현재는 로컬 URI를 임시로 사용
+      setBusinessCertUrl(result.assets[0].uri);
+      setUploadingCert(false);
+    } else {
+      setUploadingPhoto(true);
+      setBusinessPhotoUrl(result.assets[0].uri);
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!sellerType) {
+        Alert.alert("선택 필요", "판매 유형을 선택해주세요.");
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      const rawNum = businessNumber.replace(/\D/g, "");
+      if (rawNum.length !== 10) {
+        Alert.alert("입력 오류", "사업자등록번호 10자리를 입력해주세요.");
+        return;
+      }
+      if (!businessName.trim()) {
+        Alert.alert("입력 오류", "상호명을 입력해주세요.");
+        return;
+      }
+      if (!representativeName.trim()) {
+        Alert.alert("입력 오류", "대표자명을 입력해주세요.");
+        return;
+      }
+      setStep(3);
+    } else if (step === 3) {
+      if (!businessCertUrl) {
+        Alert.alert("업로드 필요", "사업자등록증을 업로드해주세요.");
+        return;
+      }
+      // 실제 환경에서는 S3 URL이어야 하지만, 개발 환경에서는 로컬 URI 허용
+      const certUrl = businessCertUrl.startsWith("http")
+        ? businessCertUrl
+        : `https://placeholder.example.com/cert/${Date.now()}`;
+      const photoUrl = businessPhotoUrl
+        ? businessPhotoUrl.startsWith("http")
+          ? businessPhotoUrl
+          : `https://placeholder.example.com/photo/${Date.now()}`
+        : undefined;
+
+      applyMutation.mutate({
+        sellerType: sellerType!,
+        businessNumber: businessNumber.replace(/\D/g, ""),
+        businessName: businessName.trim(),
+        representativeName: representativeName.trim(),
+        businessCertUrl: certUrl,
+        businessPhotoUrl: photoUrl,
+      });
+    }
+  };
+
+  const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backBtn: { padding: 4, marginRight: 12 },
+    headerTitle: { fontSize: 18, fontWeight: "700", color: colors.foreground },
+    progressBar: {
+      flexDirection: "row",
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 8,
+    },
+    progressStep: {
+      flex: 1,
+      height: 4,
+      borderRadius: 2,
+    },
+    stepTitle: {
+      fontSize: 22,
+      fontWeight: "800",
+      color: colors.foreground,
+      paddingHorizontal: 16,
+      marginBottom: 8,
+    },
+    stepDesc: {
+      fontSize: 14,
+      color: colors.muted,
+      paddingHorizontal: 16,
+      marginBottom: 24,
+      lineHeight: 20,
+    },
+    typeCard: {
+      marginHorizontal: 16,
+      marginBottom: 12,
+      borderRadius: 14,
+      borderWidth: 2,
+      padding: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+    },
+    typeEmoji: { fontSize: 28 },
+    typeLabel: { fontSize: 16, fontWeight: "700", marginBottom: 2 },
+    typeDesc: { fontSize: 12, lineHeight: 18 },
+    inputGroup: { paddingHorizontal: 16, marginBottom: 20 },
+    label: { fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 8 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 14,
+      fontSize: 15,
+      color: colors.foreground,
+      backgroundColor: colors.surface,
+    },
+    uploadBtn: {
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderWidth: 2,
+      borderStyle: "dashed",
+      borderRadius: 14,
+      padding: 24,
+      alignItems: "center",
+      gap: 8,
+    },
+    uploadLabel: { fontSize: 15, fontWeight: "600" },
+    uploadSub: { fontSize: 12 },
+    uploadedUri: { fontSize: 11, marginTop: 4 },
+    nextBtn: {
+      margin: 16,
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      padding: 16,
+      alignItems: "center",
+    },
+    nextBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+    successContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+    successIcon: { fontSize: 64, marginBottom: 24 },
+    successTitle: { fontSize: 24, fontWeight: "800", color: colors.foreground, marginBottom: 12, textAlign: "center" },
+    successDesc: { fontSize: 15, color: colors.muted, textAlign: "center", lineHeight: 24, marginBottom: 32 },
+    statusBadge: {
+      backgroundColor: colors.warning + "20",
+      borderRadius: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      marginBottom: 32,
+    },
+    statusText: { fontSize: 14, fontWeight: "700", color: colors.warning },
+    homeBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      paddingHorizontal: 40,
+      paddingVertical: 14,
+    },
+    homeBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  });
+
+  // Step 4: 승인 대기
+  if (step === 4) {
+    return (
+      <ScreenContainer>
+        <View style={s.successContainer}>
+          <Text style={s.successIcon}>📋</Text>
+          <Text style={s.successTitle}>신청이 완료되었습니다!</Text>
+          <Text style={s.successDesc}>
+            사업자 인증 신청이 접수되었습니다.{"\n"}
+            관리자 검토 후 1~3 영업일 내에{"\n"}
+            결과를 알려드립니다.
+          </Text>
+          <View style={s.statusBadge}>
+            <Text style={s.statusText}>⏳ 심사 중</Text>
+          </View>
+          <Pressable
+            style={({ pressed }) => [s.homeBtn, { opacity: pressed ? 0.8 : 1 }]}
+            onPress={() => router.replace("/(tabs)" as any)}
+          >
+            <Text style={s.homeBtnText}>홈으로 돌아가기</Text>
+          </Pressable>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  return (
+    <ScreenContainer>
+      {/* 헤더 */}
+      <View style={s.header}>
+        <Pressable style={s.backBtn} onPress={() => (step > 1 ? setStep(step - 1) : router.back())}>
+          <IconSymbol name="chevron.left.forwardslash.chevron.right" size={20} color={colors.foreground} />
+        </Pressable>
+        <Text style={s.headerTitle}>판매자 인증 신청</Text>
+      </View>
+
+      {/* 진행 바 */}
+      <View style={s.progressBar}>
+        {[1, 2, 3].map((n) => (
+          <View
+            key={n}
+            style={[s.progressStep, { backgroundColor: n <= step ? colors.primary : colors.border }]}
+          />
+        ))}
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Step 1: 판매 유형 선택 */}
+        {step === 1 && (
+          <>
+            <Text style={s.stepTitle}>판매 유형을 선택해주세요</Text>
+            <Text style={s.stepDesc}>해당하는 유형을 선택하면 적합한 서비스를 제공해드립니다.</Text>
+            {SELLER_TYPES.map((type) => {
+              const selected = sellerType === type.id;
+              return (
+                <Pressable
+                  key={type.id}
+                  style={[
+                    s.typeCard,
+                    {
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.primary + "10" : colors.surface,
+                    },
+                  ]}
+                  onPress={() => setSellerType(type.id)}
+                >
+                  <Text style={s.typeEmoji}>{type.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.typeLabel, { color: selected ? colors.primary : colors.foreground }]}>
+                      {type.label}
+                    </Text>
+                    <Text style={[s.typeDesc, { color: colors.muted }]}>{type.desc}</Text>
+                  </View>
+                  {selected && (
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: colors.primary,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }}>✓</Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </>
+        )}
+
+        {/* Step 2: 사업자 정보 입력 */}
+        {step === 2 && (
+          <>
+            <Text style={s.stepTitle}>사업자 정보를 입력해주세요</Text>
+            <Text style={s.stepDesc}>사업자등록증에 기재된 정보를 정확히 입력해주세요.</Text>
+
+            <View style={s.inputGroup}>
+              <Text style={s.label}>사업자등록번호 *</Text>
+              <TextInput
+                style={s.input}
+                placeholder="000-00-00000"
+                placeholderTextColor={colors.muted}
+                value={businessNumber}
+                onChangeText={(t) => setBusinessNumber(formatBusinessNumber(t))}
+                keyboardType="numeric"
+                maxLength={12}
+              />
+            </View>
+
+            <View style={s.inputGroup}>
+              <Text style={s.label}>상호명 *</Text>
+              <TextInput
+                style={s.input}
+                placeholder="예: 홍길동 카페"
+                placeholderTextColor={colors.muted}
+                value={businessName}
+                onChangeText={setBusinessName}
+                maxLength={100}
+              />
+            </View>
+
+            <View style={s.inputGroup}>
+              <Text style={s.label}>대표자명 *</Text>
+              <TextInput
+                style={s.input}
+                placeholder="예: 홍길동"
+                placeholderTextColor={colors.muted}
+                value={representativeName}
+                onChangeText={setRepresentativeName}
+                maxLength={50}
+              />
+            </View>
+          </>
+        )}
+
+        {/* Step 3: 증빙자료 업로드 */}
+        {step === 3 && (
+          <>
+            <Text style={s.stepTitle}>증빙자료를 업로드해주세요</Text>
+            <Text style={s.stepDesc}>
+              사업자등록증은 필수입니다.{"\n"}
+              사업장 사진은 선택 사항입니다.
+            </Text>
+
+            {/* 사업자등록증 업로드 */}
+            <Text style={[s.label, { paddingHorizontal: 16, marginBottom: 8 }]}>
+              사업자등록증 * (필수)
+            </Text>
+            <Pressable
+              style={[
+                s.uploadBtn,
+                {
+                  borderColor: businessCertUrl ? colors.success : colors.primary,
+                  backgroundColor: businessCertUrl ? colors.success + "10" : colors.primary + "08",
+                },
+              ]}
+              onPress={() => uploadImage("cert")}
+            >
+              {uploadingCert ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : businessCertUrl ? (
+                <>
+                  <Text style={{ fontSize: 32 }}>✅</Text>
+                  <Text style={[s.uploadLabel, { color: colors.success }]}>업로드 완료</Text>
+                  <Text style={[s.uploadedUri, { color: colors.muted }]} numberOfLines={1}>
+                    {businessCertUrl.split("/").pop()}
+                  </Text>
+                  <Text style={[s.uploadSub, { color: colors.muted }]}>다시 선택하려면 탭하세요</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontSize: 32 }}>📄</Text>
+                  <Text style={[s.uploadLabel, { color: colors.primary }]}>사업자등록증 업로드</Text>
+                  <Text style={[s.uploadSub, { color: colors.muted }]}>JPG, PNG 파일 지원</Text>
+                </>
+              )}
+            </Pressable>
+
+            {/* 사업장 사진 업로드 (선택) */}
+            <Text style={[s.label, { paddingHorizontal: 16, marginBottom: 8, marginTop: 8 }]}>
+              사업장 사진 (선택)
+            </Text>
+            <Pressable
+              style={[
+                s.uploadBtn,
+                {
+                  borderColor: businessPhotoUrl ? colors.success : colors.border,
+                  backgroundColor: businessPhotoUrl ? colors.success + "10" : colors.surface,
+                },
+              ]}
+              onPress={() => uploadImage("photo")}
+            >
+              {uploadingPhoto ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : businessPhotoUrl ? (
+                <>
+                  <Text style={{ fontSize: 32 }}>✅</Text>
+                  <Text style={[s.uploadLabel, { color: colors.success }]}>업로드 완료</Text>
+                  <Text style={[s.uploadSub, { color: colors.muted }]}>다시 선택하려면 탭하세요</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontSize: 32 }}>🏪</Text>
+                  <Text style={[s.uploadLabel, { color: colors.muted }]}>사업장 사진 업로드</Text>
+                  <Text style={[s.uploadSub, { color: colors.muted }]}>선택 사항입니다</Text>
+                </>
+              )}
+            </Pressable>
+          </>
+        )}
+      </ScrollView>
+
+      {/* 다음 버튼 */}
+      <Pressable
+        style={({ pressed }) => [s.nextBtn, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={handleNext}
+        disabled={applyMutation.isPending}
+      >
+        {applyMutation.isPending ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={s.nextBtnText}>
+            {step === 3 ? "신청 완료" : "다음 단계"}
+          </Text>
+        )}
+      </Pressable>
+    </ScreenContainer>
+  );
+}

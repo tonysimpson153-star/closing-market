@@ -9,8 +9,10 @@ import {
   businesses,
   favorites,
   notifications,
+  sellerApplications,
   InsertProduct,
   InsertUser,
+  InsertSellerApplication,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -204,6 +206,117 @@ export async function markNotificationRead(id: number, userId: number) {
 
 import { chatRooms, users as usersTable } from "../drizzle/schema";
 import { or, sql } from "drizzle-orm";
+
+// ─── Seller Applications ─────────────────────────────────────
+
+export async function submitSellerApplication(
+  data: Omit<InsertSellerApplication, "id" | "createdAt" | "updatedAt" | "status" | "rejectionReason" | "reviewedAt" | "reviewedBy">
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // 기존 심사중 신청이 있으면 중복 방지
+  const existing = await db
+    .select()
+    .from(sellerApplications)
+    .where(and(eq(sellerApplications.userId, data.userId), eq(sellerApplications.status, "pending")))
+    .limit(1);
+
+  if (existing.length > 0) {
+    throw new Error("이미 심사 중인 신청이 있습니다.");
+  }
+
+  const result = await db.insert(sellerApplications).values({
+    ...data,
+    status: "pending",
+  });
+  return { id: result[0].insertId };
+}
+
+export async function getMySellerApplication(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const rows = await db
+    .select()
+    .from(sellerApplications)
+    .where(eq(sellerApplications.userId, userId))
+    .orderBy(desc(sellerApplications.createdAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function getAllSellerApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [];
+  if (input?.status) conditions.push(eq(sellerApplications.status, input.status));
+
+  const query = db
+    .select()
+    .from(sellerApplications)
+    .orderBy(desc(sellerApplications.createdAt))
+    .limit(100);
+
+  return conditions.length > 0 ? query.where(and(...conditions)) : query;
+}
+
+export async function reviewSellerApplication(
+  applicationId: number,
+  action: "approved" | "rejected" | "suspended",
+  reviewerId: number,
+  rejectionReason?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const app = await db
+    .select()
+    .from(sellerApplications)
+    .where(eq(sellerApplications.id, applicationId))
+    .limit(1);
+
+  if (!app[0]) throw new Error("신청을 찾을 수 없습니다.");
+
+  await db
+    .update(sellerApplications)
+    .set({
+      status: action,
+      rejectionReason: rejectionReason ?? null,
+      reviewedAt: new Date(),
+      reviewedBy: reviewerId,
+    })
+    .where(eq(sellerApplications.id, applicationId));
+
+  // 승인 시 users 테이블 업데이트
+  if (action === "approved") {
+    await db
+      .update(users)
+      .set({ userType: "seller", sellerStatus: "approved", isVerified: true })
+      .where(eq(users.id, app[0].userId));
+  } else if (action === "rejected") {
+    await db
+      .update(users)
+      .set({ sellerStatus: "rejected" })
+      .where(eq(users.id, app[0].userId));
+  } else if (action === "suspended") {
+    await db
+      .update(users)
+      .set({ sellerStatus: "rejected", isVerified: false })
+      .where(eq(users.id, app[0].userId));
+  }
+
+  return { success: true };
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return rows[0] ?? null;
+}
 
 export async function getChatList(userId: number) {
   const db = await getDb();

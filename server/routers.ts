@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { router, protectedProcedure, publicProcedure } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { router, protectedProcedure, publicProcedure, adminProcedure } from "./_core/trpc";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -28,7 +29,7 @@ export const appRouter = router({
         return db.getProductDetail(input.id);
       }),
 
-    // 상품 등록 (인증 필요)
+    // 상품 등록 (인증된 판매자만 가능)
     create: protectedProcedure
       .input(
         z.object({
@@ -42,7 +43,15 @@ export const appRouter = router({
           mainImageUrl: z.string().optional(),
         })
       )
-      .mutation(({ ctx, input }) => {
+      .mutation(async ({ ctx, input }) => {
+        // 판매자 인증 여부 확인
+        const user = await db.getUserById(ctx.user.id);
+        if (!user || !user.isVerified || user.sellerStatus !== "approved") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "인증된 판매자만 상품을 등록할 수 있습니다.",
+          });
+        }
         return db.createProduct({ ...input, userId: ctx.user.id });
       }),
 
@@ -116,6 +125,71 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => {
         return db.markNotificationRead(input.id, ctx.user.id);
+      }),
+  }),
+
+  // ─── 판매자 인증 ─────────────────────────────────────────────
+  seller: router({
+    // 내 판매자 신청 상태 조회
+    myApplication: protectedProcedure.query(({ ctx }) => {
+      return db.getMySellerApplication(ctx.user.id);
+    }),
+
+    // 내 계정 상세 정보 조회 (판매자 상태 포함)
+    myProfile: protectedProcedure.query(({ ctx }) => {
+      return db.getUserById(ctx.user.id);
+    }),
+
+    // 판매자 신청 제출
+    submit: protectedProcedure
+      .input(
+        z.object({
+          sellerType: z.enum(["closing_soon", "closed", "relocating", "inventory", "transfer"]),
+          businessNumber: z.string().min(10).max(20),
+          businessName: z.string().min(1).max(255),
+          representativeName: z.string().min(1).max(100),
+          businessCertUrl: z.string().url(),
+          businessPhotoUrl: z.string().url().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => {
+        return db.submitSellerApplication({
+          userId: ctx.user.id,
+          ...input,
+          businessPhotoUrl: input.businessPhotoUrl ?? null,
+        });
+      }),
+  }),
+
+  // ─── 관리자 전용 ─────────────────────────────────────────────
+  admin: router({
+    // 판매자 신청 목록 조회
+    sellerApplications: adminProcedure
+      .input(
+        z.object({
+          status: z.enum(["pending", "approved", "rejected", "suspended"]).optional(),
+        }).optional()
+      )
+      .query(({ input }) => {
+        return db.getAllSellerApplications(input);
+      }),
+
+    // 판매자 신청 승인/반려/정지
+    reviewApplication: adminProcedure
+      .input(
+        z.object({
+          applicationId: z.number(),
+          action: z.enum(["approved", "rejected", "suspended"]),
+          rejectionReason: z.string().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => {
+        return db.reviewSellerApplication(
+          input.applicationId,
+          input.action,
+          ctx.user.id,
+          input.rejectionReason
+        );
       }),
   }),
 });
