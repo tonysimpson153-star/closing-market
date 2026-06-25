@@ -20,7 +20,7 @@ export const appRouter = router({
         password: z.string().min(6),
         name: z.string().min(1).max(50),
         phone: z.string().optional(),
-        userType: z.enum(["buyer", "seller"]).optional().default("buyer"),
+        // userType 제거 - 모든 신규 가입자는 일반회원(user)으로 가입
       }))
       .mutation(async ({ input }) => {
         const existing = await db.getUserByEmail(input.email);
@@ -36,10 +36,10 @@ export const appRouter = router({
           name: input.name,
           phone: input.phone,
           loginMethod: "email",
-          userType: input.userType,
+          
         });
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 이메일 로그인
@@ -58,7 +58,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 현재 사용자 정보 조회 (토큰 기반)
@@ -69,7 +69,7 @@ export const appRouter = router({
           const decoded = jwt.verify(input.token, JWT_SECRET) as { userId: number };
           const user = await db.getUserById(decoded.userId);
           if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-          return { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
+          return { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
         } catch {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "유효하지 않은 토큰입니다." });
         }
@@ -107,7 +107,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, userType: user.userType, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
       }),
   }),
 
@@ -379,7 +379,7 @@ export const appRouter = router({
       return db.getUserById(ctx.user.id);
     }),
 
-    // 판매자 신청 제출
+    // 판매회원 신청 제출 (일반회원 → 판매회원 전환)
     submit: protectedProcedure
       .input(
         z.object({
@@ -387,16 +387,59 @@ export const appRouter = router({
           businessNumber: z.string().min(10).max(20),
           businessName: z.string().min(1).max(255),
           representativeName: z.string().min(1).max(100),
-          businessCertUrl: z.string().url(),
+          businessCertUrl: z.string().url().optional(),
           businessPhotoUrl: z.string().url().optional(),
         })
       )
-      .mutation(({ ctx, input }) => {
-        return db.submitSellerApplication({
+      .mutation(async ({ ctx, input }) => {
+        await db.submitSellerApplication({
           userId: ctx.user.id,
           ...input,
+          businessCertUrl: input.businessCertUrl ?? "",
           businessPhotoUrl: input.businessPhotoUrl ?? null,
         });
+        await db.updateUserSellerInfo(ctx.user.id, {
+          sellerStatus: "pending",
+          sellerType: input.sellerType,
+          businessNumber: input.businessNumber,
+          businessName: input.businessName,
+          representativeName: input.representativeName,
+          businessCertUrl: input.businessCertUrl ?? null,
+        });
+        return { success: true };
+      }),
+  }),
+  // ─── 업체회원 ─────────────────────────────────────────────────
+  company: router({
+    // 내 업체 프로필 조회
+    myProfile: protectedProcedure.query(({ ctx }) => {
+      return db.getUserById(ctx.user.id);
+    }),
+    // 업체회원 신청 제출 (일반회원 → 업체회원 전환)
+    submit: protectedProcedure
+      .input(z.object({
+        companyType: z.enum(["demolition", "interior", "waste", "signage", "pos", "cleaning", "tax", "labor"]),
+        companyName: z.string().min(1).max(255),
+        representativeName: z.string().min(1).max(100),
+        companyPhone: z.string().min(9).max(20),
+        companyAddress: z.string().min(1).max(500),
+        companyDesc: z.string().max(1000).optional(),
+        businessNumber: z.string().min(10).max(20).optional(),
+        companyLogoUrl: z.string().url().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUserCompanyInfo(ctx.user.id, {
+          companyStatus: "pending",
+          companyType: input.companyType,
+          companyName: input.companyName,
+          companyPhone: input.companyPhone,
+          companyAddress: input.companyAddress,
+          companyDesc: input.companyDesc ?? null,
+          businessNumber: input.businessNumber ?? null,
+          companyLogoUrl: input.companyLogoUrl ?? null,
+          representativeName: input.representativeName,
+        });
+        return { success: true };
       }),
   }),
 
@@ -508,6 +551,25 @@ export const appRouter = router({
       .input(z.object({ noticeId: z.number() }))
       .mutation(({ input }) => {
         return db.deleteNotice(input.noticeId);
+      }),
+    // 업체회원 신청 목록 조회
+    companyApplications: adminProcedure
+      .input(z.object({
+        status: z.enum(["pending", "approved", "rejected", "suspended"]).optional(),
+      }).optional())
+      .query(({ input }) => {
+        return db.getCompanyApplications(input);
+      }),
+    // 업체회원 신청 승인/반려
+    reviewCompanyApplication: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        action: z.enum(["approved", "rejected", "suspended"]),
+        rejectionReason: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.reviewCompanyApplication(input.userId, input.action, input.rejectionReason);
+        return { success: true };
       }),
   }),
 

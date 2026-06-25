@@ -121,3 +121,22 @@
 - [x] DB users 테이블에 notifChat/notifPriceDrop/notifTrade/notifMarketing 컬럼 추가
 - [x] 서버 user.updateProfile, user.changePassword, user.getNotificationSettings, user.updateNotificationSettings API 구현
 - [x] 마이페이지 설정 메뉴에 onPress 핸들러 연결
+
+## 회원 시스템 전면 개편 (4단계: user/seller/company/admin)
+
+- [ ] DB - users.role enum을 user/seller/company/admin으로 변경
+- [ ] DB - users.userType 컬럼 제거 (role로 통합)
+- [ ] DB - companyApplications 테이블 추가 (업체회원 신청)
+- [ ] DB - sellerApplications 테이블 판매유형 5가지로 업데이트
+- [ ] 서버 API - company.apply (업체회원 신청)
+- [ ] 서버 API - company.myProfile (내 업체 프로필 조회)
+- [ ] 서버 API - admin.approveCompany / rejectCompany
+- [ ] 서버 API - admin.getCompanyApplications
+- [ ] 서버 API - seller 신청 판매유형 5가지 반영
+- [ ] 회원가입 화면 단순화 - 구매자/판매자 선택 제거, 모두 일반회원(user)으로 가입
+- [ ] 판매회원 신청 화면 개편 - 판매유형 5가지 선택 + 사업자 정보
+- [ ] 업체회원 신청 화면 구현 - 업체유형 8가지 선택 + 업체 정보
+- [ ] 등록하기 탭 - 물품등록(seller만) / 업체등록(company만) 권한 분기
+- [ ] 관리자 대시보드 - 업체회원 승인 탭 추가
+- [ ] 마이페이지 - 회원 유형별 UI 분기 (일반/판매/업체/관리자)
+- [ ] AuthUser 타입 role 업데이트 (user/seller/company/admin)

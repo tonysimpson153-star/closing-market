@@ -312,7 +312,7 @@ export async function reviewSellerApplication(
   if (action === "approved") {
     await db
       .update(users)
-      .set({ userType: "seller", sellerStatus: "approved", isVerified: true })
+      .set({ role: "seller", sellerStatus: "approved", isVerified: true })
       .where(eq(users.id, app[0].userId));
   } else if (action === "rejected") {
     await db
@@ -735,7 +735,6 @@ export async function getAdminUsers(input?: { limit?: number; offset?: number })
       name: users.name,
       email: users.email,
       role: users.role,
-      userType: users.userType,
       isVerified: users.isVerified,
       sellerStatus: users.sellerStatus,
       createdAt: users.createdAt,
@@ -811,7 +810,6 @@ export async function createUserByEmail(data: {
   loginMethod: string;
   kakaoId?: string | null;
   profileImageUrl?: string | null;
-  userType?: "buyer" | "seller";
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -825,7 +823,6 @@ export async function createUserByEmail(data: {
     kakaoId: data.kakaoId ?? undefined,
     profileImageUrl: data.profileImageUrl ?? undefined,
     role: "user",
-    userType: data.userType ?? "buyer",
     isVerified: false,
     lastSignedIn: new Date(),
   });
@@ -834,6 +831,107 @@ export async function createUserByEmail(data: {
   return newUser;
 }
 
+
+export async function updateUserSellerInfo(userId: number, data: {
+  sellerStatus: "pending" | "approved" | "rejected" | "suspended";
+  sellerType: "closing_soon" | "closed" | "relocating" | "inventory" | "transfer";
+  businessNumber: string;
+  businessName: string;
+  representativeName: string;
+  businessCertUrl: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    sellerStatus: data.sellerStatus,
+    sellerType: data.sellerType,
+    businessNumber: data.businessNumber,
+    businessName: data.businessName,
+    representativeName: data.representativeName,
+    businessCertUrl: data.businessCertUrl ?? undefined,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function updateUserCompanyInfo(userId: number, data: {
+  companyStatus: "pending" | "approved" | "rejected" | "suspended";
+  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cleaning" | "tax" | "labor";
+  companyName: string;
+  companyPhone: string;
+  companyAddress: string;
+  companyDesc: string | null;
+  businessNumber: string | null;
+  companyLogoUrl: string | null;
+  representativeName: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    companyStatus: data.companyStatus,
+    companyType: data.companyType,
+    companyName: data.companyName,
+    companyPhone: data.companyPhone,
+    companyAddress: data.companyAddress,
+    companyDesc: data.companyDesc ?? undefined,
+    businessNumber: data.businessNumber ?? undefined,
+    companyLogoUrl: data.companyLogoUrl ?? undefined,
+    representativeName: data.representativeName,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function getCompanyApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    phone: users.phone,
+    companyStatus: users.companyStatus,
+    companyType: users.companyType,
+    companyName: users.companyName,
+    companyPhone: users.companyPhone,
+    companyAddress: users.companyAddress,
+    companyDesc: users.companyDesc,
+    businessNumber: users.businessNumber,
+    representativeName: users.representativeName,
+    createdAt: users.createdAt,
+  }).from(users).$dynamic();
+  if (input?.status) {
+    query = query.where(eq(users.companyStatus, input.status));
+  } else {
+    // 업체회원 신청자만 (companyStatus가 null이 아닌 경우)
+    const { isNotNull } = await import("drizzle-orm");
+    query = query.where(isNotNull(users.companyType));
+  }
+  return query.orderBy(desc(users.createdAt)).limit(100);
+}
+
+export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (action === "approved") {
+    await db.update(users).set({
+      role: "company",
+      companyStatus: "approved",
+      isVerified: true,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+  } else if (action === "rejected") {
+    await db.update(users).set({
+      companyStatus: "rejected",
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+  } else if (action === "suspended") {
+    await db.update(users).set({
+      companyStatus: "suspended",
+      isVerified: false,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+  }
+  return { success: true };
+}
 export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

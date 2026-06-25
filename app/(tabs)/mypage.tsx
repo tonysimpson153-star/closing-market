@@ -43,7 +43,6 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           await clearAuth();
-          // 상태 초기화 후 홈 탭으로 이동
           router.replace("/" as any);
         },
       },
@@ -96,53 +95,41 @@ export default function MyPageScreen() {
                   <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
                     {user.email ?? ""}
                   </Text>
-                  {/* 판매자 인증 배지 */}
-                  {isVerifiedSeller && (
-                    <View style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      backgroundColor: "#22C55E20",
-                      borderRadius: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      marginTop: 6,
-                      alignSelf: "flex-start",
-                      gap: 4,
-                    }}>
+                  {/* 회원 유형 배지 */}
+                  {user.role === "admin" && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#3B82F620", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
+                      <Text style={{ fontSize: 11 }}>🔐</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#3B82F6" }}>관리자</Text>
+                    </View>
+                  )}
+                  {user.role === "seller" && isVerifiedSeller && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#22C55E20", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
                       <Text style={{ fontSize: 11 }}>✅</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>인증 판매자</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>인증 판매회원</Text>
                     </View>
                   )}
-                  {isPendingSeller && (
-                    <View style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      backgroundColor: "#F59E0B20",
-                      borderRadius: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      marginTop: 6,
-                      alignSelf: "flex-start",
-                      gap: 4,
-                    }}>
+                  {user.role === "seller" && !isVerifiedSeller && isPendingSeller && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F59E0B20", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
                       <Text style={{ fontSize: 11 }}>⏳</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B" }}>심사 중</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B" }}>판매회원 심사중</Text>
                     </View>
                   )}
-                  {isRejectedSeller && (
-                    <View style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      backgroundColor: "#EF444420",
-                      borderRadius: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      marginTop: 6,
-                      alignSelf: "flex-start",
-                      gap: 4,
-                    }}>
+                  {user.role === "seller" && !isVerifiedSeller && isRejectedSeller && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#EF444420", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
                       <Text style={{ fontSize: 11 }}>❌</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#EF4444" }}>반려</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#EF4444" }}>판매회원 반려</Text>
+                    </View>
+                  )}
+                  {user.role === "company" && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#8B5CF620", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
+                      <Text style={{ fontSize: 11 }}>🏢</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#8B5CF6" }}>업체회원</Text>
+                    </View>
+                  )}
+                  {user.role === "user" && (
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: colors.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
+                      <Text style={{ fontSize: 11 }}>👤</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: colors.muted }}>일반회원</Text>
                     </View>
                   )}
                 </>
@@ -160,26 +147,24 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 판매자 인증 신청 버튼 (로그인 + 미인증 시 표시) */}
-        {isAuthenticated && !isVerifiedSeller && !isPendingSeller && (
-          <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+        {/* 판매/업체 회원 신청 버튼 (일반회원만 표시) */}
+        {isAuthenticated && user?.role === "user" && (
+          <View style={{ paddingHorizontal: 16, marginTop: 12, gap: 8 }}>
+            {!isPendingSeller && (
+              <Pressable
+                style={({ pressed }) => [{ backgroundColor: "#F59E0B", borderRadius: 12, padding: 14, alignItems: "center", opacity: pressed ? 0.9 : 1, flexDirection: "row", justifyContent: "center", gap: 8 }]}
+                onPress={() => router.push("/seller/apply" as any)}
+              >
+                <Text style={{ fontSize: 15 }}>🏪</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{isRejectedSeller ? "판매회원 재신청" : "판매회원 신청"}</Text>
+              </Pressable>
+            )}
             <Pressable
-              style={({ pressed }) => [{
-                backgroundColor: "#F59E0B",
-                borderRadius: 12,
-                padding: 14,
-                alignItems: "center",
-                opacity: pressed ? 0.9 : 1,
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 8,
-              }]}
-              onPress={() => router.push("/seller/apply" as any)}
+              style={({ pressed }) => [{ backgroundColor: "#8B5CF6", borderRadius: 12, padding: 14, alignItems: "center", opacity: pressed ? 0.9 : 1, flexDirection: "row", justifyContent: "center", gap: 8 }]}
+              onPress={() => router.push("/company/apply" as any)}
             >
-              <Text style={{ fontSize: 15 }}>🏪</Text>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>
-                {isRejectedSeller ? "판매자 재신청하기" : "판매자 인증 신청"}
-              </Text>
+              <Text style={{ fontSize: 15 }}>🏢</Text>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>업체회원 신청</Text>
             </Pressable>
           </View>
         )}
@@ -361,49 +346,40 @@ export default function MyPageScreen() {
         {/* 관리자 메뉴 */}
         {isAuthenticated && user?.role === "admin" && (
           <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>관리자</Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>관리</Text>
             <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
               <Pressable
-                style={({ pressed }) => [{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  padding: 16,
-                  opacity: pressed ? 0.7 : 1,
-                }]}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: colors.border,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
                 onPress={() => router.push("/admin/dashboard" as any)}
               >
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "#3B82F620", justifyContent: "center", alignItems: "center", marginRight: 12 }}>
-                  <Text style={{ fontSize: 18 }}>⚙️</Text>
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: colors.primary + "15",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: 12,
+                  }}
+                >
+                  <IconSymbol name="gear" size={18} color={colors.primary} />
                 </View>
                 <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>관리자 대시보드</Text>
-                <IconSymbol name="chevron.right" size={16} color={colors.muted} />
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  padding: 16,
-                  borderTopWidth: 0.5,
-                  borderTopColor: colors.border,
-                  opacity: pressed ? 0.7 : 1,
-                }]}
-                onPress={() => router.push("/admin/seller-applications" as any)}
-              >
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "#8B5CF620", justifyContent: "center", alignItems: "center", marginRight: 12 }}>
-                  <Text style={{ fontSize: 18 }}>🏪</Text>
-                </View>
-                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>판매자 신청 관리</Text>
                 <IconSymbol name="chevron.right" size={16} color={colors.muted} />
               </Pressable>
             </View>
           </View>
         )}
-
-        {/* 앱 버전 */}
-        <View style={{ alignItems: "center", marginTop: 32 }}>
-          <Text style={{ fontSize: 12, color: colors.muted }}>클로징마켓 v1.0.0</Text>
-          <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>사업의 끝, 가치의 시작</Text>
-        </View>
       </ScrollView>
     </ScreenContainer>
   );

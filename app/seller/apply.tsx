@@ -138,14 +138,12 @@ export default function SellerApplyScreen() {
       }
       setStep(3);
     } else if (step === 3) {
-      if (!businessCertUrl) {
-        Alert.alert("업로드 필요", "사업자등록증을 업로드해주세요.");
-        return;
-      }
-      // 실제 환경에서는 S3 URL이어야 하지만, 개발 환경에서는 로컬 URI 허용
-      const certUrl = businessCertUrl.startsWith("http")
-        ? businessCertUrl
-        : `https://placeholder.example.com/cert/${Date.now()}`;
+      // 사업자등록증은 선택 사항
+      const certUrl = businessCertUrl
+        ? businessCertUrl.startsWith("http")
+          ? businessCertUrl
+          : `https://placeholder.example.com/cert/${Date.now()}`
+        : undefined;
       const photoUrl = businessPhotoUrl
         ? businessPhotoUrl.startsWith("http")
           ? businessPhotoUrl

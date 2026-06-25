@@ -17,7 +17,7 @@ import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 
-type TabType = "overview" | "products" | "reports" | "users" | "notices";
+type TabType = "overview" | "products" | "sellers" | "companies" | "reports" | "users" | "notices";
 
 export default function AdminDashboard() {
   const colors = useColors();
@@ -59,10 +59,12 @@ export default function AdminDashboard() {
         style={[styles.tabBar, { borderBottomColor: colors.border }]}
         contentContainerStyle={{ paddingHorizontal: 16 }}
       >
-        {(["overview", "products", "reports", "users", "notices"] as TabType[]).map((tab) => {
+        {(["overview", "products", "sellers", "companies", "reports", "users", "notices"] as TabType[]).map((tab) => {
           const labels: Record<TabType, string> = {
             overview: "📊 개요",
             products: "📦 상품",
+            sellers: "🏢 판매자",
+            companies: "🏢 업체",
             reports: "🚨 신고",
             users: "👥 회원",
             notices: "📢 공지",
@@ -87,6 +89,8 @@ export default function AdminDashboard() {
       {/* 탭 콘텐츠 */}
       {activeTab === "overview" && <OverviewTab colors={colors} router={router} />}
       {activeTab === "products" && <ProductsTab colors={colors} />}
+      {activeTab === "sellers" && <SellerApplicationsTab colors={colors} />}
+      {activeTab === "companies" && <CompanyApplicationsTab colors={colors} />}
       {activeTab === "reports" && <ReportsTab colors={colors} />}
       {activeTab === "users" && <UsersTab colors={colors} />}
       {activeTab === "notices" && (
@@ -372,11 +376,216 @@ function UsersTab({ colors }: { colors: any }) {
                 </View>
                 <Text style={[styles.listCardSub, { color: colors.muted }]}>{item.email ?? "이메일 없음"}</Text>
                 <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  {item.userType === "seller" ? "판매자" : "구매자"} · 가입일{" "}
+                  {item.role === "seller" ? "판매회원" : item.role === "company" ? "업체회원" : item.role === "admin" ? "관리자" : "일반회원"} · 가입일{" "}
                   {new Date(item.createdAt).toLocaleDateString("ko-KR")}
                 </Text>
               </View>
             </View>
+          </View>
+        );
+      }}
+    />
+  );
+}
+
+// ─── 판매자 신청 탭 ─────────────────────────────
+
+function SellerApplicationsTab({ colors }: { colors: any }) {
+  const { data: applications, isLoading, refetch } = trpc.admin.sellerApplications.useQuery();
+  const reviewMutation = trpc.admin.reviewApplication.useMutation({
+    onSuccess: () => {
+      Alert.alert("완료", "처리되었습니다.");
+      refetch();
+    },
+    onError: (e: any) => Alert.alert("오류", e.message),
+  });
+
+  const SELLER_TYPE_LABELS: Record<string, string> = {
+    closing_soon: "폐업 예정",
+    closed: "폐업 완료",
+    relocating: "사업장 이전",
+    inventory: "재고 정리",
+    transfer: "사업 양도",
+  };
+
+  const handleReview = (id: number, action: "approve" | "reject") => {
+    if (action === "reject") {
+      Alert.prompt(
+        "반려 사유",
+        "반려 사유를 입력해주세요",
+        (reason) => {
+          if (!reason?.trim()) return;
+          reviewMutation.mutate({ applicationId: id, action: "rejected", rejectionReason: reason.trim() });
+        },
+        "plain-text"
+      );
+    } else {
+      Alert.alert("승인 확인", "판매자 신청을 승인하시겠습니까?", [
+        { text: "취소", style: "cancel" },
+        { text: "승인", onPress: () => reviewMutation.mutate({ applicationId: id, action: "approved" }) },
+      ]);
+    }
+  };
+
+  if (isLoading) return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
+
+  return (
+    <FlatList
+      data={applications ?? []}
+      keyExtractor={(item: any) => String(item.id)}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+      ListEmptyComponent={
+        <View style={styles.center}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>🏢</Text>
+          <Text style={[styles.emptyTitle, { color: colors.muted }]}>판매자 신청이 없습니다.</Text>
+        </View>
+      }
+      renderItem={({ item }: { item: any }) => {
+        const isPending = item.sellerStatus === "pending";
+        const statusColor = item.sellerStatus === "approved" ? "#10B981" : item.sellerStatus === "rejected" ? "#EF4444" : "#F59E0B";
+        const statusLabel = item.sellerStatus === "approved" ? "승인" : item.sellerStatus === "rejected" ? "반려" : "심사중";
+        return (
+          <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+              <Text style={[styles.listCardTitle, { color: colors.foreground }]}>{item.businessName ?? "상호 없음"}</Text>
+              <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
+                <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
+              </View>
+            </View>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              신청자: {item.name ?? "알 수 없음"} ({item.email})
+            </Text>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              유형: {SELLER_TYPE_LABELS[item.sellerType] ?? item.sellerType} · 사업자번호: {item.businessNumber ?? "-"}
+            </Text>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              대표자: {item.representativeName ?? "-"}
+            </Text>
+            {item.rejectReason && (
+              <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
+                반려 사유: {item.rejectReason}
+              </Text>
+            )}
+            {isPending && (
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#10B981" }]}
+                  onPress={() => handleReview(item.id, "approve")}
+                >
+                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: colors.error }]}
+                  onPress={() => handleReview(item.id, "reject")}
+                >
+                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        );
+      }}
+    />
+  );
+}
+
+// ─── 업체 신청 탭 ─────────────────────────────
+
+function CompanyApplicationsTab({ colors }: { colors: any }) {
+  const { data: applications, isLoading, refetch } = trpc.admin.companyApplications.useQuery();
+    const reviewMutation = trpc.admin.reviewCompanyApplication.useMutation({
+    onSuccess: () => {
+      Alert.alert("완료", "처리되었습니다.");
+      refetch();
+    },
+    onError: (e: any) => Alert.alert("오류", e.message),
+  });
+  const COMPANY_TYPE_LABELS: Record<string, string> = {
+    demolition: "철거업체",
+    interior: "인테리어업체",
+    waste: "폐기물처리업체",
+    signage: "간판업체",
+    pos: "POS업체",
+    cleaning: "청소업체",
+    tax: "세무사",
+    labor: "노무사",
+  };
+
+    const handleReview = (id: number, action: "approve" | "reject") => {
+    if (action === "reject") {
+      Alert.prompt(
+        "반려 사유",
+        "반려 사유를 입력해주세요",
+        (reason) => {
+          if (!reason?.trim()) return;
+          reviewMutation.mutate({ userId: id, action: "rejected", rejectionReason: reason.trim() });
+        },
+        "plain-text"
+      );
+    } else {
+      Alert.alert("승인 확인", "업체 등록 신청을 승인하시겠습니까?", [
+        { text: "취소", style: "cancel" },
+        { text: "승인", onPress: () => reviewMutation.mutate({ userId: id, action: "approved" }) },
+      ]);
+    }
+  };
+  if (isLoading) return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
+
+  return (
+    <FlatList
+      data={applications ?? []}
+      keyExtractor={(item: any) => String(item.id)}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+      ListEmptyComponent={
+        <View style={styles.center}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>🏢</Text>
+          <Text style={[styles.emptyTitle, { color: colors.muted }]}>업체 등록 신청이 없습니다.</Text>
+        </View>
+      }
+      renderItem={({ item }: { item: any }) => {
+        const isPending = item.status === "pending";
+        const statusColor = item.status === "approved" ? "#10B981" : item.status === "rejected" ? "#EF4444" : "#F59E0B";
+        const statusLabel = item.status === "approved" ? "승인" : item.status === "rejected" ? "반려" : "심사중";
+        return (
+          <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+              <Text style={[styles.listCardTitle, { color: colors.foreground }]}>{item.companyName ?? "업체명 없음"}</Text>
+              <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
+                <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
+              </View>
+            </View>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              신청자: {item.userName ?? "알 수 없음"} ({item.userEmail})
+            </Text>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              유형: {COMPANY_TYPE_LABELS[item.companyType] ?? item.companyType} · 연락체: {item.companyPhone ?? "-"}
+            </Text>
+            <Text style={[styles.listCardSub, { color: colors.muted }]}>
+              주소: {item.companyAddress ?? "-"}
+            </Text>
+            {item.rejectReason && (
+              <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
+                반려 사유: {item.rejectReason}
+              </Text>
+            )}
+            {isPending && (
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#10B981" }]}
+                  onPress={() => handleReview(item.id, "approve")}
+                >
+                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: colors.error }]}
+                  onPress={() => handleReview(item.id, "reject")}
+                >
+                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         );
       }}

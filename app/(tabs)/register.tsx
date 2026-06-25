@@ -31,11 +31,14 @@ const TRADE_TYPE_OPTIONS = [
   { id: "negotiable", name: "협의" },
 ];
 
+type RegisterMode = "select" | "product";
+
 export default function RegisterScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const isAuthenticated = !!token;
+  const [mode, setMode] = useState<RegisterMode>("select");
 
   // 판매자 프로필 조회 (로그인 시에만)
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
@@ -44,7 +47,6 @@ export default function RegisterScreen() {
 
   const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
-  const isRejectedSeller = sellerProfile?.sellerStatus === "rejected";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -57,7 +59,7 @@ export default function RegisterScreen() {
   const createMutation = trpc.products.create.useMutation({
     onSuccess: () => {
       Alert.alert("등록 완료", "상품이 성공적으로 등록되었습니다.", [
-        { text: "확인", onPress: () => router.push("/" as any) },
+        { text: "확인", onPress: () => { setMode("select"); router.push("/" as any); } },
       ]);
     },
     onError: (error) => {
@@ -69,22 +71,49 @@ export default function RegisterScreen() {
     },
   });
 
-  const handleSubmit = () => {
+  const handleProductRegisterPress = () => {
     if (!isAuthenticated) {
-      Alert.alert("로그인 필요", "상품 등록을 위해 로그인이 필요합니다.");
+      Alert.alert("로그인 필요", "상품 등록을 위해 로그인이 필요합니다.", [
+        { text: "취소", style: "cancel" },
+        { text: "로그인", onPress: () => router.push("/auth/login" as any) },
+      ]);
+      return;
+    }
+    if (isPendingSeller) {
+      Alert.alert("심사 중", "판매자 인증 신청이 심사 중입니다.\n승인 후 상품 등록이 가능합니다.");
       return;
     }
     if (!isVerifiedSeller) {
       Alert.alert(
-        "판매자 인증 필요",
-        "상품 등록은 인증된 판매자만 가능합니다.\n판매자 인증을 신청하시겠습니까?",
+        "판매회원 신청 필요",
+        "상품 등록은 판매회원만 가능합니다.\n판매회원 신청을 하시겠습니까?",
         [
           { text: "취소", style: "cancel" },
-          { text: "인증 신청", onPress: () => router.push("/seller/apply" as any) },
+          { text: "신청하기", onPress: () => router.push("/seller/apply" as any) },
         ]
       );
       return;
     }
+    setMode("product");
+  };
+
+  const handleCompanyRegisterPress = () => {
+    if (!isAuthenticated) {
+      Alert.alert("로그인 필요", "업체 등록을 위해 로그인이 필요합니다.", [
+        { text: "취소", style: "cancel" },
+        { text: "로그인", onPress: () => router.push("/auth/login" as any) },
+      ]);
+      return;
+    }
+    // 이미 업체회원이면 바로 프로필 관리로
+    if (user?.role === "company") {
+      Alert.alert("업체회원", "이미 업체회원으로 등록되어 있습니다.");
+      return;
+    }
+    router.push("/company/apply" as any);
+  };
+
+  const handleSubmit = () => {
     if (!title.trim()) {
       Alert.alert("입력 오류", "상품명을 입력해주세요.");
       return;
@@ -97,7 +126,6 @@ export default function RegisterScreen() {
       Alert.alert("입력 오류", "업종을 선택해주세요.");
       return;
     }
-
     createMutation.mutate({
       title: title.trim(),
       description: description.trim() || undefined,
@@ -109,10 +137,166 @@ export default function RegisterScreen() {
     });
   };
 
+  // 선택 화면
+  if (mode === "select") {
+    return (
+      <ScreenContainer>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
+          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.foreground }}>등록하기</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, marginTop: 4 }}>
+            원하는 등록 유형을 선택해주세요
+          </Text>
+        </View>
+
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+          {/* 물품 등록 카드 */}
+          <Pressable
+            style={({ pressed }) => [
+              {
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                padding: 24,
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            onPress={handleProductRegisterPress}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 16 }}>
+              <View style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: colors.primary + "15",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <Text style={{ fontSize: 28 }}>📦</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>물품 등록</Text>
+                <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>사업장 물품을 판매하세요</Text>
+              </View>
+              <Text style={{ fontSize: 20, color: colors.muted }}>›</Text>
+            </View>
+            <View style={{ gap: 6 }}>
+              {["폐업·이전 사업장 물품 판매", "집기·비품·재고 등록", "판매회원 인증 후 이용 가능"].map((item, i) => (
+                <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary }} />
+                  <Text style={{ fontSize: 13, color: colors.muted }}>{item}</Text>
+                </View>
+              ))}
+            </View>
+            {/* 상태 배지 */}
+            {isAuthenticated && (
+              <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
+                {isVerifiedSeller ? (
+                  <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>✓ 판매회원 인증 완료</Text>
+                  </View>
+                ) : isPendingSeller ? (
+                  <View style={{ backgroundColor: colors.warning + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: colors.warning }}>⏳ 심사 중</Text>
+                  </View>
+                ) : (
+                  <View style={{ backgroundColor: colors.border, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>판매회원 신청 필요</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </Pressable>
+
+          {/* 업체 등록 카드 */}
+          <Pressable
+            style={({ pressed }) => [
+              {
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                padding: 24,
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            onPress={handleCompanyRegisterPress}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 16 }}>
+              <View style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: "#8B5CF620",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <Text style={{ fontSize: 28 }}>🏢</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>업체 등록</Text>
+                <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>전문 업체 서비스를 홍보하세요</Text>
+              </View>
+              <Text style={{ fontSize: 20, color: colors.muted }}>›</Text>
+            </View>
+            <View style={{ gap: 6 }}>
+              {["철거·인테리어·폐기물 등 전문 업체", "포트폴리오 및 견적 관리", "업체회원 인증 후 이용 가능"].map((item, i) => (
+                <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#8B5CF6" }} />
+                  <Text style={{ fontSize: 13, color: colors.muted }}>{item}</Text>
+                </View>
+              ))}
+            </View>
+            {/* 상태 배지 */}
+            {isAuthenticated && user?.role === "company" && (
+              <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
+                <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>✓ 업체회원 인증 완료</Text>
+                </View>
+              </View>
+            )}
+          </Pressable>
+
+          {/* 비로그인 안내 */}
+          {!isAuthenticated && (
+            <View style={{
+              backgroundColor: colors.primary + "10",
+              borderRadius: 14,
+              padding: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}>
+              <Text style={{ fontSize: 20 }}>ℹ️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, color: colors.foreground, fontWeight: "600", marginBottom: 2 }}>
+                  로그인이 필요합니다
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  등록 서비스 이용을 위해 로그인해주세요
+                </Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => router.push("/auth/login" as any)}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary }}>로그인</Text>
+              </Pressable>
+            </View>
+          )}
+        </ScrollView>
+      </ScreenContainer>
+    );
+  }
+
+  // 상품 등록 폼
   return (
     <ScreenContainer>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.foreground }}>상품 등록</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
+        <Pressable onPress={() => setMode("select")}>
+          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: "600" }}>← 뒤로</Text>
+        </Pressable>
+        <Text style={{ fontSize: 20, fontWeight: "800", color: colors.foreground }}>상품 등록</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
@@ -123,39 +307,25 @@ export default function RegisterScreen() {
           </Text>
           <View style={{ flexDirection: "row", gap: 10 }}>
             <Pressable
-              style={({ pressed }) => [
-                {
-                  width: 80,
-                  height: 80,
-                  borderRadius: 12,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderStyle: "dashed",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
+              style={({ pressed }) => [{
+                width: 80, height: 80, borderRadius: 12,
+                backgroundColor: colors.surface, borderWidth: 1.5,
+                borderColor: colors.border, borderStyle: "dashed",
+                justifyContent: "center", alignItems: "center",
+                opacity: pressed ? 0.7 : 1,
+              }]}
             >
               <IconSymbol name="camera.fill" size={24} color={colors.muted} />
               <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>대표 사진</Text>
             </Pressable>
             <Pressable
-              style={({ pressed }) => [
-                {
-                  width: 80,
-                  height: 80,
-                  borderRadius: 12,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderStyle: "dashed",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
+              style={({ pressed }) => [{
+                width: 80, height: 80, borderRadius: 12,
+                backgroundColor: colors.surface, borderWidth: 1.5,
+                borderColor: colors.border, borderStyle: "dashed",
+                justifyContent: "center", alignItems: "center",
+                opacity: pressed ? 0.7 : 1,
+              }]}
             >
               <IconSymbol name="plus.circle.fill" size={24} color={colors.muted} />
               <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>추가 (0/30)</Text>
@@ -175,13 +345,9 @@ export default function RegisterScreen() {
             placeholderTextColor={colors.muted}
             returnKeyType="next"
             style={{
-              backgroundColor: colors.surface,
-              borderRadius: 10,
-              padding: 14,
-              fontSize: 15,
-              color: colors.foreground,
-              borderWidth: 1,
-              borderColor: colors.border,
+              backgroundColor: colors.surface, borderRadius: 10,
+              padding: 14, fontSize: 15, color: colors.foreground,
+              borderWidth: 1, borderColor: colors.border,
             }}
           />
         </View>
@@ -195,30 +361,21 @@ export default function RegisterScreen() {
             {CATEGORY_OPTIONS.map((cat) => (
               <Pressable
                 key={cat.id}
-                style={({ pressed }) => [
-                  {
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    backgroundColor: selectedCategory === cat.id ? colors.primary : colors.surface,
-                    borderWidth: 1,
-                    borderColor: selectedCategory === cat.id ? colors.primary : colors.border,
-                    opacity: pressed ? 0.7 : 1,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 4,
-                  },
-                ]}
+                style={({ pressed }) => [{
+                  paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+                  backgroundColor: selectedCategory === cat.id ? colors.primary : colors.surface,
+                  borderWidth: 1,
+                  borderColor: selectedCategory === cat.id ? colors.primary : colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                  flexDirection: "row", alignItems: "center", gap: 4,
+                }]}
                 onPress={() => setSelectedCategory(cat.id)}
               >
                 <Text style={{ fontSize: 14 }}>{cat.emoji}</Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "500",
-                    color: selectedCategory === cat.id ? "#FFFFFF" : colors.foreground,
-                  }}
-                >
+                <Text style={{
+                  fontSize: 13, fontWeight: "500",
+                  color: selectedCategory === cat.id ? "#FFFFFF" : colors.foreground,
+                }}>
                   {cat.name}
                 </Text>
               </Pressable>
@@ -231,17 +388,11 @@ export default function RegisterScreen() {
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
             가격 <Text style={{ color: colors.error }}>*</Text>
           </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: colors.surface,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingHorizontal: 14,
-            }}
-          >
+          <View style={{
+            flexDirection: "row", alignItems: "center",
+            backgroundColor: colors.surface, borderRadius: 10,
+            borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14,
+          }}>
             <TextInput
               value={price}
               onChangeText={setPrice}
@@ -258,17 +409,11 @@ export default function RegisterScreen() {
         {/* 수량 */}
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>수량</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: colors.surface,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingHorizontal: 14,
-            }}
-          >
+          <View style={{
+            flexDirection: "row", alignItems: "center",
+            backgroundColor: colors.surface, borderRadius: 10,
+            borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14,
+          }}>
             <TextInput
               value={quantity}
               onChangeText={setQuantity}
@@ -289,26 +434,19 @@ export default function RegisterScreen() {
             {TRADE_TYPE_OPTIONS.map((type) => (
               <Pressable
                 key={type.id}
-                style={({ pressed }) => [
-                  {
-                    paddingHorizontal: 16,
-                    paddingVertical: 9,
-                    borderRadius: 20,
-                    backgroundColor: selectedTradeType === type.id ? colors.primary : colors.surface,
-                    borderWidth: 1,
-                    borderColor: selectedTradeType === type.id ? colors.primary : colors.border,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
+                style={({ pressed }) => [{
+                  paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20,
+                  backgroundColor: selectedTradeType === type.id ? colors.primary : colors.surface,
+                  borderWidth: 1,
+                  borderColor: selectedTradeType === type.id ? colors.primary : colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
                 onPress={() => setSelectedTradeType(type.id)}
               >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "500",
-                    color: selectedTradeType === type.id ? "#FFFFFF" : colors.foreground,
-                  }}
-                >
+                <Text style={{
+                  fontSize: 13, fontWeight: "500",
+                  color: selectedTradeType === type.id ? "#FFFFFF" : colors.foreground,
+                }}>
                   {type.name}
                 </Text>
               </Pressable>
@@ -326,13 +464,9 @@ export default function RegisterScreen() {
             placeholderTextColor={colors.muted}
             returnKeyType="next"
             style={{
-              backgroundColor: colors.surface,
-              borderRadius: 10,
-              padding: 14,
-              fontSize: 15,
-              color: colors.foreground,
-              borderWidth: 1,
-              borderColor: colors.border,
+              backgroundColor: colors.surface, borderRadius: 10,
+              padding: 14, fontSize: 15, color: colors.foreground,
+              borderWidth: 1, borderColor: colors.border,
             }}
           />
         </View>
@@ -349,14 +483,9 @@ export default function RegisterScreen() {
             numberOfLines={5}
             textAlignVertical="top"
             style={{
-              backgroundColor: colors.surface,
-              borderRadius: 10,
-              padding: 14,
-              fontSize: 15,
-              color: colors.foreground,
-              minHeight: 120,
-              borderWidth: 1,
-              borderColor: colors.border,
+              backgroundColor: colors.surface, borderRadius: 10,
+              padding: 14, fontSize: 15, color: colors.foreground,
+              minHeight: 120, borderWidth: 1, borderColor: colors.border,
             }}
           />
         </View>
@@ -364,22 +493,20 @@ export default function RegisterScreen() {
         {/* 등록 버튼 */}
         <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
           <Pressable
-            style={({ pressed }) => [
-              {
-                backgroundColor: createMutation.isPending ? colors.muted : colors.primary,
-                borderRadius: 12,
-                padding: 16,
-                alignItems: "center",
-                opacity: pressed ? 0.9 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
+            style={({ pressed }) => [{
+              backgroundColor: createMutation.isPending ? colors.muted : colors.primary,
+              borderRadius: 12, padding: 16, alignItems: "center",
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            }]}
             onPress={handleSubmit}
             disabled={createMutation.isPending}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700" }}>
-              {createMutation.isPending ? "등록 중..." : "등록하기"}
-            </Text>
+            {createMutation.isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700" }}>등록하기</Text>
+            )}
           </Pressable>
         </View>
       </ScrollView>

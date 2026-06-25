@@ -5,10 +5,10 @@ export interface AuthUser {
   id: number;
   email: string | null;
   name: string | null;
-  role: "user" | "admin";
-  userType: "buyer" | "seller";
+  role: "user" | "seller" | "company" | "admin";
   isVerified: boolean;
-  sellerStatus: "pending" | "approved" | "rejected" | null;
+  sellerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
+  companyStatus?: "pending" | "approved" | "rejected" | "suspended" | null;
   profileImageUrl: string | null;
   phone?: string | null;
   loginMethod?: string | null;
