@@ -4,6 +4,7 @@ import { router, protectedProcedure, publicProcedure, adminProcedure } from "./_
 import * as db from "./db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { sendChatPushNotification } from "./_core/push-notifications";
 
 const JWT_SECRET = process.env.JWT_SECRET || "closing-market-secret-2024";
 
@@ -108,6 +109,16 @@ export const appRouter = router({
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+      }),
+
+    // 푸시 토큰 저장
+    savePushToken: protectedProcedure
+      .input(z.object({
+        token: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.savePushToken(ctx.user.id, input.token);
+        return { success: true };
       }),
   }),
 

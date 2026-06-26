@@ -43,6 +43,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     notifPriceDrop: true,
     notifTrade: true,
     notifMarketing: false,
+    expoPushToken: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),

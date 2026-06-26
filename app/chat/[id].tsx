@@ -343,7 +343,7 @@ export default function ChatRoomScreen() {
                     ) : (
                       <Text style={[
                         styles.msgText,
-                        { color: isMine ? "#FFFFFF" : colors.foreground }
+                        { color: isMine ? "#FFFFFF" : "#1F2937" }
                       ]}>
                         {item.content}
                       </Text>
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   msgContentOther: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#E5E7EB",
     borderBottomLeftRadius: 4,
   },
   msgText: {

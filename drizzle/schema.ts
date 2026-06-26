@@ -36,6 +36,8 @@ export const users = mysqlTable("users", {
   notifPriceDrop: boolean("notifPriceDrop").default(true).notNull(),
   notifTrade: boolean("notifTrade").default(true).notNull(),
   notifMarketing: boolean("notifMarketing").default(false).notNull(),
+  // 푸시 알림
+  expoPushToken: text("expoPushToken"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

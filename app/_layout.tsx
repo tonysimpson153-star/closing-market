@@ -19,6 +19,8 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { useAuthStore } from "@/lib/auth-store";
+import * as Notifications from "expo-notifications";
+import { setupLocalNotifications, getDeviceToken } from "@/lib/chat-notifications";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -39,8 +41,35 @@ export default function RootLayout() {
     initManusRuntime();
   }, []);
 
+  // 로컬 알림 설정 및 푸시 토큰 등록
+  useEffect(() => {
+    const setupNotifications = async () => {
+      try {
+        // 로컬 알림 설정
+        await setupLocalNotifications();
+
+        // 기기 토큰 가져오기 및 서버에 등록
+        const deviceToken = await getDeviceToken();
+        const { token } = useAuthStore.getState();
+        if (deviceToken && token) {
+          try {
+            const client = createTRPCClient();
+            await client.auth.savePushToken.mutate({ token: deviceToken });
+            console.log("푸시 토큰 등록 완료");
+          } catch (error) {
+            console.error("푸시 토큰 등록 실패:", error);
+          }
+        }
+      } catch (error) {
+        console.error("알림 설정 실패:", error);
+      }
+    };
+
+    setupNotifications();
+  }, []);
+
   // 앱 시작 시 저장된 JWT 토큰 복원
-  const loadFromStorage = useAuthStore((s) => s.loadFromStorage);
+  const { loadFromStorage } = useAuthStore();
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);

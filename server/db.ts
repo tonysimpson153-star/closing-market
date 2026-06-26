@@ -945,6 +945,21 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
   await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
+export async function savePushToken(userId: number, token: string) {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db
+      .update(users)
+      .set({ expoPushToken: token })
+      .where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("푸시 토큰 저장 실패:", error);
+    return false;
+  }
+}
+
 export async function updateNotificationSettings(userId: number, data: {
   notifChat?: boolean;
   notifPriceDrop?: boolean;
