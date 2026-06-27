@@ -40,7 +40,7 @@ export const appRouter = router({
           
         });
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 이메일 로그인
@@ -59,7 +59,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 현재 사용자 정보 조회 (토큰 기반)
@@ -70,7 +70,7 @@ export const appRouter = router({
           const decoded = jwt.verify(input.token, JWT_SECRET) as { userId: number };
           const user = await db.getUserById(decoded.userId);
           if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-          return { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
+          return { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
         } catch {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "유효하지 않은 토큰입니다." });
         }
@@ -108,7 +108,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 푸시 토큰 저장
