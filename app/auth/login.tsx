@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -68,14 +68,19 @@ export default function LoginScreen() {
             />
           </View>
           <Text style={[styles.appName, { color: colors.foreground }]}>클로징마켓</Text>
-          <Text style={[styles.tagline, { color: colors.muted }]}>사업의 끝, 가치의 시작</Text>
+          <Text style={[styles.tagline, { color: colors.muted }]}>폐업 물품의 새로운 가치</Text>
         </View>
 
         {/* 입력 폼 */}
         <View style={styles.form}>
+          {/* 이메일 로그인 섹션 */}
+          <View style={[styles.sectionHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>이메일로 로그인</Text>
+          </View>
+
           {/* 이메일 입력 */}
-          <View>
-            <Text style={[styles.label, { color: colors.foreground }]}>이메일</Text>
+          <View style={{ marginTop: 16 }}>
+            <Text style={[styles.label, { color: colors.foreground }]}>이메일 주소</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <IconSymbol name="envelope" size={18} color={colors.muted} />
               <TextInput
@@ -119,7 +124,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* 로그인 버튼 */}
+          {/* 이메일 로그인 버튼 */}
           <Pressable
             style={({ pressed }) => [
               styles.loginBtn,
@@ -134,14 +139,14 @@ export default function LoginScreen() {
             {loginMutation.isPending ? (
               <ActivityIndicator color="#000000" size="small" />
             ) : (
-              <Text style={styles.loginBtnText}>로그인</Text>
+              <Text style={styles.loginBtnText}>이메일로 로그인</Text>
             )}
           </Pressable>
 
-          {/* 구분선 */}
+          {/* 소셜 로그인 구분선 */}
           <View style={styles.dividerContainer}>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.muted }]}>또는</Text>
+            <Text style={[styles.dividerText, { color: colors.muted }]}>또는 소셜 로그인</Text>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
           </View>
 
@@ -183,6 +188,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  sectionHeader: {
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   backBtn: {
     width: 40,
@@ -264,8 +279,9 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
+    letterSpacing: 0.2,
   },
   kakaoBtn: {
     backgroundColor: "#FEE500",
