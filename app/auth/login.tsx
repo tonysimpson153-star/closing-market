@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -158,7 +159,7 @@ export default function LoginScreen() {
             ]}
             onPress={() => router.push("/auth/kakao" as any)}
           >
-            <Text style={styles.kakaoBtnIcon}>☀️</Text>
+            <LucideIcon name="send" size={18} color="#191919" />
             <Text style={styles.kakaoBtnText}>카카오로 로그인</Text>
           </Pressable>
 
@@ -172,9 +173,10 @@ export default function LoginScreen() {
         </View>
 
         {/* 하단 안내 */}
-        <View style={styles.infoBox}>
+        <View style={[styles.infoBox, { flexDirection: "row", alignItems: "flex-start", gap: 10 }]}>
+          <LucideIcon name="lock" size={16} color={colors.muted} />
           <Text style={[styles.infoText, { color: colors.muted }]}>
-            🔒 안전한 로그인{"\n"}
+            안전한 로그인{"\n"}
             당신의 정보는 암호화되어 안전하게 보호됩니다.
           </Text>
         </View>

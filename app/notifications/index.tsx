@@ -17,8 +17,8 @@ const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
 };
 
 const NOTIFICATION_TYPE_ICONS: Record<string, string> = {
-  chat: "💬",
-  favorite: "❤️",
+  chat: "message-circle",
+  favorite: "heart",
   comment: "💭",
   sold: "✅",
   price_change: "💰",

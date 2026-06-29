@@ -12,12 +12,13 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { trpc } from "@/lib/trpc";
 
 const COMPANY_TYPES = [
-  { id: "demolition" as const, label: "철거업체", icon: "🏗️", desc: "건물 및 시설 철거 전문" },
-  { id: "interior" as const, label: "인테리어업체", icon: "🎨", desc: "인테리어 시공 및 리모델링" },
-  { id: "waste" as const, label: "폐기물처리업체", icon: "♻️", desc: "산업·생활 폐기물 처리" },
+  { id: "demolition" as const, label: "철거업체", icon: "hammer", desc: "건물 및 시설 철거 전문" },
+  { id: "interior" as const, label: "인테리어업체", icon: "palette", desc: "인테리어 시공 및 리모델링" },
+  { id: "waste" as const, label: "폐기물처리업체", icon: "recycle", desc: "산업·생활 폐기물 처리" },
   { id: "signage" as const, label: "간판업체", icon: "🪧", desc: "간판 제작 및 철거" },
   { id: "pos" as const, label: "POS업체", icon: "🖥️", desc: "POS 시스템 구매·판매" },
   { id: "cleaning" as const, label: "청소업체", icon: "🧹", desc: "사업장 청소 및 정리" },
@@ -179,7 +180,10 @@ export default function CompanyApplyScreen() {
             결과를 알려드립니다.
           </Text>
           <View style={s.statusBadge}>
-            <Text style={s.statusText}>⏳ 심사 중</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <LucideIcon name="clock" size={16} color={colors.primary} />
+              <Text style={s.statusText}>심사 중</Text>
+            </View>
           </View>
           <Pressable
             style={({ pressed }) => [s.homeBtn, { opacity: pressed ? 0.8 : 1 }]}
@@ -252,7 +256,7 @@ export default function CompanyApplyScreen() {
                           justifyContent: "center",
                         }}
                       >
-                        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>✓</Text>
+                        <LucideIcon name="check" size={12} color="#fff" />
                       </View>
                     )}
                   </Pressable>

@@ -2,6 +2,7 @@ import { Text, View, Pressable, FlatList, ActivityIndicator, Image } from "react
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
@@ -65,7 +66,7 @@ export default function ChatScreen() {
 
       {!isAuthenticated ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>💬</Text>
+          <LucideIcon name="message-circle" size={48} color={colors.primary} />
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
             로그인이 필요합니다
           </Text>
@@ -79,7 +80,7 @@ export default function ChatScreen() {
         </View>
       ) : !chats || chats.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>💬</Text>
+          <LucideIcon name="message-circle" size={48} color={colors.primary} />
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
             채팅 내역이 없습니다
           </Text>

@@ -243,7 +243,7 @@ export default function ChatRoomScreen() {
               })
             }
           >
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>⭐ 후기작성</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>star 후기작성</Text>
           </Pressable>
         )}
         {room?.status === "cancelled" && (
@@ -297,7 +297,7 @@ export default function ChatRoomScreen() {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>💬</Text>
+              <Text style={{ fontSize: 40, marginBottom: 12 }}>message-circle</Text>
               <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", fontWeight: "500" }}>
                 {room?.otherUser?.name ?? "상대방"}님과의 대화를{"\n"}시작해보세요.
               </Text>

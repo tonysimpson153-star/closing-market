@@ -18,6 +18,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function RegisterScreen() {
         {/* 안내 배너 - 프리미엄 스타일 */}
         <View style={[styles.infoBanner, { backgroundColor: colors.primary + "10", borderColor: colors.primary }]}>
           <View style={[styles.infoIconBg, { backgroundColor: colors.primary + "20" }]}>
-            <Text style={styles.infoIcon}>ℹ️</Text>
+            <LucideIcon name="info" size={20} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.infoTitle, { color: colors.primary }]}>일반회원으로 가입됩니다</Text>

@@ -2,17 +2,18 @@ import { ScrollView, Text, View, Pressable, ActivityIndicator } from "react-nati
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORIES = [
-  { id: "cafe", name: "카페", emoji: "☕" },
-  { id: "pcroom", name: "PC방", emoji: "🎮" },
-  { id: "restaurant", name: "식당", emoji: "🍽️" },
-  { id: "gym", name: "헬스장", emoji: "🏋️" },
-  { id: "office", name: "사무실", emoji: "🏢" },
-  { id: "warehouse", name: "창고재고", emoji: "📦" },
-  { id: "transfer", name: "사업양도", emoji: "🏪" },
+  { id: "cafe", name: "카페", icon: "coffee" },
+  { id: "pcroom", name: "PC방", icon: "gamepad2" },
+  { id: "restaurant", name: "식당", icon: "utensils" },
+  { id: "gym", name: "헬스장", icon: "dumbbell" },
+  { id: "office", name: "사무실", icon: "briefcase" },
+  { id: "warehouse", name: "창고재고", icon: "package" },
+  { id: "transfer", name: "사업양도", icon: "store" },
 ];
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -28,15 +29,15 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 };
 
 const BUSINESS_TYPE_ICONS: Record<string, string> = {
-  demolition: "🚧",
-  interior: "🎨",
-  waste: "♻️",
-  sign: "🪧",
-  pos: "🖥️",
-  cctv: "📹",
-  cleaning: "🧹",
-  tax: "📋",
-  labor: "⚖️",
+  demolition: "hammer",
+  interior: "palette",
+  waste: "recycle",
+  sign: "signpost",
+  pos: "monitor",
+  cctv: "camera",
+  cleaning: "waves",
+  tax: "file",
+  labor: "scale",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -132,7 +133,7 @@ export default function HomeScreen() {
                     borderColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 32 }}>{cat.emoji}</Text>
+                  <LucideIcon name={cat.icon as any} size={32} color={colors.primary} />
                 </View>
                 <Text style={{ fontSize: 12, color: colors.foreground, fontWeight: "600", textAlign: "center" }}>
                   {cat.name}
@@ -200,9 +201,7 @@ export default function HomeScreen() {
                       alignItems: "center",
                     }}
                   >
-                    <Text style={{ fontSize: 36 }}>
-                      {CATEGORIES.find((c) => c.id === product.category)?.emoji ?? "📦"}
-                    </Text>
+                    <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
                   </View>
                   <View style={{ padding: 12 }}>
                     <Text
@@ -364,9 +363,7 @@ export default function HomeScreen() {
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ fontSize: 36 }}>
-                    {CATEGORIES.find((c) => c.id === product.category)?.emoji ?? "📦"}
-                  </Text>
+                  <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1, padding: 14 }}>
                   <Text

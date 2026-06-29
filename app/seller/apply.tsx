@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 
@@ -22,7 +23,7 @@ const SELLER_TYPES = [
     id: "closing_soon" as const,
     label: "폐업 예정",
     desc: "폐업을 앞두고 물품을 정리하려는 사업자",
-    icon: "⏰",
+    icon: "clock",
   },
   {
     id: "closed" as const,
@@ -34,7 +35,7 @@ const SELLER_TYPES = [
     id: "relocating" as const,
     label: "사업장 이전",
     desc: "이전으로 인해 물품을 처분하려는 사업자",
-    icon: "🚚",
+    icon: "truck",
   },
   {
     id: "inventory" as const,
@@ -274,7 +275,7 @@ export default function SellerApplyScreen() {
     return (
       <ScreenContainer>
         <View style={s.successContainer}>
-          <Text style={s.successIcon}>📋</Text>
+          <LucideIcon name="clipboard" size={48} color={colors.primary} />
           <Text style={s.successTitle}>신청이 완료되었습니다!</Text>
           <Text style={s.successDesc}>
             사업자 인증 신청이 접수되었습니다.{"\n"}
@@ -282,7 +283,10 @@ export default function SellerApplyScreen() {
             결과를 알려드립니다.
           </Text>
           <View style={s.statusBadge}>
-            <Text style={s.statusText}>⏳ 심사 중</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <LucideIcon name="clock" size={16} color={colors.primary} />
+              <Text style={s.statusText}>심사 중</Text>
+            </View>
           </View>
           <Pressable
             style={({ pressed }) => [s.homeBtn, { opacity: pressed ? 0.8 : 1 }]}
@@ -353,7 +357,7 @@ export default function SellerApplyScreen() {
                         justifyContent: "center",
                       }}
                     >
-                      <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }}>✓</Text>
+                      <LucideIcon name="check" size={14} color="#fff" />
                     </View>
                   )}
                 </Pressable>
@@ -434,7 +438,7 @@ export default function SellerApplyScreen() {
                 <ActivityIndicator color={colors.primary} />
               ) : businessCertUrl ? (
                 <>
-                  <Text style={{ fontSize: 32 }}>✅</Text>
+                  <LucideIcon name="check-circle" size={32} color={colors.success} />
                   <Text style={[s.uploadLabel, { color: colors.success }]}>업로드 완료</Text>
                   <Text style={[s.uploadedUri, { color: colors.muted }]} numberOfLines={1}>
                     {businessCertUrl.split("/").pop()}
@@ -443,7 +447,7 @@ export default function SellerApplyScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 32 }}>📄</Text>
+                  <LucideIcon name="file" size={32} color={colors.primary} />
                   <Text style={[s.uploadLabel, { color: colors.primary }]}>사업자등록증 업로드</Text>
                   <Text style={[s.uploadSub, { color: colors.muted }]}>JPG, PNG 파일 지원</Text>
                 </>
@@ -468,7 +472,7 @@ export default function SellerApplyScreen() {
                 <ActivityIndicator color={colors.primary} />
               ) : businessPhotoUrl ? (
                 <>
-                  <Text style={{ fontSize: 32 }}>✅</Text>
+                  <LucideIcon name="check-circle" size={32} color={colors.success} />
                   <Text style={[s.uploadLabel, { color: colors.success }]}>업로드 완료</Text>
                   <Text style={[s.uploadSub, { color: colors.muted }]}>다시 선택하려면 탭하세요</Text>
                 </>

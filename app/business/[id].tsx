@@ -19,8 +19,8 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 
 const BUSINESS_TYPE_ICONS: Record<string, string> = {
   demolition: "🚧",
-  interior: "🎨",
-  waste: "♻️",
+  interior: "palette",
+  waste: "recycle",
   sign: "🪧",
   pos: "🖥️",
   cctv: "📹",
@@ -201,7 +201,7 @@ export default function BusinessDetailScreen() {
             },
           ]}
         >
-          <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>💬 문의하기</Text>
+          <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>message-circle 문의하기</Text>
         </Pressable>
       </View>
     </ScreenContainer>

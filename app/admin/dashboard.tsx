@@ -20,6 +20,7 @@ import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 
 type TabType = "overview" | "products" | "sellers" | "companies" | "reports" | "users" | "notices";
 
@@ -37,7 +38,9 @@ export default function AdminDashboard() {
     return (
       <ScreenContainer>
         <View style={styles.center}>
-          <Text style={{ fontSize: 48 }}>🔒</Text>
+          <View style={{ marginBottom: 16 }}>
+            <LucideIcon name="lock" size={48} color={colors.primary} />
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>접근 권한 없음</Text>
           <Text style={[styles.emptyDesc, { color: colors.muted }]}>관리자만 접근할 수 있습니다.</Text>
         </View>
@@ -67,14 +70,26 @@ export default function AdminDashboard() {
         contentContainerStyle={{ paddingHorizontal: 16 }}
       >
         {(["overview", "products", "sellers", "companies", "reports", "users", "notices"] as TabType[]).map((tab) => {
+          const getTabIcon = (tab: TabType) => {
+            const iconMap: Record<TabType, string> = {
+              overview: "bar-chart",
+              products: "package",
+              sellers: "briefcase",
+              companies: "building",
+              reports: "alert-triangle",
+              users: "users",
+              notices: "bell",
+            };
+            return iconMap[tab];
+          };
           const labels: Record<TabType, string> = {
-            overview: "📊 개요",
-            products: "📦 상품",
-            sellers: "🏪 판매자",
-            companies: "🏢 업체",
-            reports: "🚨 신고",
-            users: "👥 회원",
-            notices: "📢 공지",
+            overview: "개요",
+            products: "상품",
+            sellers: "판매자",
+            companies: "업체",
+            reports: "신고",
+            users: "회원",
+            notices: "공지",
           };
           const isActive = activeTab === tab;
           return (
@@ -90,9 +105,12 @@ export default function AdminDashboard() {
                 },
               ]}
             >
-              <Text style={[styles.tabLabel, { color: isActive ? colors.primary : colors.muted }]}>
-                {labels[tab]}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <LucideIcon name={getTabIcon(tab) as any} size={18} color={isActive ? colors.primary : colors.muted} />
+                <Text style={[styles.tabLabel, { color: isActive ? colors.primary : colors.muted }]}>
+                  {labels[tab]}
+                </Text>
+              </View>
             </Pressable>
           );
         })}
@@ -126,11 +144,11 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
   const { data: stats, isLoading, refetch } = trpc.admin.stats.useQuery();
 
   const statCards = [
-    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "👥", color: "#3B82F6" },
-    { label: "전체 상품", value: stats?.totalProducts ?? 0, icon: "📦", color: "#10B981" },
-    { label: "전체 신고", value: stats?.totalReports ?? 0, icon: "🚨", color: "#EF4444" },
-    { label: "미처리 신고", value: stats?.pendingReports ?? 0, icon: "⚠️", color: "#F59E0B" },
-    { label: "판매자 심사 대기", value: stats?.pendingSellers ?? 0, icon: "🏪", color: "#8B5CF6" },
+    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "users", color: "#3B82F6" },
+    { label: "전체 상품", value: stats?.totalProducts ?? 0, icon: "package", color: "#10B981" },
+    { label: "전체 신고", value: stats?.totalReports ?? 0, icon: "alert-triangle", color: "#EF4444" },
+    { label: "미처리 신고", value: stats?.pendingReports ?? 0, icon: "alert-circle", color: "#F59E0B" },
+    { label: "판매자 심사 대기", value: stats?.pendingSellers ?? 0, icon: "briefcase", color: "#8B5CF6" },
   ];
 
   return (
@@ -139,7 +157,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
     >
       {/* 플랫폼 현황 */}
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>📊 플랫폼 현황</Text>
+      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>bar-chart 플랫폼 현황</Text>
 
       <View style={styles.statsGrid}>
         {statCards.map((card) => (
@@ -147,7 +165,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
             key={card.label}
             style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
-            <Text style={{ fontSize: 28 }}>{card.icon}</Text>
+            <LucideIcon name={card.icon as any} size={28} color={card.color} />
             <Text style={[styles.statValue, { color: card.color }]}>{card.value.toLocaleString()}</Text>
             <Text style={[styles.statLabel, { color: colors.muted }]}>{card.label}</Text>
           </View>
@@ -155,12 +173,12 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
       </View>
 
       {/* 빠른 메뉴 */}
-      <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}>⚡ 빠른 메뉴</Text>
+      <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}> 빠른 메뉴</Text>
       <View style={styles.quickMenu}>
         {[
-          { label: "판매자 신청 관리", icon: "🏪", path: "/admin/seller-applications" },
-          { label: "신고 처리", icon: "🚨", action: "reports" },
-          { label: "공지사항 작성", icon: "📢", action: "notices" },
+          { label: "판매자 신청 관리", icon: "briefcase", path: "/admin/seller-applications" },
+          { label: "신고 처리", icon: "alert-triangle", action: "reports" },
+          { label: "공지사항 작성", icon: "bell", action: "notices" },
         ].map((item) => (
           <Pressable
             key={item.label}
@@ -172,7 +190,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
               if (item.path) router.push(item.path as any);
             }}
           >
-            <Text style={{ fontSize: 24 }}>{item.icon}</Text>
+            <LucideIcon name={item.icon as any} size={24} color={colors.primary} />
             <Text style={[styles.quickLabel, { color: colors.foreground }]}>{item.label}</Text>
             <IconSymbol name="chevron.right" size={18} color={colors.muted} />
           </Pressable>
@@ -229,7 +247,7 @@ function ProductsTab({ colors }: { colors: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       ListEmptyComponent={
         <View style={styles.center}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>📦</Text>
+          <LucideIcon name="package" size={40} color={colors.primary} />
           <Text style={[styles.emptyTitle, { color: colors.muted }]}>등록된 상품이 없습니다.</Text>
         </View>
       }
@@ -316,7 +334,7 @@ function ReportsTab({ colors }: { colors: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       ListEmptyComponent={
         <View style={styles.center}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>🚨</Text>
+          <LucideIcon name="alert-triangle" size={40} color={colors.primary} />
           <Text style={[styles.emptyTitle, { color: colors.muted }]}>신고 내역이 없습니다.</Text>
         </View>
       }
@@ -391,7 +409,7 @@ function UsersTab({ colors }: { colors: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       ListEmptyComponent={
         <View style={styles.center}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>👥</Text>
+          <LucideIcon name="users" size={40} color={colors.primary} />
           <Text style={[styles.emptyTitle, { color: colors.muted }]}>회원이 없습니다.</Text>
         </View>
       }
@@ -490,7 +508,7 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       ListEmptyComponent={
         <View style={styles.center}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>🏪</Text>
+          <LucideIcon name="briefcase" size={40} color={colors.primary} />
           <Text style={[styles.emptyTitle, { color: colors.muted }]}>판매자 신청이 없습니다.</Text>
         </View>
       }
@@ -609,7 +627,7 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       ListEmptyComponent={
         <View style={styles.center}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>🏢</Text>
+          <LucideIcon name="building" size={40} color={colors.primary} />
           <Text style={[styles.emptyTitle, { color: colors.muted }]}>업체 등록 신청이 없습니다.</Text>
         </View>
       }
@@ -722,7 +740,7 @@ function NoticesTab({
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       {/* 작성 폼 */}
       <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>📢 공지사항 작성</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>bell 공지사항 작성</Text>
         <TextInput
           style={[
             styles.input,

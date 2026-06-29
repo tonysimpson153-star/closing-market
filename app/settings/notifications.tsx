@@ -64,7 +64,7 @@ export default function NotificationSettingsScreen() {
       key: "chatNotification" as const,
       label: "채팅 알림",
       desc: "새 채팅 메시지가 도착하면 알림을 받습니다.",
-      emoji: "💬",
+      emoji: "message-circle",
     },
     {
       key: "priceDropNotification" as const,
