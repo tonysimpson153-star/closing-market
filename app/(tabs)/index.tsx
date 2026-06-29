@@ -65,21 +65,23 @@ export default function HomeScreen() {
   const { data: businesses, isLoading: bizLoading } = trpc.businesses.list.useQuery({});
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="bg-background">
       {/* Header */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.foreground }}>
-          클로징마켓
+        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.primary, letterSpacing: 1 }}>
+          CLOSING
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
           <Pressable
             style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
             onPress={() => router.push("/search" as any)}
@@ -90,58 +92,66 @@ export default function HomeScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
             onPress={() => router.push("/notifications" as any)}
           >
-            <View>
-              <IconSymbol name="bell.fill" size={24} color={colors.foreground} />
-            </View>
+            <IconSymbol name="bell.fill" size={24} color={colors.foreground} />
           </Pressable>
         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 카테고리 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 12 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat.id}
-              style={({ pressed }) => [
-                {
-                  alignItems: "center",
-                  opacity: pressed ? 0.7 : 1,
-                  width: 64,
-                },
-              ]}
-            >
-              <View
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 16,
-                  backgroundColor: colors.surface,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginBottom: 6,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
+        {/* 카테고리 섹션 */}
+        <View style={{ paddingHorizontal: 20, paddingVertical: 24 }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 16, letterSpacing: 0.5 }}>
+            카테고리
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            {CATEGORIES.map((cat) => (
+              <Pressable
+                key={cat.id}
+                style={({ pressed }) => [
+                  {
+                    alignItems: "center",
+                    opacity: pressed ? 0.7 : 1,
+                    width: 72,
+                  },
+                ]}
               >
-                <Text style={{ fontSize: 28 }}>{cat.emoji}</Text>
-              </View>
-              <Text style={{ fontSize: 11, color: colors.foreground, fontWeight: "500", textAlign: "center" }}>
-                {cat.name}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+                <View
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 14,
+                    backgroundColor: colors.surface,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 8,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text style={{ fontSize: 32 }}>{cat.emoji}</Text>
+                </View>
+                <Text style={{ fontSize: 12, color: colors.foreground, fontWeight: "600", textAlign: "center" }}>
+                  {cat.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* 추천 사업정리 물품 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
-            추천 사업정리 물품
-          </Text>
+        <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, letterSpacing: 0.5 }}>
+              추천 물품
+            </Text>
+            <Pressable onPress={() => router.push("/search" as any)}>
+              <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "600" }}>더보기 →</Text>
+            </Pressable>
+          </View>
           {productsLoading ? (
             <View style={{ padding: 32, alignItems: "center" }}>
               <ActivityIndicator color={colors.primary} />
@@ -150,18 +160,18 @@ export default function HomeScreen() {
             <View
               style={{
                 backgroundColor: colors.surface,
-                borderRadius: 16,
-                padding: 36,
+                borderRadius: 14,
+                padding: 40,
                 alignItems: "center",
                 borderWidth: 1,
                 borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 44, marginBottom: 12 }}>📦</Text>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
-                아직 등록된 매물이 없습니다.
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>📦</Text>
+              <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
+                아직 등록된 물품이 없습니다
               </Text>
-              <Text style={{ fontSize: 13, color: colors.muted }}>첫 번째 판매자가 되어보세요.</Text>
+              <Text style={{ fontSize: 13, color: colors.muted }}>첫 번째 판매자가 되어보세요</Text>
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ gap: 12 }}>
@@ -172,10 +182,10 @@ export default function HomeScreen() {
                     {
                       width: 160,
                       backgroundColor: colors.surface,
-                      borderRadius: 12,
-                      marginRight: 12,
+                      borderRadius: 14,
+                      marginRight: 0,
                       overflow: "hidden",
-                      opacity: pressed ? 0.8 : 1,
+                      opacity: pressed ? 0.85 : 1,
                       borderWidth: 1,
                       borderColor: colors.border,
                     },
@@ -190,22 +200,22 @@ export default function HomeScreen() {
                       alignItems: "center",
                     }}
                   >
-                    <Text style={{ fontSize: 32 }}>
+                    <Text style={{ fontSize: 36 }}>
                       {CATEGORIES.find((c) => c.id === product.category)?.emoji ?? "📦"}
                     </Text>
                   </View>
-                  <View style={{ padding: 10 }}>
+                  <View style={{ padding: 12 }}>
                     <Text
-                      style={{ fontSize: 13, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}
+                      style={{ fontSize: 13, fontWeight: "600", color: colors.foreground, marginBottom: 6 }}
                       numberOfLines={2}
                     >
                       {product.title}
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: colors.primary, marginBottom: 6 }}>
                       {formatPrice(product.price)}
                     </Text>
                     {product.location ? (
-                      <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>
+                      <Text style={{ fontSize: 11, color: colors.muted }}>
                         📍 {product.location}
                       </Text>
                     ) : null}
@@ -217,10 +227,15 @@ export default function HomeScreen() {
         </View>
 
         {/* 추천 업체 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
-            추천 업체
-          </Text>
+        <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, letterSpacing: 0.5 }}>
+              추천 업체
+            </Text>
+            <Pressable onPress={() => router.push("/search" as any)}>
+              <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "600" }}>더보기 →</Text>
+            </Pressable>
+          </View>
           {bizLoading ? (
             <View style={{ padding: 32, alignItems: "center" }}>
               <ActivityIndicator color={colors.primary} />
@@ -229,17 +244,17 @@ export default function HomeScreen() {
             <View
               style={{
                 backgroundColor: colors.surface,
-                borderRadius: 16,
+                borderRadius: 14,
                 padding: 24,
                 alignItems: "center",
                 borderWidth: 1,
                 borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 13, color: colors.muted }}>등록된 업체가 없습니다.</Text>
+              <Text style={{ fontSize: 13, color: colors.muted }}>등록된 업체가 없습니다</Text>
             </View>
           ) : (
-            businesses.map((biz) => (
+            businesses.slice(0, 3).map((biz) => (
               <Pressable
                 key={biz.id}
                 style={({ pressed }) => [
@@ -248,9 +263,9 @@ export default function HomeScreen() {
                     alignItems: "center",
                     backgroundColor: colors.surface,
                     borderRadius: 14,
-                    padding: 14,
-                    marginBottom: 10,
-                    opacity: pressed ? 0.8 : 1,
+                    padding: 16,
+                    marginBottom: 12,
+                    opacity: pressed ? 0.85 : 1,
                     borderWidth: 1,
                     borderColor: colors.border,
                   },
@@ -259,25 +274,25 @@ export default function HomeScreen() {
               >
                 <View
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 12,
                     backgroundColor: colors.background,
                     justifyContent: "center",
                     alignItems: "center",
-                    marginRight: 12,
+                    marginRight: 14,
                     borderWidth: 1,
                     borderColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 22 }}>{BUSINESS_TYPE_ICONS[biz.type] ?? "🏢"}</Text>
+                  <Text style={{ fontSize: 24 }}>{BUSINESS_TYPE_ICONS[biz.type] ?? "🏢"}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground }}>
                     {biz.name}
                   </Text>
                   {biz.description ? (
-                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }} numberOfLines={1}>
+                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3 }} numberOfLines={1}>
                       {biz.description}
                     </Text>
                   ) : null}
@@ -285,12 +300,12 @@ export default function HomeScreen() {
                 <View
                   style={{
                     backgroundColor: colors.primary,
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 10,
                   }}
                 >
-                  <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>문의</Text>
+                  <Text style={{ color: "#000000", fontWeight: "700", fontSize: 12 }}>문의</Text>
                 </View>
               </Pressable>
             ))
@@ -298,9 +313,9 @@ export default function HomeScreen() {
         </View>
 
         {/* 최신 등록 물품 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 28, marginBottom: 32 }}>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
-            최신 등록 물품
+        <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 16, letterSpacing: 0.5 }}>
+            최신 물품
           </Text>
           {productsLoading ? (
             <View style={{ padding: 32, alignItems: "center" }}>
@@ -310,16 +325,16 @@ export default function HomeScreen() {
             <View
               style={{
                 backgroundColor: colors.surface,
-                borderRadius: 16,
-                padding: 36,
+                borderRadius: 14,
+                padding: 40,
                 alignItems: "center",
                 borderWidth: 1,
                 borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 44, marginBottom: 12 }}>📋</Text>
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>📋</Text>
               <Text style={{ fontSize: 15, fontWeight: "500", color: colors.foreground }}>
-                등록된 물품이 없습니다.
+                등록된 물품이 없습니다
               </Text>
             </View>
           ) : (
@@ -331,9 +346,9 @@ export default function HomeScreen() {
                     flexDirection: "row",
                     backgroundColor: colors.surface,
                     borderRadius: 14,
-                    marginBottom: 10,
+                    marginBottom: 12,
                     overflow: "hidden",
-                    opacity: pressed ? 0.8 : 1,
+                    opacity: pressed ? 0.85 : 1,
                     borderWidth: 1,
                     borderColor: colors.border,
                   },
@@ -342,28 +357,28 @@ export default function HomeScreen() {
               >
                 <View
                   style={{
-                    width: 90,
-                    height: 90,
+                    width: 100,
+                    height: 100,
                     backgroundColor: colors.border,
                     justifyContent: "center",
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ fontSize: 32 }}>
+                  <Text style={{ fontSize: 36 }}>
                     {CATEGORIES.find((c) => c.id === product.category)?.emoji ?? "📦"}
                   </Text>
                 </View>
-                <View style={{ flex: 1, padding: 12 }}>
+                <View style={{ flex: 1, padding: 14 }}>
                   <Text
-                    style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}
+                    style={{ fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 6 }}
                     numberOfLines={2}
                   >
                     {product.title}
                   </Text>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: colors.primary, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: "800", color: colors.primary, marginBottom: 6 }}>
                     {formatPrice(product.price)}
                   </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     {product.location ? (
                       <Text style={{ fontSize: 11, color: colors.muted }}>📍 {product.location}</Text>
                     ) : null}

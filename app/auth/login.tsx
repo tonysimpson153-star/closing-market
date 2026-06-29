@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -12,14 +12,18 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const colors = useColors();
   const { setAuth } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
@@ -40,72 +44,134 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        {/* 로고 */}
+    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
+      <ScrollView
+        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 헤더 - 뒤로가기 버튼 */}
+        <Pressable
+          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.6 : 1 }]}
+          onPress={() => router.back()}
+        >
+          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
+        </Pressable>
+
+        {/* 로고 및 타이틀 영역 */}
         <View style={styles.logoArea}>
-          <Image
-            source={require("@/assets/images/icon.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.appName}>클로징마켓</Text>
-          <Text style={styles.tagline}>사업의 끝, 가치의 시작</Text>
+          <View style={[styles.logoBg, { backgroundColor: colors.primary + "15" }]}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={[styles.appName, { color: colors.foreground }]}>클로징마켓</Text>
+          <Text style={[styles.tagline, { color: colors.muted }]}>사업의 끝, 가치의 시작</Text>
         </View>
 
         {/* 입력 폼 */}
         <View style={styles.form}>
-          <Text style={styles.label}>이메일</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="이메일을 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            returnKeyType="next"
-          />
+          {/* 이메일 입력 */}
+          <View>
+            <Text style={[styles.label, { color: colors.foreground }]}>이메일</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <IconSymbol name="envelope" size={18} color={colors.muted} />
+              <TextInput
+                style={[styles.input, { color: colors.foreground }]}
+                placeholder="이메일을 입력하세요"
+                placeholderTextColor={colors.muted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                returnKeyType="next"
+              />
+            </View>
+          </View>
 
-          <Text style={styles.label}>비밀번호</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="비밀번호를 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            returnKeyType="done"
-            onSubmitEditing={handleLogin}
-          />
+          {/* 비밀번호 입력 */}
+          <View style={{ marginTop: 16 }}>
+            <Text style={[styles.label, { color: colors.foreground }]}>비밀번호</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <IconSymbol name="lock" size={18} color={colors.muted} />
+              <TextInput
+                style={[styles.input, { color: colors.foreground }]}
+                placeholder="비밀번호를 입력하세요"
+                placeholderTextColor={colors.muted}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+              <Pressable
+                onPress={() => setShowPassword(!showPassword)}
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+              >
+                <IconSymbol
+                  name={showPassword ? "eye" : "eye.slash"}
+                  size={18}
+                  color={colors.muted}
+                />
+              </Pressable>
+            </View>
+          </View>
 
-          <TouchableOpacity
-            style={[styles.loginBtn, loginMutation.isPending && styles.loginBtnDisabled]}
+          {/* 로그인 버튼 */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.loginBtn,
+              {
+                backgroundColor: colors.primary,
+                opacity: pressed || loginMutation.isPending ? 0.85 : 1,
+              },
+            ]}
             onPress={handleLogin}
             disabled={loginMutation.isPending}
           >
             {loginMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#000000" size="small" />
             ) : (
               <Text style={styles.loginBtnText}>로그인</Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
+
+          {/* 구분선 */}
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.muted }]}>또는</Text>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          </View>
 
           {/* 카카오 로그인 */}
-          <TouchableOpacity
-            style={styles.kakaoBtn}
+          <Pressable
+            style={({ pressed }) => [
+              styles.kakaoBtn,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
             onPress={() => router.push("/auth/kakao" as any)}
           >
+            <Text style={styles.kakaoBtnIcon}>☀️</Text>
             <Text style={styles.kakaoBtnText}>카카오로 로그인</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* 회원가입 링크 */}
           <View style={styles.registerRow}>
-            <Text style={styles.registerText}>아직 계정이 없으신가요?</Text>
-            <TouchableOpacity onPress={() => router.push("/auth/register" as any)}>
-              <Text style={styles.registerLink}> 회원가입</Text>
-            </TouchableOpacity>
+            <Text style={[styles.registerText, { color: colors.muted }]}>아직 계정이 없으신가요?</Text>
+            <Pressable onPress={() => router.push("/auth/register" as any)}>
+              <Text style={[styles.registerLink, { color: colors.primary }]}> 회원가입</Text>
+            </Pressable>
           </View>
+        </View>
+
+        {/* 하단 안내 */}
+        <View style={styles.infoBox}>
+          <Text style={[styles.infoText, { color: colors.muted }]}>
+            🔒 안전한 로그인{"\n"}
+            당신의 정보는 암호화되어 안전하게 보호됩니다.
+          </Text>
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -115,90 +181,137 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 40,
-    backgroundColor: "#fff",
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
   },
   logoArea: {
     alignItems: "center",
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 32,
   },
-  logo: {
+  logoBg: {
     width: 80,
     height: 80,
-    marginBottom: 12,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  logo: {
+    width: 50,
+    height: 50,
   },
   appName: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#111827",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   tagline: {
     fontSize: 14,
-    color: "#6B7280",
-    marginTop: 4,
+    marginTop: 6,
+    fontWeight: "500",
   },
   form: {
-    gap: 4,
+    gap: 0,
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 6,
-    marginTop: 12,
+    fontWeight: "700",
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    gap: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    flex: 1,
     fontSize: 15,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    fontWeight: "500",
   },
   loginBtn: {
-    backgroundColor: "#3B82F6",
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: "center",
     marginTop: 24,
   },
-  loginBtnDisabled: {
-    opacity: 0.6,
-  },
   loginBtnText: {
-    color: "#fff",
+    color: "#000000",
     fontSize: 16,
     fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+    gap: 12,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   kakaoBtn: {
     backgroundColor: "#FEE500",
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: "center",
-    marginTop: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  kakaoBtnIcon: {
+    fontSize: 18,
   },
   kakaoBtnText: {
     color: "#191919",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
+    letterSpacing: 0.2,
   },
   registerRow: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
+    gap: 2,
   },
   registerText: {
     fontSize: 14,
-    color: "#6B7280",
+    fontWeight: "500",
   },
   registerLink: {
     fontSize: 14,
-    color: "#3B82F6",
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+  infoBox: {
+    marginTop: 32,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(212, 175, 55, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.1)",
+  },
+  infoText: {
+    fontSize: 12,
+    fontWeight: "500",
+    lineHeight: 18,
+    textAlign: "center",
   },
 });

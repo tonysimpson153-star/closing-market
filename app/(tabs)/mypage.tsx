@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -7,12 +7,12 @@ import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 const MENU_ITEMS = [
-  { id: "products", label: "내 상품", icon: "tag.fill" as const, badge: null },
-  { id: "purchases", label: "내 구매내역", icon: "list.bullet" as const, badge: null },
-  { id: "favorites", label: "찜 목록", icon: "heart.fill" as const, badge: null },
-  { id: "chatlist", label: "채팅 목록", icon: "bubble.left.fill" as const, badge: null },
-  { id: "recent", label: "최근 본 상품", icon: "clock.fill" as const, badge: null },
-  { id: "reviews", label: "거래 후기", icon: "star.fill" as const, badge: null },
+  { id: "products", label: "내 상품", icon: "tag.fill" as const },
+  { id: "purchases", label: "내 구매내역", icon: "list.bullet" as const },
+  { id: "favorites", label: "찜 목록", icon: "heart.fill" as const },
+  { id: "chatlist", label: "채팅 목록", icon: "bubble.left.fill" as const },
+  { id: "recent", label: "최근 본 상품", icon: "clock.fill" as const },
+  { id: "reviews", label: "거래 후기", icon: "star.fill" as const },
 ];
 
 const SETTINGS_ITEMS = [
@@ -26,7 +26,6 @@ export default function MyPageScreen() {
   const { user, token, clearAuth } = useAuthStore();
   const isAuthenticated = !!token && !!user;
 
-  // 판매자 프로필 조회
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -53,92 +52,90 @@ export default function MyPageScreen() {
     router.push("/auth/login" as any);
   };
 
+  // 회원 유형 배지 렌더링
+  const renderRoleBadge = () => {
+    if (user?.role === "admin") {
+      return (
+        <View style={[styles.badge, { backgroundColor: colors.primary + "20", borderColor: colors.primary, borderWidth: 1 }]}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>🔐 관리자</Text>
+        </View>
+      );
+    }
+    if (user?.role === "seller" && isVerifiedSeller) {
+      return (
+        <View style={[styles.badge, { backgroundColor: "#22C55E20", borderColor: "#22C55E", borderWidth: 1 }]}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>✅ 인증 판매회원</Text>
+        </View>
+      );
+    }
+    if (user?.role === "seller" && isPendingSeller) {
+      return (
+        <View style={[styles.badge, { backgroundColor: "#F59E0B20", borderColor: "#F59E0B", borderWidth: 1 }]}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B" }}>⏳ 판매회원 심사중</Text>
+        </View>
+      );
+    }
+    if (user?.role === "seller" && isRejectedSeller) {
+      return (
+        <View style={[styles.badge, { backgroundColor: "#EF444420", borderColor: "#EF4444", borderWidth: 1 }]}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#EF4444" }}>❌ 판매회원 반려</Text>
+        </View>
+      );
+    }
+    if (user?.role === "company") {
+      return (
+        <View style={[styles.badge, { backgroundColor: "#8B5CF620", borderColor: "#8B5CF6", borderWidth: 1 }]}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#8B5CF6" }}>🏢 업체회원</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.badge, { backgroundColor: colors.border, borderColor: colors.border, borderWidth: 1 }]}>
+        <Text style={{ fontSize: 11, fontWeight: "700", color: colors.muted }}>👤 일반회원</Text>
+      </View>
+    );
+  };
+
   return (
-    <ScreenContainer>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.foreground }}>마이페이지</Text>
+    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
+      {/* 헤더 */}
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>마이페이지</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* 프로필 영역 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: 16,
-              padding: 20,
-              flexDirection: "row",
-              alignItems: "center",
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                backgroundColor: isAuthenticated ? colors.primary + "20" : colors.border,
-                justifyContent: "center",
-                alignItems: "center",
-                marginRight: 16,
-              }}
-            >
-              <IconSymbol name="person.fill" size={32} color={isAuthenticated ? colors.primary : colors.muted} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* 프로필 카드 - 고급스러운 디자인 */}
+        <View style={styles.profileCardContainer}>
+          <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {/* 프로필 이미지 */}
+            <View style={[styles.profileImageBg, { backgroundColor: isAuthenticated ? colors.primary + "15" : colors.border }]}>
+              <IconSymbol
+                name="person.fill"
+                size={32}
+                color={isAuthenticated ? colors.primary : colors.muted}
+              />
             </View>
-            <View style={{ flex: 1 }}>
+
+            {/* 프로필 정보 */}
+            <View style={styles.profileInfo}>
               {isAuthenticated && user ? (
                 <>
-                  <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground }}>
+                  <Text style={[styles.profileName, { color: colors.foreground }]}>
                     {user.name ?? "사용자"}
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
+                  <Text style={[styles.profileEmail, { color: colors.muted }]}>
                     {user.email ?? ""}
                   </Text>
-                  {/* 회원 유형 배지 */}
-                  {user.role === "admin" && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#3B82F620", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>🔐</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#3B82F6" }}>관리자</Text>
-                    </View>
-                  )}
-                  {user.role === "seller" && isVerifiedSeller && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#22C55E20", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>✅</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>인증 판매회원</Text>
-                    </View>
-                  )}
-                  {user.role === "seller" && !isVerifiedSeller && isPendingSeller && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F59E0B20", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>⏳</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B" }}>판매회원 심사중</Text>
-                    </View>
-                  )}
-                  {user.role === "seller" && !isVerifiedSeller && isRejectedSeller && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#EF444420", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>❌</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#EF4444" }}>판매회원 반려</Text>
-                    </View>
-                  )}
-                  {user.role === "company" && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#8B5CF620", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>🏢</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: "#8B5CF6" }}>업체회원</Text>
-                    </View>
-                  )}
-                  {user.role === "user" && (
-                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: colors.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start", gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>👤</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: colors.muted }}>일반회원</Text>
-                    </View>
-                  )}
+                  <View style={styles.badgeContainer}>
+                    {renderRoleBadge()}
+                  </View>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>
+                  <Text style={[styles.profileName, { color: colors.foreground }]}>
                     로그인이 필요합니다
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
+                  <Text style={[styles.profileEmail, { color: colors.muted }]}>
                     로그인하고 클로징마켓을 이용하세요
                   </Text>
                 </>
@@ -147,113 +144,110 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 판매/업체 회원 신청 버튼 (일반회원만 표시) */}
+        {/* 판매/업체 회원 신청 버튼 */}
         {isAuthenticated && user?.role === "user" && (
-          <View style={{ paddingHorizontal: 16, marginTop: 12, gap: 8 }}>
+          <View style={styles.actionButtonsContainer}>
             {!isPendingSeller && (
               <Pressable
-                style={({ pressed }) => [{ backgroundColor: "#F59E0B", borderRadius: 12, padding: 14, alignItems: "center", opacity: pressed ? 0.9 : 1, flexDirection: "row", justifyContent: "center", gap: 8 }]}
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                ]}
                 onPress={() => router.push("/seller/apply" as any)}
               >
-                <Text style={{ fontSize: 15 }}>🏪</Text>
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{isRejectedSeller ? "판매회원 재신청" : "판매회원 신청"}</Text>
+                <Text style={styles.actionButtonIcon}>🏪</Text>
+                <Text style={[styles.actionButtonText, { color: "#000000" }]}>
+                  {isRejectedSeller ? "판매회원 재신청" : "판매회원 신청"}
+                </Text>
               </Pressable>
             )}
             <Pressable
-              style={({ pressed }) => [{ backgroundColor: "#8B5CF6", borderRadius: 12, padding: 14, alignItems: "center", opacity: pressed ? 0.9 : 1, flexDirection: "row", justifyContent: "center", gap: 8 }]}
+              style={({ pressed }) => [
+                styles.actionButton,
+                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+              ]}
               onPress={() => router.push("/company/apply" as any)}
             >
-              <Text style={{ fontSize: 15 }}>🏢</Text>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>업체회원 신청</Text>
+              <Text style={styles.actionButtonIcon}>🏢</Text>
+              <Text style={[styles.actionButtonText, { color: "#000000" }]}>업체회원 신청</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* 관리자 대시보드 버튼 */}
+        {isAuthenticated && user?.role === "admin" && (
+          <View style={styles.adminButtonContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.adminButton,
+                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+              ]}
+              onPress={() => router.push("/admin/dashboard" as any)}
+            >
+              <IconSymbol name="gear" size={18} color="#000000" />
+              <Text style={[styles.adminButtonText, { color: "#000000" }]}>관리자 대시보드</Text>
             </Pressable>
           </View>
         )}
 
         {/* 로그인/로그아웃 버튼 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+        <View style={styles.authButtonsContainer}>
           {isAuthenticated ? (
             <Pressable
               style={({ pressed }) => [
-                {
-                  backgroundColor: colors.surface,
-                  borderRadius: 12,
-                  padding: 14,
-                  alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.8 : 1,
-                },
+                styles.logoutButton,
+                { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
               ]}
               onPress={handleLogout}
             >
-              <Text style={{ fontSize: 15, fontWeight: "600", color: colors.muted }}>로그아웃</Text>
+              <Text style={[styles.logoutButtonText, { color: colors.muted }]}>로그아웃</Text>
             </Pressable>
           ) : (
-            <View style={{ gap: 10 }}>
+            <View style={styles.loginButtonsGroup}>
               <Pressable
                 style={({ pressed }) => [
-                  {
-                    backgroundColor: colors.primary,
-                    borderRadius: 12,
-                    padding: 14,
-                    alignItems: "center",
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  },
+                  styles.loginButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
                 ]}
                 onPress={handleLogin}
               >
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>이메일로 로그인</Text>
+                <Text style={styles.loginButtonText}>이메일로 로그인</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
-                  {
-                    backgroundColor: "#FEE500",
-                    borderRadius: 12,
-                    padding: 14,
-                    alignItems: "center",
-                    opacity: pressed ? 0.9 : 1,
-                  },
+                  styles.kakaoButton,
+                  { opacity: pressed ? 0.85 : 1 },
                 ]}
                 onPress={() => router.push("/auth/kakao" as any)}
               >
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#191919" }}>카카오로 로그인</Text>
+                <Text style={styles.kakaoButtonText}>카카오로 로그인</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
-                  {
-                    backgroundColor: colors.surface,
-                    borderRadius: 12,
-                    padding: 14,
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.9 : 1,
-                  },
+                  styles.registerButton,
+                  { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
                 ]}
                 onPress={() => router.push("/auth/register" as any)}
               >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>회원가입</Text>
+                <Text style={[styles.registerButtonText, { color: colors.foreground }]}>회원가입</Text>
               </Pressable>
             </View>
           )}
         </View>
 
         {/* 나의 활동 메뉴 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>나의 활동</Text>
-          <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+        <View style={styles.menuSection}>
+          <Text style={[styles.sectionTitle, { color: colors.muted }]}>나의 활동</Text>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {MENU_ITEMS.map((item, index) => (
               <Pressable
                 key={item.id}
                 style={({ pressed }) => [
+                  styles.menuItem,
                   {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    borderBottomWidth: index < MENU_ITEMS.length - 1 ? 0.5 : 0,
                     borderBottomColor: colors.border,
-                    opacity: pressed ? 0.7 : 1,
+                    borderBottomWidth: index < MENU_ITEMS.length - 1 ? 1 : 0,
+                    opacity: pressed ? 0.6 : 1,
                   },
                 ]}
                 onPress={() => {
@@ -272,41 +266,29 @@ export default function MyPageScreen() {
                   }
                 }}
               >
-                <View
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    backgroundColor: colors.primary + "15",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginRight: 12,
-                  }}
-                >
+                <View style={[styles.menuIconBg, { backgroundColor: colors.primary + "10" }]}>
                   <IconSymbol name={item.icon} size={18} color={colors.primary} />
                 </View>
-                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>{item.label}</Text>
+                <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
                 <IconSymbol name="chevron.right" size={16} color={colors.muted} />
               </Pressable>
             ))}
           </View>
         </View>
 
-        {/* 설정 */}
-        <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>설정</Text>
-          <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+        {/* 설정 메뉴 */}
+        <View style={styles.menuSection}>
+          <Text style={[styles.sectionTitle, { color: colors.muted }]}>설정</Text>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {SETTINGS_ITEMS.map((item, index) => (
               <Pressable
                 key={item.id}
                 style={({ pressed }) => [
+                  styles.menuItem,
                   {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    borderBottomWidth: index < SETTINGS_ITEMS.length - 1 ? 0.5 : 0,
                     borderBottomColor: colors.border,
-                    opacity: pressed ? 0.7 : 1,
+                    borderBottomWidth: index < SETTINGS_ITEMS.length - 1 ? 1 : 0,
+                    opacity: pressed ? 0.6 : 1,
                   },
                 ]}
                 onPress={() => {
@@ -321,66 +303,212 @@ export default function MyPageScreen() {
                   if (item.id === "account") router.push("/settings/account" as any);
                 }}
               >
-                <View
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    backgroundColor: colors.surface,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginRight: 12,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                  }}
-                >
-                  <IconSymbol name={item.icon} size={18} color={colors.muted} />
+                <View style={[styles.menuIconBg, { backgroundColor: colors.primary + "10" }]}>
+                  <IconSymbol name={item.icon} size={18} color={colors.primary} />
                 </View>
-                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>{item.label}</Text>
+                <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
                 <IconSymbol name="chevron.right" size={16} color={colors.muted} />
               </Pressable>
             ))}
           </View>
         </View>
 
-        {/* 관리자 메뉴 */}
-        {isAuthenticated && user?.role === "admin" && (
-          <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 10 }}>관리</Text>
-            <View style={{ backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
-              <Pressable
-                style={({ pressed }) => [
-                  {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: colors.border,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-                onPress={() => router.push("/admin/dashboard" as any)}
-              >
-                <View
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    backgroundColor: colors.primary + "15",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginRight: 12,
-                  }}
-                >
-                  <IconSymbol name="gear" size={18} color={colors.primary} />
-                </View>
-                <Text style={{ fontSize: 15, color: colors.foreground, flex: 1 }}>관리자 대시보드</Text>
-                <IconSymbol name="chevron.right" size={16} color={colors.muted} />
-              </Pressable>
-            </View>
-          </View>
-        )}
+        {/* 앱 정보 */}
+        <View style={styles.infoSection}>
+          <Text style={[styles.infoText, { color: colors.muted }]}>클로징마켓 v1.0.0</Text>
+          <Text style={[styles.infoText, { color: colors.muted }]}>© 2024 Closing Market. All rights reserved.</Text>
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  profileCardContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  profileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+  },
+  profileImageBg: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  profileEmail: {
+    fontSize: 13,
+    marginTop: 4,
+    fontWeight: "500",
+  },
+  badgeContainer: {
+    marginTop: 10,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+  },
+  actionButtonsContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    gap: 10,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  actionButtonIcon: {
+    fontSize: 18,
+  },
+  actionButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  adminButtonContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  adminButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  adminButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  authButtonsContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  logoutButton: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  logoutButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  loginButtonsGroup: {
+    gap: 10,
+  },
+  loginButton: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  loginButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#000000",
+    letterSpacing: 0.3,
+  },
+  kakaoButton: {
+    backgroundColor: "#FEE500",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  kakaoButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#191919",
+    letterSpacing: 0.3,
+  },
+  registerButton: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  registerButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  menuSection: {
+    paddingHorizontal: 16,
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  menuContainer: {
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  menuIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+  menuLabel: {
+    fontSize: 15,
+    flex: 1,
+    fontWeight: "500",
+  },
+  infoSection: {
+    paddingHorizontal: 16,
+    marginTop: 24,
+    alignItems: "center",
+    gap: 4,
+  },
+  infoText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+});

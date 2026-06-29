@@ -188,9 +188,9 @@ export default function ChatRoomScreen() {
   const myId = (user as any)?.id;
 
   return (
-    <ScreenContainer edges={["top", "left", "right"]}>
-      {/* 헤더 */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
+      {/* 헤더 - 고급스러운 디자인 */}
+      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
         <Pressable
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.6 : 1 }]}
           onPress={() => router.back()}
@@ -198,15 +198,15 @@ export default function ChatRoomScreen() {
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
 
-        <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground }} numberOfLines={1}>
+        <View style={{ flex: 1, marginHorizontal: 14 }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, letterSpacing: 0.5 }} numberOfLines={1}>
             {room?.otherUser?.name ?? "채팅"}
             {room?.otherUser?.isVerified && (
-              <Text style={{ fontSize: 12, color: "#22C55E" }}> ✓</Text>
+              <Text style={{ fontSize: 12, color: colors.primary }}> ✓</Text>
             )}
           </Text>
           {room?.product && (
-            <Text style={{ fontSize: 11, color: colors.primary }} numberOfLines={1}>
+            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }} numberOfLines={1}>
               📦 {room.product.title}
             </Text>
           )}
@@ -215,22 +215,22 @@ export default function ChatRoomScreen() {
         {/* 거래 관리 버튼 */}
         {room?.status === "active" && (
           <Pressable
-            style={({ pressed }) => [styles.tradeBtn, { backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.tradeBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 }]}
             onPress={handleTradeAction}
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground }}>거래관리</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>거래관리</Text>
           </Pressable>
         )}
 
         {room?.status === "completed" && (
-          <View style={[styles.tradeBtn, { backgroundColor: "#22C55E20" }]}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#22C55E" }}>거래완료</Text>
+          <View style={[styles.tradeBtn, { backgroundColor: colors.primary + "20", borderWidth: 1, borderColor: colors.primary }]}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primary }}>✓ 거래완료</Text>
           </View>
         )}
         {/* 구매자 후기 작성 버튼 */}
         {room?.status === "completed" && room?.myRole === "buyer" && (
           <Pressable
-            style={({ pressed }) => [styles.tradeBtn, { backgroundColor: "#F59E0B20", opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.tradeBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 }]}
             onPress={() =>
               router.push({
                 pathname: "/review/write" as any,
@@ -243,38 +243,40 @@ export default function ChatRoomScreen() {
               })
             }
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#F59E0B" }}>⭐ 후기작성</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>⭐ 후기작성</Text>
           </Pressable>
         )}
         {room?.status === "cancelled" && (
-          <View style={[styles.tradeBtn, { backgroundColor: "#EF444420" }]}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#EF4444" }}>거래취소</Text>
+          <View style={[styles.tradeBtn, { backgroundColor: colors.muted + "20", borderWidth: 1, borderColor: colors.muted }]}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.muted }}>거래취소</Text>
           </View>
         )}
       </View>
 
-      {/* 연결 상품 카드 */}
+      {/* 연결 상품 카드 - 고급스럽게 개편 */}
       {room?.product && (
-        <View style={[styles.productCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.productCard, { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1.5 }]}>
           {room.product.mainImageUrl ? (
             <Image source={{ uri: room.product.mainImageUrl }} style={styles.productImg} />
           ) : (
             <View style={[styles.productImg, { backgroundColor: colors.border, justifyContent: "center", alignItems: "center" }]}>
-              <Text style={{ fontSize: 18 }}>📦</Text>
+              <Text style={{ fontSize: 20 }}>📦</Text>
             </View>
           )}
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }} numberOfLines={1}>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }} numberOfLines={1}>
               {room.product.title}
             </Text>
-            <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "700", marginTop: 2 }}>
+            <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "800", marginTop: 4 }}>
               {room.product.price?.toLocaleString()}원
             </Text>
           </View>
           <View style={[styles.statusBadge, {
-            backgroundColor: room.product.status === "sold" ? "#EF444420" : "#22C55E20"
+            backgroundColor: room.product.status === "sold" ? colors.muted + "20" : colors.primary + "20",
+            borderWidth: 1,
+            borderColor: room.product.status === "sold" ? colors.muted : colors.primary,
           }]}>
-            <Text style={{ fontSize: 11, fontWeight: "600", color: room.product.status === "sold" ? "#EF4444" : "#22C55E" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: room.product.status === "sold" ? colors.muted : colors.primary }}>
               {room.product.status === "selling" ? "판매중" : room.product.status === "reserved" ? "예약중" : "판매완료"}
             </Text>
           </View>
@@ -295,8 +297,8 @@ export default function ChatRoomScreen() {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>👋</Text>
-              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center" }}>
+              <Text style={{ fontSize: 40, marginBottom: 12 }}>💬</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", fontWeight: "500" }}>
                 {room?.otherUser?.name ?? "상대방"}님과의 대화를{"\n"}시작해보세요.
               </Text>
             </View>
@@ -323,7 +325,7 @@ export default function ChatRoomScreen() {
                 <View style={[styles.msgRow, isMine ? styles.msgRowMine : styles.msgRowOther]}>
                   {/* 상대방 아바타 */}
                   {!isMine && (
-                    <View style={[styles.avatar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View style={[styles.avatar, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
                       {room?.otherUser?.profileImageUrl ? (
                         <Image source={{ uri: room.otherUser.profileImageUrl }} style={styles.avatarImg} />
                       ) : (
@@ -332,7 +334,7 @@ export default function ChatRoomScreen() {
                     </View>
                   )}
 
-                  <View style={[styles.msgContent, isMine ? styles.msgContentMine : styles.msgContentOther]}>
+                  <View style={[styles.msgContent, isMine ? styles.msgContentMine : styles.msgContentOther, { backgroundColor: isMine ? colors.primary : colors.surface, borderColor: isMine ? colors.primary : colors.border, borderWidth: 1 }]}>
                     {/* 이미지 메시지 */}
                     {item.imageUrl ? (
                       <Image
@@ -343,7 +345,7 @@ export default function ChatRoomScreen() {
                     ) : (
                       <Text style={[
                         styles.msgText,
-                        { color: isMine ? "#FFFFFF" : "#1F2937" }
+                        { color: isMine ? "#000000" : colors.foreground, fontWeight: "500" }
                       ]}>
                         {item.content}
                       </Text>
@@ -353,9 +355,9 @@ export default function ChatRoomScreen() {
                   {/* 시간 + 읽음 표시 */}
                   <View style={[styles.msgMeta, isMine ? styles.msgMetaMine : styles.msgMetaOther]}>
                     {isMine && !item.isRead && (
-                      <Text style={{ fontSize: 10, color: "#F59E0B", fontWeight: "700" }}>1</Text>
+                      <Text style={{ fontSize: 10, color: colors.primary, fontWeight: "700" }}>1</Text>
                     )}
-                    <Text style={{ fontSize: 10, color: colors.muted }}>
+                    <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "500" }}>
                       {formatTime(item.createdAt)}
                     </Text>
                   </View>
@@ -373,7 +375,7 @@ export default function ChatRoomScreen() {
             onPress={handleImagePick}
             disabled={isSending}
           >
-            <IconSymbol name="photo" size={22} color={colors.muted} />
+            <IconSymbol name="photo" size={22} color={colors.primary} />
           </Pressable>
 
           {/* 텍스트 입력 */}
@@ -382,6 +384,7 @@ export default function ChatRoomScreen() {
               backgroundColor: colors.surface,
               color: colors.foreground,
               borderColor: colors.border,
+              borderWidth: 1,
             }]}
             placeholder="메시지를 입력하세요"
             placeholderTextColor={colors.muted}
@@ -397,17 +400,18 @@ export default function ChatRoomScreen() {
             style={({ pressed }) => [
               styles.sendBtn,
               {
-                backgroundColor: inputText.trim() ? colors.primary : colors.border,
-                opacity: pressed ? 0.8 : 1,
+                backgroundColor: colors.primary,
+                opacity: pressed ? 0.9 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
               },
             ]}
             onPress={handleSend}
-            disabled={!inputText.trim() || isSending}
+            disabled={isSending || !inputText.trim()}
           >
             {isSending ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color="#000000" />
             ) : (
-              <IconSymbol name="paperplane.fill" size={18} color="#FFFFFF" />
+              <IconSymbol name="paperplane.fill" size={18} color="#000000" />
             )}
           </Pressable>
         </View>
@@ -420,37 +424,35 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
   backBtn: {
-    padding: 4,
+    marginRight: 8,
   },
   tradeBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginLeft: 8,
   },
   productCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    marginHorizontal: 12,
-    marginTop: 8,
-    borderRadius: 10,
-    borderWidth: 1,
+    margin: 12,
+    padding: 12,
+    borderRadius: 14,
   },
   productImg: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
+    width: 60,
+    height: 60,
+    borderRadius: 10,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
+    borderRadius: 8,
   },
   dateDivider: {
     flexDirection: "row",
@@ -463,12 +465,14 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 11,
-    paddingHorizontal: 10,
+    fontWeight: "600",
+    marginHorizontal: 8,
+    paddingHorizontal: 4,
   },
   msgRow: {
     flexDirection: "row",
+    marginVertical: 4,
     alignItems: "flex-end",
-    marginBottom: 6,
   },
   msgRowMine: {
     justifyContent: "flex-end",
@@ -479,31 +483,26 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 10,
+    marginRight: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 6,
-    borderWidth: 1,
-    overflow: "hidden",
   },
   avatarImg: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 10,
   },
   msgContent: {
-    maxWidth: "68%",
-    borderRadius: 16,
+    maxWidth: "70%",
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    overflow: "hidden",
+    paddingVertical: 10,
+    borderRadius: 12,
   },
   msgContentMine: {
-    backgroundColor: "#3B82F6",
     borderBottomRightRadius: 4,
   },
   msgContentOther: {
-    backgroundColor: "#E5E7EB",
     borderBottomLeftRadius: 4,
   },
   msgText: {
@@ -511,52 +510,44 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   msgImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
+    width: 180,
+    height: 180,
+    borderRadius: 10,
   },
   msgMeta: {
-    flexDirection: "column",
-    alignItems: "flex-end",
-    marginBottom: 2,
+    marginHorizontal: 6,
+    alignItems: "center",
     gap: 2,
   },
   msgMetaMine: {
-    marginRight: 6,
-    alignItems: "flex-end",
+    flexDirection: "row-reverse",
   },
   msgMetaOther: {
-    marginLeft: 6,
-    alignItems: "flex-start",
+    flexDirection: "row",
   },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    paddingBottom: 12,
-    borderTopWidth: 0.5,
+    paddingVertical: 12,
+    borderTopWidth: 1,
     gap: 8,
   },
   iconBtn: {
     padding: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   textInput: {
     flex: 1,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
     maxHeight: 100,
-    minHeight: 40,
+    fontSize: 14,
   },
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },

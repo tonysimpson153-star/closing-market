@@ -37,9 +37,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  selling: "#3B82F6",
-  reserved: "#F59E0B",
-  sold: "#6B7280",
+  selling: "#D4AF37",
+  reserved: "#B0B0B0",
+  sold: "#808080",
 };
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -132,13 +132,13 @@ export default function ProductDetailScreen() {
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>
-            상품을 찾을 수 없습니다.
+            상품을 찾을 수 없습니다
           </Text>
           <Pressable
-            style={({ pressed }) => [{ marginTop: 20, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [{ marginTop: 24, opacity: pressed ? 0.7 : 1 }]}
             onPress={() => router.back()}
           >
-            <Text style={{ color: colors.primary, fontWeight: "600" }}>뒤로 가기</Text>
+            <Text style={{ color: colors.primary, fontWeight: "700" }}>← 뒤로 가기</Text>
           </Pressable>
         </View>
       </ScreenContainer>
@@ -148,38 +148,38 @@ export default function ProductDetailScreen() {
   const isMine = (user as any)?.id === product.userId;
 
   return (
-    <ScreenContainer edges={["top", "left", "right"]}>
+    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
       {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable
-          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 12 }]}
+          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 16 }]}
           onPress={() => router.back()}
         >
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text style={{ fontSize: 17, fontWeight: "600", color: colors.foreground, flex: 1 }}>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, flex: 1, letterSpacing: 0.5 }}>
           상품 상세
         </Text>
         <Pressable
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           onPress={handleFavorite}
         >
-          <IconSymbol name="heart" size={24} color={colors.foreground} />
+          <IconSymbol name="heart" size={24} color={colors.primary} />
         </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 이미지 영역 */}
-        <View style={[styles.imageArea, { backgroundColor: colors.surface }]}>
-          <Text style={{ fontSize: 80 }}>{CATEGORY_EMOJIS[product.category] ?? "📦"}</Text>
+        {/* 이미지 영역 - 고급스러운 배경 */}
+        <View style={[styles.imageArea, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+          <Text style={{ fontSize: 96 }}>{CATEGORY_EMOJIS[product.category] ?? "📦"}</Text>
         </View>
 
         {/* 상품 정보 */}
-        <View style={{ padding: 16 }}>
+        <View style={{ padding: 20 }}>
           {/* 상태 배지 */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <View style={[styles.badge, { backgroundColor: STATUS_COLORS[product.status] + "20" }]}>
-              <Text style={[styles.badgeText, { color: STATUS_COLORS[product.status] }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <View style={[styles.badge, { backgroundColor: STATUS_COLORS[product.status] + "20", borderWidth: 1, borderColor: STATUS_COLORS[product.status] }]}>
+              <Text style={[styles.badgeText, { color: STATUS_COLORS[product.status], fontWeight: "700" }]}>
                 {STATUS_LABELS[product.status]}
               </Text>
             </View>
@@ -188,53 +188,56 @@ export default function ProductDetailScreen() {
                 {CATEGORY_LABELS[product.category]}
               </Text>
             </View>
-
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+          {/* 제목 */}
+          <Text style={{ fontSize: 22, fontWeight: "800", color: colors.foreground, marginBottom: 12, lineHeight: 32 }}>
             {product.title}
           </Text>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.primary, marginBottom: 12 }}>
+
+          {/* 가격 - 골드 강조 */}
+          <Text style={{ fontSize: 28, fontWeight: "800", color: colors.primary, marginBottom: 20, letterSpacing: 1 }}>
             {formatPrice(product.price)}
           </Text>
 
-          {/* 메타 정보 */}
+          {/* 메타 정보 - 구분선 추가 */}
           <View style={[styles.metaRow, { borderColor: colors.border }]}>
             {product.location ? (
               <View style={styles.metaItem}>
-                <IconSymbol name="location.fill" size={14} color={colors.muted} />
-                <Text style={[styles.metaText, { color: colors.muted }]}>{product.location}</Text>
+                <IconSymbol name="location.fill" size={14} color={colors.primary} />
+                <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>{product.location}</Text>
               </View>
             ) : null}
             <View style={styles.metaItem}>
-              <IconSymbol name="shippingbox.fill" size={14} color={colors.muted} />
-              <Text style={[styles.metaText, { color: colors.muted }]}>
+              <IconSymbol name="shippingbox.fill" size={14} color={colors.primary} />
+              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>
                 {TRADE_TYPE_LABELS[product.tradeType]}
               </Text>
             </View>
             <View style={styles.metaItem}>
-              <IconSymbol name="number" size={14} color={colors.muted} />
-              <Text style={[styles.metaText, { color: colors.muted }]}>수량 {product.quantity}개</Text>
+              <IconSymbol name="number" size={14} color={colors.primary} />
+              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>수량 {product.quantity}개</Text>
             </View>
             <View style={styles.metaItem}>
-              <IconSymbol name="eye.fill" size={14} color={colors.muted} />
-              <Text style={[styles.metaText, { color: colors.muted }]}>조회 {product.viewCount}</Text>
+              <IconSymbol name="eye.fill" size={14} color={colors.primary} />
+              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>조회 {product.viewCount}</Text>
             </View>
           </View>
 
-          {/* 판매자 정보 카드 */}
+          {/* 판매자 정보 카드 - 고급스럽게 개편 */}
           <Pressable
             style={({ pressed }) => [{
               flexDirection: "row",
               alignItems: "center",
-              gap: 12,
-              padding: 14,
+              gap: 14,
+              padding: 16,
               borderRadius: 14,
-              borderWidth: 1,
-              borderColor: colors.border,
+              borderWidth: 1.5,
+              borderColor: colors.primary,
               backgroundColor: colors.surface,
-              marginBottom: 20,
-              opacity: pressed ? 0.8 : 1,
+              marginBottom: 28,
+              marginTop: 12,
+              opacity: pressed ? 0.85 : 1,
             }]}
             onPress={() =>
               router.push({
@@ -246,32 +249,32 @@ export default function ProductDetailScreen() {
               })
             }
           >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary + "20", justifyContent: "center", alignItems: "center" }}>
-              <Text style={{ fontSize: 22 }}>👤</Text>
+            <View style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: colors.primary + "20", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.primary }}>
+              <Text style={{ fontSize: 28 }}>👤</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground }}>
                   {product.sellerName ?? "판매자"}
                 </Text>
                 {product.isSellerVerified && (
-                  <View style={{ backgroundColor: "#22C55E20", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#22C55E" }}>✓ 인증판매자</Text>
+                  <View style={{ backgroundColor: colors.primary + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: colors.primary }}>
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>✓ 인증판매자</Text>
                   </View>
                 )}
               </View>
-              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>후기 보기 ›</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>후기 보기 ›</Text>
             </View>
-            <IconSymbol name="chevron.right" size={16} color={colors.muted} />
+            <IconSymbol name="chevron.right" size={18} color={colors.primary} />
           </Pressable>
 
           {/* 상품 설명 */}
           {product.description ? (
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+            <View style={{ marginBottom: 32, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground, marginBottom: 12, letterSpacing: 0.5 }}>
                 상품 설명
               </Text>
-              <Text style={{ fontSize: 14, color: colors.foreground, lineHeight: 22 }}>
+              <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 24, fontWeight: "500" }}>
                 {product.description}
               </Text>
             </View>
@@ -279,11 +282,11 @@ export default function ProductDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* 하단 버튼 */}
+      {/* 하단 버튼 - 고급스러운 스타일 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         {isMine ? (
-          <View style={[styles.myProductBanner, { backgroundColor: colors.surface }]}>
-            <Text style={{ fontSize: 14, color: colors.muted, fontWeight: "500" }}>
+          <View style={[styles.myProductBanner, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
+            <Text style={{ fontSize: 14, color: colors.muted, fontWeight: "600" }}>
               내가 등록한 상품입니다
             </Text>
           </View>
@@ -292,13 +295,13 @@ export default function ProductDetailScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.favBtn,
-                { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+                { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1.5, opacity: pressed ? 0.8 : 1 },
               ]}
               onPress={handleFavorite}
               disabled={favMutation.isPending}
             >
-              <IconSymbol name="heart" size={20} color={colors.foreground} />
-              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 4 }}>
+              <IconSymbol name="heart" size={20} color={colors.primary} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary, marginLeft: 6 }}>
                 찜
               </Text>
             </Pressable>
@@ -315,9 +318,9 @@ export default function ProductDetailScreen() {
               disabled={getOrCreateChatMutation.isPending || product.status === "sold"}
             >
               {getOrCreateChatMutation.isPending ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#000000" />
               ) : (
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#000000" }}>
                   {product.status === "sold" ? "판매완료" : "채팅하기"}
                 </Text>
               )}
@@ -333,9 +336,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
   },
   imageArea: {
     height: 280,
@@ -343,9 +346,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   badgeText: {
     fontSize: 12,
@@ -354,8 +357,8 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
-    paddingVertical: 12,
+    gap: 14,
+    paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     marginBottom: 16,
@@ -363,7 +366,7 @@ const styles = StyleSheet.create({
   metaItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
   metaText: {
     fontSize: 13,
@@ -380,7 +383,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
-    borderWidth: 1,
   },
   chatBtn: {
     flex: 1,

@@ -98,45 +98,47 @@ export default function CompanyApplyScreen() {
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    backBtnText: { fontSize: 15, color: colors.primary, fontWeight: "600" },
-    headerTitle: { fontSize: 18, fontWeight: "700", color: colors.foreground, marginLeft: 12 },
+    backBtnText: { fontSize: 16, color: colors.primary, fontWeight: "700", marginRight: 8 },
+    headerTitle: { fontSize: 20, fontWeight: "800", color: colors.foreground, letterSpacing: 0.5 },
     progressBar: { flexDirection: "row", paddingHorizontal: 16, paddingVertical: 16, gap: 8 },
-    progressStep: { flex: 1, height: 4, borderRadius: 2 },
-    stepTitle: { fontSize: 22, fontWeight: "800", color: colors.foreground, paddingHorizontal: 16, marginBottom: 8 },
-    stepDesc: { fontSize: 14, color: colors.muted, paddingHorizontal: 16, marginBottom: 24, lineHeight: 20 },
+    progressStep: { flex: 1, height: 5, borderRadius: 3 },
+    stepTitle: { fontSize: 24, fontWeight: "800", color: colors.foreground, paddingHorizontal: 16, marginBottom: 8, letterSpacing: 0.3 },
+    stepDesc: { fontSize: 14, color: colors.muted, paddingHorizontal: 16, marginBottom: 28, lineHeight: 22, fontWeight: "500" },
     typeGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 10 },
     typeCard: {
       width: "47%",
       borderWidth: 2,
-      borderRadius: 14,
-      padding: 16,
+      borderRadius: 16,
+      padding: 18,
       alignItems: "center",
-      gap: 6,
+      gap: 8,
     },
-    typeEmoji: { fontSize: 28 },
-    typeLabel: { fontSize: 14, fontWeight: "700", textAlign: "center" },
-    typeDesc: { fontSize: 11, textAlign: "center", lineHeight: 16 },
-    inputGroup: { paddingHorizontal: 16, marginBottom: 20 },
-    label: { fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 8 },
+    typeEmoji: { fontSize: 32 },
+    typeLabel: { fontSize: 15, fontWeight: "700", textAlign: "center" },
+    typeDesc: { fontSize: 12, textAlign: "center", lineHeight: 18, fontWeight: "500" },
+    inputGroup: { paddingHorizontal: 16, marginBottom: 22 },
+    label: { fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 10, letterSpacing: 0.3 },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 12,
+      borderRadius: 14,
       padding: 14,
       fontSize: 15,
       color: colors.foreground,
       backgroundColor: colors.surface,
+      fontWeight: "500",
     },
     textArea: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 12,
+      borderRadius: 14,
       padding: 14,
       fontSize: 15,
       color: colors.foreground,
       backgroundColor: colors.surface,
-      height: 100,
+      height: 110,
       textAlignVertical: "top",
+      fontWeight: "500",
     },
     nextBtn: {
       margin: 16,
@@ -145,21 +147,23 @@ export default function CompanyApplyScreen() {
       padding: 16,
       alignItems: "center",
     },
-    nextBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+    nextBtnText: { color: "#000000", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
     successContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-    successIcon: { fontSize: 64, marginBottom: 24 },
-    successTitle: { fontSize: 24, fontWeight: "800", color: colors.foreground, marginBottom: 12, textAlign: "center" },
-    successDesc: { fontSize: 15, color: colors.muted, textAlign: "center", lineHeight: 24, marginBottom: 32 },
+    successIcon: { fontSize: 64, marginBottom: 28 },
+    successTitle: { fontSize: 26, fontWeight: "800", color: colors.foreground, marginBottom: 14, textAlign: "center", letterSpacing: 0.3 },
+    successDesc: { fontSize: 15, color: colors.muted, textAlign: "center", lineHeight: 26, marginBottom: 36, fontWeight: "500" },
     statusBadge: {
       backgroundColor: colors.warning + "20",
       borderRadius: 20,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      marginBottom: 32,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      marginBottom: 36,
+      borderWidth: 1,
+      borderColor: colors.warning + "40",
     },
     statusText: { fontSize: 14, fontWeight: "700", color: colors.warning },
-    homeBtn: { backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14 },
-    homeBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+    homeBtn: { backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 40, paddingVertical: 16 },
+    homeBtnText: { color: "#000000", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
   });
 
   // Step 3: 신청 완료
@@ -192,8 +196,8 @@ export default function CompanyApplyScreen() {
     <ScreenContainer>
       {/* 헤더 */}
       <View style={s.header}>
-        <Pressable onPress={() => (step > 1 ? setStep(step - 1) : router.back())}>
-          <Text style={s.backBtnText}>← 뒤로</Text>
+        <Pressable onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={{ padding: 8 }}>
+          <Text style={s.backBtnText}>←</Text>
         </Pressable>
         <Text style={s.headerTitle}>업체 등록 신청</Text>
       </View>

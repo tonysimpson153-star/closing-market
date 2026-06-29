@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+"use client";
+
 import {
   View,
   Text,
@@ -8,14 +9,19 @@ import {
   Alert,
   ActivityIndicator,
   StyleSheet,
+  Pressable,
 } from "react-native";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
+import { useColors } from "@/hooks/use-colors";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const colors = useColors();
   const { setAuth } = useAuthStore();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,101 +66,174 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← 뒤로</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>회원가입</Text>
-          <Text style={styles.subtitle}>클로징마켓에 오신 것을 환영합니다</Text>
+          <Pressable
+            style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.6 : 1 }]}
+            onPress={() => router.back()}
+          >
+            <IconSymbol name="chevron.left" size={24} color={colors.primary} />
+          </Pressable>
+          <Text style={[styles.title, { color: colors.foreground }]}>회원가입</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>클로징마켓에 오신 것을 환영합니다</Text>
         </View>
 
-        {/* 안내 배너 */}
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoIcon}>ℹ️</Text>
-          <Text style={styles.infoText}>
-            모든 신규 회원은 <Text style={styles.infoBold}>일반회원</Text>으로 가입됩니다.{"\n"}
-            가입 후 마이페이지에서 판매회원 또는 업체회원으로 전환할 수 있습니다.
-          </Text>
+        {/* 안내 배너 - 프리미엄 스타일 */}
+        <View style={[styles.infoBanner, { backgroundColor: colors.primary + "10", borderColor: colors.primary }]}>
+          <View style={[styles.infoIconBg, { backgroundColor: colors.primary + "20" }]}>
+            <Text style={styles.infoIcon}>ℹ️</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.infoTitle, { color: colors.primary }]}>일반회원으로 가입됩니다</Text>
+            <Text style={[styles.infoText, { color: colors.muted }]}>
+              모든 신규 회원은 일반회원으로 가입됩니다. 가입 후 마이페이지에서 판매회원 또는 업체회원으로 전환할 수 있습니다.
+            </Text>
+          </View>
         </View>
 
         {/* 입력 폼 */}
         <View style={styles.form}>
-          <Text style={styles.label}>이름 <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="이름을 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            value={name}
-            onChangeText={setName}
-            returnKeyType="next"
-          />
+          {/* 이름 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              이름 <Text style={[styles.required, { color: colors.error }]}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="이름을 입력하세요"
+              placeholderTextColor={colors.muted}
+              value={name}
+              onChangeText={setName}
+              returnKeyType="next"
+            />
+          </View>
 
-          <Text style={styles.label}>이메일 <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="이메일을 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            returnKeyType="next"
-          />
+          {/* 이메일 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              이메일 <Text style={[styles.required, { color: colors.error }]}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="example@email.com"
+              placeholderTextColor={colors.muted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+              returnKeyType="next"
+            />
+          </View>
 
-          <Text style={styles.label}>전화번호 (선택)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="010-0000-0000"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-            returnKeyType="next"
-          />
+          {/* 전화번호 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>전화번호 (선택)</Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="010-0000-0000"
+              placeholderTextColor={colors.muted}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              returnKeyType="next"
+            />
+          </View>
 
-          <Text style={styles.label}>비밀번호 <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="6자 이상 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            returnKeyType="next"
-          />
+          {/* 비밀번호 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              비밀번호 <Text style={[styles.required, { color: colors.error }]}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="6자 이상 입력하세요"
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              returnKeyType="next"
+            />
+          </View>
 
-          <Text style={styles.label}>비밀번호 확인 <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="비밀번호를 다시 입력하세요"
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={passwordConfirm}
-            onChangeText={setPasswordConfirm}
-            returnKeyType="done"
-            onSubmitEditing={handleRegister}
-          />
+          {/* 비밀번호 확인 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              비밀번호 확인 <Text style={[styles.required, { color: colors.error }]}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="비밀번호를 다시 입력하세요"
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              value={passwordConfirm}
+              onChangeText={setPasswordConfirm}
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+            />
+          </View>
 
-          <TouchableOpacity
-            style={[styles.registerBtn, registerMutation.isPending && styles.btnDisabled]}
+          {/* 가입 버튼 */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.registerBtn,
+              {
+                backgroundColor: colors.primary,
+                opacity: registerMutation.isPending ? 0.6 : pressed ? 0.85 : 1,
+              },
+            ]}
             onPress={handleRegister}
             disabled={registerMutation.isPending}
           >
             {registerMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#000000" />
             ) : (
               <Text style={styles.registerBtnText}>일반회원으로 가입하기</Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
+          {/* 로그인 링크 */}
           <View style={styles.loginRow}>
-            <Text style={styles.loginText}>이미 계정이 있으신가요?</Text>
-            <TouchableOpacity onPress={() => router.push("/auth/login" as any)}>
-              <Text style={styles.loginLink}> 로그인</Text>
-            </TouchableOpacity>
+            <Text style={[styles.loginText, { color: colors.muted }]}>이미 계정이 있으신가요?</Text>
+            <Pressable onPress={() => router.push("/auth/login" as any)}>
+              <Text style={[styles.loginLink, { color: colors.primary }]}> 로그인</Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
@@ -165,104 +244,105 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingBottom: 40,
-    backgroundColor: "#fff",
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   backBtn: {
-    marginBottom: 16,
-  },
-  backBtnText: {
-    fontSize: 15,
-    color: "#3B82F6",
-    fontWeight: "600",
+    width: 40,
+    height: 40,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
-    color: "#111827",
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
-    color: "#6B7280",
-    marginTop: 4,
+    fontWeight: "500",
   },
   infoBanner: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "#EFF6FF",
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  infoIconBg: {
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   infoIcon: {
-    fontSize: 18,
-    marginTop: 1,
+    fontSize: 20,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   infoText: {
-    flex: 1,
     fontSize: 13,
-    color: "#1E40AF",
+    fontWeight: "500",
     lineHeight: 20,
   },
-  infoBold: {
-    fontWeight: "700",
-  },
   form: {
-    gap: 4,
+    gap: 0,
+  },
+  fieldGroup: {
+    marginBottom: 18,
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 6,
-    marginTop: 12,
+    fontWeight: "700",
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
   required: {
-    color: "#EF4444",
+    fontWeight: "700",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    fontWeight: "500",
   },
   registerBtn: {
-    backgroundColor: "#3B82F6",
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
-    marginTop: 24,
-  },
-  btnDisabled: {
-    opacity: 0.6,
+    marginTop: 28,
   },
   registerBtnText: {
-    color: "#fff",
+    color: "#000000",
     fontSize: 16,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
   loginRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 24,
   },
   loginText: {
     fontSize: 14,
-    color: "#6B7280",
+    fontWeight: "500",
   },
   loginLink: {
     fontSize: 14,
-    color: "#3B82F6",
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });
