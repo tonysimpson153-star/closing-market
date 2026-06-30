@@ -112,6 +112,7 @@ export default function HomeScreen() {
             {CATEGORIES.map((cat) => (
               <Pressable
                 key={cat.id}
+                onPress={() => router.push(`/products?category=${cat.id}` as any)}
                 style={({ pressed }) => [
                   {
                     alignItems: "center",
