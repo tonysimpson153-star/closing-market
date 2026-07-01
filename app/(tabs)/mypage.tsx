@@ -258,11 +258,28 @@ export default function MyPageScreen() {
                     ]);
                     return;
                   }
-                  if (item.id === "reviews") {
-                    router.push({
-                      pathname: "/seller/profile" as any,
-                      params: { userId: user?.id?.toString() ?? "", userName: user?.name ?? "나" },
-                    });
+                  switch (item.id) {
+                    case "products":
+                      router.push("/seller/products" as any);
+                      break;
+                    case "purchases":
+                      router.push("/user/purchases" as any);
+                      break;
+                    case "favorites":
+                      router.push("/user/favorites" as any);
+                      break;
+                    case "chatlist":
+                      router.push("/(tabs)/chat" as any);
+                      break;
+                    case "recent":
+                      router.push("/user/recent" as any);
+                      break;
+                    case "reviews":
+                      router.push({
+                        pathname: "/seller/profile" as any,
+                        params: { userId: user?.id?.toString() ?? "", userName: user?.name ?? "나" },
+                      });
+                      break;
                   }
                 }}
               >
