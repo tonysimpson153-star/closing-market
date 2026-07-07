@@ -37,8 +37,54 @@ async function getDb() {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return rows[0] ?? null;
+  try {
+    const rows = await db
+      .select({
+        id: users.id,
+        openId: users.openId,
+        name: users.name,
+        email: users.email,
+        loginMethod: users.loginMethod,
+        role: users.role,
+        sellerStatus: users.sellerStatus,
+        sellerType: users.sellerType,
+        businessNumber: users.businessNumber,
+        businessName: users.businessName,
+        representativeName: users.representativeName,
+        businessCertUrl: users.businessCertUrl,
+        businessPhotoUrl: users.businessPhotoUrl,
+        companyStatus: users.companyStatus,
+        companyType: users.companyType,
+        companyName: users.companyName,
+        companyDesc: users.companyDesc,
+        companyPhone: users.companyPhone,
+        companyAddress: users.companyAddress,
+        companyLogoUrl: users.companyLogoUrl,
+        isVerified: users.isVerified,
+        profileImageUrl: users.profileImageUrl,
+        phone: users.phone,
+        password: users.password,
+        kakaoId: users.kakaoId,
+        notifChat: users.notifChat,
+        notifPriceDrop: users.notifPriceDrop,
+        notifTrade: users.notifTrade,
+        notifMarketing: users.notifMarketing,
+        expoPushToken: users.expoPushToken,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        lastSignedIn: users.lastSignedIn,
+        deletedAt: users.deletedAt,
+        suspendedAt: users.suspendedAt,
+        suspendedReason: users.suspendedReason,
+      })
+      .from(users)
+      .where(eq(users.openId, openId))
+      .limit(1);
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error('[getUserByOpenId] Error:', err);
+    return null;
+  }
 }
 
 export async function upsertUser(data: Partial<InsertUser> & { openId: string }) {
@@ -332,8 +378,54 @@ export async function reviewSellerApplication(
 export async function getUserById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  return rows[0] ?? null;
+  try {
+    const rows = await db
+      .select({
+        id: users.id,
+        openId: users.openId,
+        name: users.name,
+        email: users.email,
+        loginMethod: users.loginMethod,
+        role: users.role,
+        sellerStatus: users.sellerStatus,
+        sellerType: users.sellerType,
+        businessNumber: users.businessNumber,
+        businessName: users.businessName,
+        representativeName: users.representativeName,
+        businessCertUrl: users.businessCertUrl,
+        businessPhotoUrl: users.businessPhotoUrl,
+        companyStatus: users.companyStatus,
+        companyType: users.companyType,
+        companyName: users.companyName,
+        companyDesc: users.companyDesc,
+        companyPhone: users.companyPhone,
+        companyAddress: users.companyAddress,
+        companyLogoUrl: users.companyLogoUrl,
+        isVerified: users.isVerified,
+        profileImageUrl: users.profileImageUrl,
+        phone: users.phone,
+        password: users.password,
+        kakaoId: users.kakaoId,
+        notifChat: users.notifChat,
+        notifPriceDrop: users.notifPriceDrop,
+        notifTrade: users.notifTrade,
+        notifMarketing: users.notifMarketing,
+        expoPushToken: users.expoPushToken,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        lastSignedIn: users.lastSignedIn,
+        deletedAt: users.deletedAt,
+        suspendedAt: users.suspendedAt,
+        suspendedReason: users.suspendedReason,
+      })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error('[getUserById] Error:', err);
+    return null;
+  }
 }
 
 export async function getChatList(userId: number) {
@@ -826,9 +918,48 @@ export async function createUserByEmail(data: {
     isVerified: false,
     lastSignedIn: new Date(),
   });
-  const newUser = await getUserById(result[0].insertId);
-  if (!newUser) throw new Error("Failed to create user");
-  return newUser;
+  
+  // 새로 생성된 사용자 정보 반환
+  const userId = result[0].insertId;
+  const now = new Date();
+  return {
+    id: userId,
+    openId: data.openId,
+    name: data.name,
+    email: data.email ?? null,
+    loginMethod: data.loginMethod,
+    role: "user" as const,
+    sellerStatus: null,
+    sellerType: null,
+    businessNumber: null,
+    businessName: null,
+    representativeName: null,
+    businessCertUrl: null,
+    businessPhotoUrl: null,
+    companyStatus: null,
+    companyType: null,
+    companyName: null,
+    companyDesc: null,
+    companyPhone: null,
+    companyAddress: null,
+    companyLogoUrl: null,
+    isVerified: false,
+    profileImageUrl: data.profileImageUrl ?? null,
+    phone: data.phone ?? null,
+    password: data.password ?? null,
+    kakaoId: data.kakaoId ?? null,
+    notifChat: true,
+    notifPriceDrop: true,
+    notifTrade: true,
+    notifMarketing: false,
+    expoPushToken: null,
+    createdAt: now,
+    updatedAt: now,
+    lastSignedIn: now,
+    deletedAt: null,
+    suspendedAt: null,
+    suspendedReason: null,
+  };
 }
 
 
