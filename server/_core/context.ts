@@ -2,8 +2,7 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import type { User } from "../../drizzle/schema";
 import jwt from "jsonwebtoken";
 import { getUserById } from "../db";
-
-const JWT_SECRET = process.env.JWT_SECRET || "closing-market-secret-2024";
+import { ENV } from "./env";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -18,9 +17,13 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     const authHeader = opts.req.headers["authorization"];
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+      const decoded = jwt.verify(token, ENV.jwtSecret) as { userId: number };
       if (decoded?.userId) {
         user = await getUserById(decoded.userId);
+        // 탈퇴했거나 정지된 계정의 토큰은 만료 전이라도 즉시 무효화
+        if (user?.deletedAt || user?.suspendedAt) {
+          user = null;
+        }
       }
     }
   } catch {

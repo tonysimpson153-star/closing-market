@@ -7,7 +7,7 @@ export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "seller", "company", "admin"]).default("user").notNull(),
   // 판매회원 관련
@@ -20,7 +20,7 @@ export const users = mysqlTable("users", {
   businessPhotoUrl: text("businessPhotoUrl"),
   // 업체회원 관련
   companyStatus: mysqlEnum("companyStatus", ["pending", "approved", "rejected", "suspended"]).default("pending"),
-  companyType: mysqlEnum("companyType", ["demolition", "interior", "waste", "signage", "pos", "cleaning", "tax", "labor"]),
+  companyType: mysqlEnum("companyType", ["demolition", "interior", "waste", "signage", "pos", "cctv", "cleaning", "tax", "labor", "kitchen", "consulting"]),
   companyName: varchar("companyName", { length: 255 }),
   companyDesc: text("companyDesc"),
   companyPhone: varchar("companyPhone", { length: 20 }),
@@ -41,6 +41,11 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  // 회원 탈퇴 (소프트 삭제) - 채팅/후기 등 다른 회원과 연결된 기록은 보존하고 개인정보만 익명화
+  deletedAt: timestamp("deletedAt"),
+  // 관리자에 의한 계정 정지
+  suspendedAt: timestamp("suspendedAt"),
+  suspendedReason: text("suspendedReason"),
 });
 
 export type User = typeof users.$inferSelect;
@@ -85,6 +90,19 @@ export const productImages = mysqlTable("product_images", {
 });
 
 export type ProductImage = typeof productImages.$inferSelect;
+
+/**
+ * Company gallery images (업체 소개 사진 여러 장) table
+ */
+export const companyImages = mysqlTable("company_images", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CompanyImage = typeof companyImages.$inferSelect;
 
 /**
  * Business transfer (사업양도) table
@@ -136,6 +154,18 @@ export const favorites = mysqlTable("favorites", {
 });
 
 export type Favorite = typeof favorites.$inferSelect;
+
+/**
+ * Recent product views (최근 본 상품) table
+ */
+export const recentViews = mysqlTable("recent_views", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  productId: int("productId").notNull(),
+  viewedAt: timestamp("viewedAt").defaultNow().notNull(),
+});
+
+export type RecentView = typeof recentViews.$inferSelect;
 
 /**
  * Reviews (후기) table
@@ -269,3 +299,36 @@ export const notices = mysqlTable("notices", {
 
 export type Notice = typeof notices.$inferSelect;
 export type InsertNotice = typeof notices.$inferInsert;
+
+/**
+ * 1:1 고객센터 문의 (Inquiries) table
+ */
+export const inquiries = mysqlTable("inquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  category: mysqlEnum("category", ["account", "product", "payment", "report", "seller", "company", "etc"]).default("etc").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  status: mysqlEnum("status", ["pending", "answered"]).default("pending").notNull(),
+  answerContent: text("answerContent"),
+  answeredBy: int("answeredBy"),
+  answeredAt: timestamp("answeredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Inquiry = typeof inquiries.$inferSelect;
+
+/**
+ * 비밀번호 재설정 토큰 (이메일 로그인 사용자 전용)
+ */
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertInquiry = typeof inquiries.$inferInsert;

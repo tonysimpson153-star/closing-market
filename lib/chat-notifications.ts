@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 // 로컬 알림 설정
@@ -54,7 +55,18 @@ export async function sendChatNotification(
 // 기기 토큰 가져오기 (FCM용)
 export async function getDeviceToken(): Promise<string | null> {
   try {
-    const token = await Notifications.getExpoPushTokenAsync();
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+
+    if (!projectId) {
+      console.warn(
+        "[푸시 알림] EAS projectId가 설정되지 않아 푸시 토큰을 발급받을 수 없습니다. " +
+          "`eas init`으로 프로젝트를 생성한 뒤 app.config.ts의 extra.eas.projectId를 설정하세요."
+      );
+      return null;
+    }
+
+    const token = await Notifications.getExpoPushTokenAsync({ projectId });
     return token.data;
   } catch (error) {
     console.error("기기 토큰 조회 실패:", error);

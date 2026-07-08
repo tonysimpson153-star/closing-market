@@ -14,7 +14,6 @@ const CATEGORIES = [
   { id: "gym", name: "헬스장" },
   { id: "office", name: "사무실" },
   { id: "warehouse", name: "창고재고" },
-  { id: "transfer", name: "사업양도" },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -73,7 +72,8 @@ export default function SearchScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "flex-start" }}
+        style={{ flexGrow: 0 }}
       >
         <Pressable
           style={({ pressed }) => [

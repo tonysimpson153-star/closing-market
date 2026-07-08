@@ -66,8 +66,8 @@ export default function AdminDashboard() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={[styles.tabBar, { borderBottomColor: colors.border }]}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        style={[styles.tabBar, { borderBottomColor: colors.border, flexGrow: 0 }]}
+        contentContainerStyle={{ paddingHorizontal: 16, alignItems: "flex-start" }}
       >
         {(["overview", "products", "sellers", "companies", "reports", "users", "notices", "inquiries"] as TabType[]).map((tab) => {
           const getTabIcon = (tab: TabType) => {

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -48,6 +48,14 @@ export default function MyPageScreen() {
   const MENU_ITEMS = isApprovedCompany ? [...COMPANY_MENU_ITEMS, ...BASE_MENU_ITEMS] : BASE_MENU_ITEMS;
 
   const handleLogout = () => {
+    if (Platform.OS === "web") {
+      // react-native-web에서는 Alert.alert의 버튼 콜백이 동작하지 않는 경우가 있어
+      // 브라우저 기본 confirm으로 대체합니다.
+      if (window.confirm("정말 로그아웃하시겠습니까?")) {
+        clearAuth().then(() => router.replace("/" as any));
+      }
+      return;
+    }
     Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
       { text: "취소", style: "cancel" },
       {
@@ -368,7 +376,7 @@ export default function MyPageScreen() {
         {/* 앱 정보 */}
         <View style={styles.infoSection}>
           <Text style={[styles.infoText, { color: colors.muted }]}>클로징마켓 v1.0.0</Text>
-          <Text style={[styles.infoText, { color: colors.muted }]}>© 2024 Closing Market. All rights reserved.</Text>
+          <Text style={[styles.infoText, { color: colors.muted }]}>© 2026 Closing Market. All rights reserved.</Text>
         </View>
       </ScrollView>
     </ScreenContainer>

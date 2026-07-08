@@ -25,7 +25,6 @@ const CATEGORY_OPTIONS = [
   { id: "gym", name: "헬스장", icon: "dumbbell" },
   { id: "office", name: "사무실", icon: "briefcase" },
   { id: "warehouse", name: "창고재고", icon: "package" },
-  { id: "transfer", name: "사업양도", icon: "store" },
 ];
 
 const TRADE_TYPE_OPTIONS = [

@@ -14,7 +14,6 @@ const CATEGORIES = [
   { id: "gym", name: "헬스장", icon: "dumbbell", desc: "운동기구·장비" },
   { id: "office", name: "사무실", icon: "briefcase", desc: "사무용품·가구" },
   { id: "warehouse", name: "창고재고", icon: "package", desc: "재고·창고물품" },
-  { id: "transfer", name: "사업양도", icon: "store", desc: "권리금·보증금" },
 ];
 
 const STATUS_LABELS: Record<string, string> = {

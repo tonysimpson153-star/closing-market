@@ -13,7 +13,6 @@ const CATEGORIES = [
   { id: "gym", name: "헬스장", icon: "dumbbell" },
   { id: "office", name: "사무실", icon: "briefcase" },
   { id: "warehouse", name: "창고재고", icon: "package" },
-  { id: "transfer", name: "사업양도", icon: "store" },
 ];
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -111,7 +110,8 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12 }}
+            style={{ flexGrow: 0 }}
+            contentContainerStyle={{ gap: 12, alignItems: "flex-start" }}
           >
             {CATEGORIES.map((cat) => (
               <Pressable

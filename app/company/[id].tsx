@@ -198,7 +198,7 @@ export default function CompanyDetailScreen() {
             <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 10, marginHorizontal: 16 }}>
               소개 사진
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, alignItems: "flex-start" }}>
               {images.map((img: any) => (
                 <Image
                   key={img.id}

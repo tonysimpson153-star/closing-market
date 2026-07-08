@@ -103,11 +103,11 @@ const config: ExpoConfig = {
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 200,
+        imageWidth: 320,
         resizeMode: "contain",
         backgroundColor: "#ffffff",
         dark: {
-          backgroundColor: "#000000",
+          backgroundColor: "#ffffff",
         },
       },
     ],
@@ -124,6 +124,13 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    // 푸시 알림(Expo Push Token) 발급에 필요합니다.
+    // `eas init` 실행 후 발급되는 프로젝트 ID를 EAS_PROJECT_ID 환경변수에 넣어주세요.
+    eas: {
+      projectId: process.env.EAS_PROJECT_ID ?? "",
+    },
   },
 };
 
