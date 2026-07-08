@@ -1317,6 +1317,47 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
   await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
+// ─── 로그인 브루트포스 방어 ─────────────────────────────────────
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
+
+/** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
+export async function getAccountLockStatus(userId: number): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ lockedUntil: users.lockedUntil }).from(users).where(eq(users.id, userId)).limit(1);
+  const lockedUntil = rows[0]?.lockedUntil;
+  if (!lockedUntil) return null;
+  const remainingMs = lockedUntil.getTime() - Date.now();
+  if (remainingMs <= 0) return null;
+  return Math.ceil(remainingMs / 60000);
+}
+
+/** 로그인 실패 기록. 5회 누적 시 10분간 잠금 처리 */
+export async function recordFailedLogin(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const rows = await db.select({ failedLoginAttempts: users.failedLoginAttempts }).from(users).where(eq(users.id, userId)).limit(1);
+  const nextCount = (rows[0]?.failedLoginAttempts ?? 0) + 1;
+
+  if (nextCount >= MAX_FAILED_ATTEMPTS) {
+    await db.update(users).set({
+      failedLoginAttempts: nextCount,
+      lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS),
+    }).where(eq(users.id, userId));
+  } else {
+    await db.update(users).set({ failedLoginAttempts: nextCount }).where(eq(users.id, userId));
+  }
+}
+
+/** 로그인 성공 시 실패 카운트 초기화 */
+export async function resetFailedLogin(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(users.id, userId));
+}
+
 // ─── 비밀번호 재설정 (이메일 로그인 전용) ─────────────────────────
 
 export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {

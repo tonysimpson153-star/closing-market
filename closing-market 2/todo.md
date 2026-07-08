@@ -462,3 +462,19 @@
 - [x] getApiBaseUrl() 우선순위 변경: Manus 터널 자동 감지를 먼저 시도하고,
       전부 실패했을 때만(=실제 운영 빌드일 때만) 명시적 EXPO_PUBLIC_API_BASE_URL을 사용하도록 수정
       운영 배포본은 애초에 개발 터널 주소가 없으므로 이 변경으로 인한 부작용 없음
+
+## 보안 강화 5종 (신규)
+
+- [x] 1. 로그인 브루트포스 방어 - DB에 failedLoginAttempts/lockedUntil 컬럼 추가,
+      5회 실패 시 10분 자동 잠금, 성공 시 카운트 초기화
+- [x] 2. 이미지 업로드 형식/크기 제한 - JPG/JPEG/PNG/WEBP만 허용, 최대 5MB
+      (chatImage, productImage, sellerDocument, companyLogo, profilePhoto 5개 업로드 지점 전부 적용)
+- [x] 3. CORS 제한 - 기존 "아무 도메인이나 허용"에서 화이트리스트 방식으로 변경
+      (ALLOWED_ORIGINS 환경변수 + *.onrender.com 서브도메인 + WEB_APP_URL 자동 허용)
+      네이티브 앱 요청(Origin 헤더 없음)은 영향 없음, 웹 배포 버전에만 영향
+- [x] 4. Rate Limit 적용 - 로그인(IP당 10회/10분), 회원가입(IP당 10회/시간),
+      상품등록(사용자당 20회/시간) - 메모리 기반 Rate Limiter 신규 작성
+- [x] 5. 문법 검사 - 전체 프로젝트 재검사 완료, 기존 로직 변경 없이 검증 로직만 추가된 것 확인
+      (실제 기기 동작 테스트는 사용자가 직접 진행 필요)
+- [x] Express trust proxy 설정 추가 (Render 프록시 뒤에서 실제 클라이언트 IP 인식 위해 필요)
+- [x] DB 스키마 변경 있음 - pnpm db:push 필요 (failedLoginAttempts, lockedUntil 컬럼)

@@ -29,20 +29,39 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+  // Render 등 리버스 프록시 뒤에서 실제 클라이언트 IP를 올바르게 인식하도록 설정
+  // (X-Forwarded-For 헤더 신뢰) - Rate Limit이 제대로 동작하려면 필요합니다.
+  app.set("trust proxy", 1);
   const server = createServer(app);
 
-  // Enable CORS for all routes - reflect the request origin to support credentials
+  // CORS - 알려진 도메인만 허용 (네이티브 앱 요청은 Origin 헤더가 없어 영향받지 않습니다)
+  const allowedOrigins = [
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()) : []),
+    ...(process.env.WEB_APP_URL ? [process.env.WEB_APP_URL] : []),
+    "http://localhost:3000",
+    "http://localhost:8081",
+  ].filter(Boolean);
+  const isRenderPreview = (origin: string) => /\.onrender\.com$/.test(new URL(origin).hostname);
+
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin) {
-      res.header("Access-Control-Allow-Origin", origin);
+      let allow = false;
+      try {
+        allow = allowedOrigins.includes(origin) || isRenderPreview(origin);
+      } catch {
+        allow = false;
+      }
+      if (allow) {
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header("Access-Control-Allow-Credentials", "true");
+      }
     }
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header(
       "Access-Control-Allow-Headers",
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
     );
-    res.header("Access-Control-Allow-Credentials", "true");
 
     // Handle preflight requests
     if (req.method === "OPTIONS") {

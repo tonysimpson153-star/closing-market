@@ -24,7 +24,13 @@ export const appRouter = router({
         phone: z.string().optional(),
         // userType 제거 - 모든 신규 가입자는 일반회원(user)으로 가입
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        const ip = ctx.req.ip ?? "unknown";
+        if (!checkRateLimit(`register:${ip}`, 10, 60 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 가입 시도가 감지되었습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         const normalizedEmail = input.email.trim().toLowerCase();
         const existing = await db.getUserByEmail(normalizedEmail);
         if (existing) {
@@ -58,15 +64,33 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        const ip = ctx.req.ip ?? "unknown";
+        if (!checkRateLimit(`login:${ip}`, 10, 10 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 로그인 시도가 감지되었습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         const user = await db.getUserByEmail(input.email.trim().toLowerCase());
         if (!user || !user.password) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
+
+        const lockedMinutes = await db.getAccountLockStatus(user.id);
+        if (lockedMinutes !== null) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: `로그인 시도가 너무 많아 계정이 잠겼습니다. 약 ${lockedMinutes}분 후 다시 시도해주세요.`,
+          });
+        }
+
         const valid = await bcrypt.compare(input.password, user.password);
         if (!valid) {
+          await db.recordFailedLogin(user.id);
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
+        await db.resetFailedLogin(user.id);
+
         if (user.suspendedAt) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -312,6 +336,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        if (!checkRateLimit(`product-create:${ctx.user.id}`, 20, 60 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 상품을 등록했습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         // 판매자 인증 여부 확인
         const user = await db.getUserById(ctx.user.id);
         if (!user || !user.isVerified || user.sellerStatus !== "approved") {
@@ -436,7 +465,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(`chat/images/${input.fileName.replace(/\.[^.]+$/, "")}.${ext}`, buffer, input.mimeType);
         return { url: result.url };
@@ -451,7 +482,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `products/images/${ctx.user.id}_${input.fileName.replace(/\.[^.]+$/, "")}.${ext}`,
@@ -471,7 +504,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `seller/${input.docType}/${ctx.user.id}_${Date.now()}.${ext}`,
@@ -490,7 +525,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `company/logo/${ctx.user.id}_${Date.now()}.${ext}`,
@@ -509,7 +546,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `user/profile/${ctx.user.id}_${Date.now()}.${ext}`,

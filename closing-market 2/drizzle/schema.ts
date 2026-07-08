@@ -30,6 +30,9 @@ export const users = mysqlTable("users", {
   profileImageUrl: text("profileImageUrl"),
   phone: varchar("phone", { length: 20 }),
   password: varchar("password", { length: 256 }),
+  // 로그인 무차별 대입 공격 방어용
+  failedLoginAttempts: int("failedLoginAttempts").default(0).notNull(),
+  lockedUntil: timestamp("lockedUntil"),
   kakaoId: varchar("kakaoId", { length: 64 }),
   // 알림 설정
   notifChat: boolean("notifChat").default(true).notNull(),
