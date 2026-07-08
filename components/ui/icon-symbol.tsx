@@ -37,6 +37,8 @@ const MAPPING = {
   "exclamationmark.triangle.fill": "warning",
   "arrow.left": "arrow-back",
   "gear": "settings",
+  "questionmark.circle.fill": "help",
+  "doc.text": "description",
   "list.bullet": "list",
   "tag.fill": "local-offer",
   "building.2.fill": "business",

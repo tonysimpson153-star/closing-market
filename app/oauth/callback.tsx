@@ -4,7 +4,8 @@ import * as Auth from "@/lib/_core/auth";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/use-colors";
 
@@ -220,7 +221,7 @@ export default function OAuthCallback() {
 
         {status === "success" && (
           <>
-            <Text style={{ fontSize: 40, marginBottom: 16 }}>✅</Text>
+            <View style={{ marginBottom: 16 }}><LucideIcon name="check-circle" size={32} color={colors.primary} strokeWidth={1.5} /></View>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
               로그인 성공!
             </Text>
@@ -232,7 +233,7 @@ export default function OAuthCallback() {
 
         {status === "cancelled" && (
           <>
-            <Text style={{ fontSize: 40, marginBottom: 16 }}>↩️</Text>
+            <View style={{ marginBottom: 16 }}><LucideIcon name="x-circle" size={32} color={colors.muted} strokeWidth={1.5} /></View>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
               로그인이 취소되었습니다.
             </Text>
@@ -244,7 +245,7 @@ export default function OAuthCallback() {
 
         {status === "error" && (
           <>
-            <Text style={{ fontSize: 40, marginBottom: 16 }}>⚠️</Text>
+            <View style={{ marginBottom: 16 }}><LucideIcon name="alert-circle" size={32} color={colors.error} strokeWidth={1.5} /></View>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.error, marginBottom: 12, textAlign: "center" }}>
               로그인 실패
             </Text>

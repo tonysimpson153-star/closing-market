@@ -29,6 +29,7 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: (data) => {
@@ -56,6 +57,10 @@ export default function RegisterScreen() {
     }
     if (password.length < 6) {
       Alert.alert("비밀번호 오류", "비밀번호는 6자 이상이어야 합니다.");
+      return;
+    }
+    if (!agreedToPrivacy) {
+      Alert.alert("동의 필요", "이용약관 및 개인정보처리방침에 동의해주세요.");
       return;
     }
     registerMutation.mutate({
@@ -209,6 +214,45 @@ export default function RegisterScreen() {
               onSubmitEditing={handleRegister}
             />
           </View>
+
+          {/* 이용약관 및 개인정보처리방침 동의 */}
+          <Pressable
+            style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
+            onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+          >
+            <View
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 4,
+                borderWidth: 1.5,
+                borderColor: agreedToPrivacy ? colors.primary : colors.border,
+                backgroundColor: agreedToPrivacy ? colors.primary + "20" : "transparent",
+                justifyContent: "center",
+                alignItems: "center",
+                marginRight: 10,
+              }}
+            >
+              {agreedToPrivacy && <LucideIcon name="check" size={13} color={colors.primary} strokeWidth={2.5} />}
+            </View>
+            <Text style={{ fontSize: 13, color: colors.foreground }}>
+              (필수){" "}
+              <Text
+                style={{ color: colors.primary, fontWeight: "700", textDecorationLine: "underline" }}
+                onPress={() => router.push("/legal/terms" as any)}
+              >
+                이용약관
+              </Text>
+              {" "}및{" "}
+              <Text
+                style={{ color: colors.primary, fontWeight: "700", textDecorationLine: "underline" }}
+                onPress={() => router.push("/legal/privacy" as any)}
+              >
+                개인정보처리방침
+              </Text>
+              에 동의합니다
+            </Text>
+          </Pressable>
 
           {/* 가입 버튼 */}
           <Pressable

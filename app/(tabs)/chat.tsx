@@ -148,9 +148,12 @@ export default function ChatScreen() {
 
                   {/* 연결된 상품 */}
                   {item.product && (
-                    <Text style={{ fontSize: 11, color: colors.primary, marginBottom: 2 }} numberOfLines={1}>
-                      📦 {item.product.title}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 2 }}>
+                      <LucideIcon name="package" size={11} color={colors.primary} strokeWidth={1.8} />
+                      <Text style={{ fontSize: 11, color: colors.primary }} numberOfLines={1}>
+                        {item.product.title}
+                      </Text>
+                    </View>
                   )}
 
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

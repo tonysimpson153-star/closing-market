@@ -7,22 +7,25 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORY_OPTIONS = [
-  { id: "cafe", name: "카페", emoji: "☕" },
-  { id: "pcroom", name: "PC방", emoji: "🎮" },
-  { id: "restaurant", name: "식당", emoji: "🍽️" },
-  { id: "gym", name: "헬스장", emoji: "🏋️" },
-  { id: "office", name: "사무실", emoji: "🏢" },
-  { id: "warehouse", name: "창고재고", emoji: "📦" },
-  { id: "transfer", name: "사업양도", emoji: "🏪" },
+  { id: "cafe", name: "카페", icon: "coffee" },
+  { id: "pcroom", name: "PC방", icon: "gamepad2" },
+  { id: "restaurant", name: "식당", icon: "utensils" },
+  { id: "gym", name: "헬스장", icon: "dumbbell" },
+  { id: "office", name: "사무실", icon: "briefcase" },
+  { id: "warehouse", name: "창고재고", icon: "package" },
+  { id: "transfer", name: "사업양도", icon: "store" },
 ];
 
 const TRADE_TYPE_OPTIONS = [
@@ -55,11 +58,70 @@ export default function RegisterScreen() {
   const [location, setLocation] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedTradeType, setSelectedTradeType] = useState("direct");
+  const [images, setImages] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const MAX_IMAGES = 10;
+  const uploadImageMutation = trpc.upload.productImage.useMutation();
+
+  const handlePickImages = async () => {
+    if (images.length >= MAX_IMAGES) {
+      Alert.alert("업로드 제한", `이미지는 최대 ${MAX_IMAGES}장까지 등록할 수 있어요.`);
+      return;
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("권한 필요", "사진 접근 권한이 필요합니다.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_IMAGES - images.length,
+      base64: true,
+    });
+    if (result.canceled || result.assets.length === 0) return;
+
+    setIsUploadingImage(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const asset of result.assets) {
+        if (!asset.base64) continue;
+        try {
+          const uploadResult = await uploadImageMutation.mutateAsync({
+            base64: asset.base64,
+            mimeType: asset.mimeType ?? "image/jpeg",
+            fileName: asset.fileName ?? "photo.jpg",
+          });
+          uploadedUrls.push(uploadResult.url);
+        } catch {
+          // 개별 이미지 업로드 실패 시 건너뛰고 계속 진행
+        }
+      }
+      if (uploadedUrls.length < result.assets.length) {
+        Alert.alert("일부 실패", "일부 이미지 업로드에 실패했어요. 나머지만 등록됩니다.");
+      }
+      setImages((prev) => [...prev, ...uploadedUrls].slice(0, MAX_IMAGES));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const createMutation = trpc.products.create.useMutation({
     onSuccess: () => {
       Alert.alert("등록 완료", "상품이 성공적으로 등록되었습니다.", [
-        { text: "확인", onPress: () => { setMode("select"); router.push("/" as any); } },
+        { text: "확인", onPress: () => {
+          setTitle(""); setDescription(""); setPrice(""); setQuantity("1");
+          setLocation(""); setSelectedCategory(""); setSelectedTradeType("direct");
+          setImages([]);
+          setMode("select"); router.push("/" as any);
+        } },
       ]);
     },
     onError: (error) => {
@@ -126,6 +188,10 @@ export default function RegisterScreen() {
       Alert.alert("입력 오류", "업종을 선택해주세요.");
       return;
     }
+    if (images.length === 0) {
+      Alert.alert("입력 오류", "상품 이미지를 1장 이상 등록해주세요.");
+      return;
+    }
     createMutation.mutate({
       title: title.trim(),
       description: description.trim() || undefined,
@@ -134,6 +200,7 @@ export default function RegisterScreen() {
       category: selectedCategory as any,
       tradeType: selectedTradeType as any,
       location: location.trim() || undefined,
+      images,
     });
   };
 
@@ -168,11 +235,13 @@ export default function RegisterScreen() {
                 width: 56,
                 height: 56,
                 borderRadius: 16,
-                backgroundColor: colors.primary + "15",
+                backgroundColor: colors.primary + "10",
                 alignItems: "center",
                 justifyContent: "center",
+                borderWidth: 1,
+                borderColor: colors.primary,
               }}>
-                <Text style={{ fontSize: 28 }}>📦</Text>
+                <LucideIcon name="package" size={22} color={colors.primary} strokeWidth={1.5} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>물품 등록</Text>
@@ -193,7 +262,10 @@ export default function RegisterScreen() {
               <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
                 {isVerifiedSeller ? (
                   <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>✓ 판매회원 인증 완료</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <LucideIcon name="check" size={12} color={colors.success} strokeWidth={2} />
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>판매회원 인증 완료</Text>
+                  </View>
                   </View>
                 ) : isPendingSeller ? (
                   <View style={{ backgroundColor: colors.warning + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
@@ -227,11 +299,13 @@ export default function RegisterScreen() {
                 width: 56,
                 height: 56,
                 borderRadius: 16,
-                backgroundColor: "#8B5CF620",
+                backgroundColor: colors.primary + "12",
                 alignItems: "center",
                 justifyContent: "center",
+                borderWidth: 1,
+                borderColor: colors.primary,
               }}>
-                <Text style={{ fontSize: 28 }}>🏢</Text>
+                <LucideIcon name="building" size={22} color={colors.primary} strokeWidth={1.5} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>업체 등록</Text>
@@ -242,7 +316,7 @@ export default function RegisterScreen() {
             <View style={{ gap: 6 }}>
               {["철거·인테리어·폐기물 등 전문 업체", "포트폴리오 및 견적 관리", "업체회원 인증 후 이용 가능"].map((item, i) => (
                 <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#8B5CF6" }} />
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary }} />
                   <Text style={{ fontSize: 13, color: colors.muted }}>{item}</Text>
                 </View>
               ))}
@@ -251,7 +325,10 @@ export default function RegisterScreen() {
             {isAuthenticated && user?.role === "company" && (
               <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
                 <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>✓ 업체회원 인증 완료</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <LucideIcon name="check" size={12} color={colors.success} strokeWidth={2} />
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>업체회원 인증 완료</Text>
+                </View>
                 </View>
               </View>
             )}
@@ -303,34 +380,71 @@ export default function RegisterScreen() {
         {/* 이미지 업로드 */}
         <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 10 }}>
-            상품 이미지
+            상품 이미지 <Text style={{ color: colors.error }}>*</Text>
           </Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <Pressable
-              style={({ pressed }) => [{
-                width: 80, height: 80, borderRadius: 12,
-                backgroundColor: colors.surface, borderWidth: 1.5,
-                borderColor: colors.border, borderStyle: "dashed",
-                justifyContent: "center", alignItems: "center",
-                opacity: pressed ? 0.7 : 1,
-              }]}
-            >
-              <IconSymbol name="camera.fill" size={24} color={colors.muted} />
-              <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>대표 사진</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [{
-                width: 80, height: 80, borderRadius: 12,
-                backgroundColor: colors.surface, borderWidth: 1.5,
-                borderColor: colors.border, borderStyle: "dashed",
-                justifyContent: "center", alignItems: "center",
-                opacity: pressed ? 0.7 : 1,
-              }]}
-            >
-              <IconSymbol name="plus.circle.fill" size={24} color={colors.muted} />
-              <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>추가 (0/30)</Text>
-            </Pressable>
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {images.map((uri, index) => (
+                <View key={uri + index} style={{ width: 80, height: 80 }}>
+                  <Image
+                    source={{ uri }}
+                    style={{ width: 80, height: 80, borderRadius: 12, backgroundColor: colors.surface }}
+                  />
+                  {index === 0 && (
+                    <View
+                      style={{
+                        position: "absolute", bottom: 4, left: 4,
+                        backgroundColor: colors.primary, borderRadius: 4,
+                        paddingHorizontal: 5, paddingVertical: 2,
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, color: "#fff", fontWeight: "700" }}>대표</Text>
+                    </View>
+                  )}
+                  <Pressable
+                    onPress={() => handleRemoveImage(index)}
+                    hitSlop={8}
+                    style={{
+                      position: "absolute", top: -6, right: -6,
+                      width: 22, height: 22, borderRadius: 11,
+                      backgroundColor: "#00000099",
+                      justifyContent: "center", alignItems: "center",
+                    }}
+                  >
+                    <IconSymbol name="xmark" size={12} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+
+              {images.length < MAX_IMAGES && (
+                <Pressable
+                  onPress={handlePickImages}
+                  disabled={isUploadingImage}
+                  style={({ pressed }) => [{
+                    width: 80, height: 80, borderRadius: 12,
+                    backgroundColor: colors.surface, borderWidth: 1.5,
+                    borderColor: colors.border, borderStyle: "dashed",
+                    justifyContent: "center", alignItems: "center",
+                    opacity: pressed || isUploadingImage ? 0.7 : 1,
+                  }]}
+                >
+                  {isUploadingImage ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <>
+                      <IconSymbol name={images.length === 0 ? "camera.fill" : "plus.circle.fill"} size={24} color={colors.muted} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>
+                        {images.length === 0 ? "사진 등록" : `추가 (${images.length}/${MAX_IMAGES})`}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              )}
+            </View>
+          </ScrollView>
+          <Text style={{ fontSize: 11, color: colors.muted, marginTop: 8 }}>
+            첫 번째 사진이 대표 이미지로 사용됩니다. 최대 {MAX_IMAGES}장까지 등록 가능해요.
+          </Text>
         </View>
 
         {/* 제목 */}
@@ -371,7 +485,7 @@ export default function RegisterScreen() {
                 }]}
                 onPress={() => setSelectedCategory(cat.id)}
               >
-                <Text style={{ fontSize: 14 }}>{cat.emoji}</Text>
+                <LucideIcon name={cat.icon as any} size={13} color={selectedCategory === cat.id ? "#0E0E10" : colors.muted} strokeWidth={1.8} />
                 <Text style={{
                   fontSize: 13, fontWeight: "500",
                   color: selectedCategory === cat.id ? "#FFFFFF" : colors.foreground,

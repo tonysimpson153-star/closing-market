@@ -53,7 +53,7 @@ export default function KakaoLoginScreen() {
           </View>
 
           <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>📌 카카오 로그인 설정 방법</Text>
+            <Text style={styles.infoTitle}>카카오 로그인 설정 방법</Text>
             <Text style={styles.infoText}>
               1. 카카오 개발자 콘솔(developers.kakao.com)에서 앱 등록{"\n"}
               2. 플랫폼 설정에서 Android/iOS 번들 ID 등록{"\n"}

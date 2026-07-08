@@ -125,22 +125,32 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          {/* 비밀번호 찾기 링크 */}
+          <Pressable
+            style={({ pressed }) => [{ alignSelf: "flex-end", marginTop: 10, opacity: pressed ? 0.6 : 1 }]}
+            onPress={() => router.push("/auth/forgot-password" as any)}
+          >
+            <Text style={{ fontSize: 12.5, color: colors.muted }}>비밀번호를 잊으셨나요?</Text>
+          </Pressable>
+
           {/* 이메일 로그인 버튼 */}
           <Pressable
             style={({ pressed }) => [
               styles.loginBtn,
               {
-                backgroundColor: colors.primary,
-                opacity: pressed || loginMutation.isPending ? 0.85 : 1,
+                backgroundColor: "transparent",
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                opacity: pressed || loginMutation.isPending ? 0.7 : 1,
               },
             ]}
             onPress={handleLogin}
             disabled={loginMutation.isPending}
           >
             {loginMutation.isPending ? (
-              <ActivityIndicator color="#000000" size="small" />
+              <ActivityIndicator color={colors.primary} size="small" />
             ) : (
-              <Text style={styles.loginBtnText}>이메일로 로그인</Text>
+              <Text style={[styles.loginBtnText, { color: colors.primary }]}>이메일로 로그인</Text>
             )}
           </Pressable>
 

@@ -78,7 +78,11 @@ import {
   Store,
   Camera,
   Gift,
-} from "lucide-react";
+  Tag,
+  Handshake,
+  Megaphone,
+  Pin,
+} from "lucide-react-native";
 
 export type IconName =
   | "mail"
@@ -158,14 +162,18 @@ export type IconName =
   | "dumbbell"
   | "store"
   | "camera"
-  | "gift";
+  | "gift"
+  | "waves"
+  | "tag"
+  | "handshake"
+  | "megaphone"
+  | "pin";
 
 interface IconProps {
   name: IconName;
   size?: number;
   color?: string;
   strokeWidth?: number;
-  className?: string;
 }
 
 const iconMap: Record<IconName, React.ComponentType<any>> = {
@@ -247,14 +255,18 @@ const iconMap: Record<IconName, React.ComponentType<any>> = {
   "store": Store,
   "camera": Camera,
   "gift": Gift,
+  "waves": Waves,
+  "tag": Tag,
+  "handshake": Handshake,
+  "megaphone": Megaphone,
+  "pin": Pin,
 };
 
 export function LucideIcon({
   name,
   size = 24,
-  color = "currentColor",
+  color = "#000000",
   strokeWidth = 2,
-  className = "",
 }: IconProps) {
   const IconComponent = iconMap[name];
 
@@ -268,7 +280,6 @@ export function LucideIcon({
       size={size}
       color={color}
       strokeWidth={strokeWidth}
-      className={className}
     />
   );
 }

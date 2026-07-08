@@ -1,7 +1,8 @@
-import { ScrollView, Text, View, Pressable, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, Linking, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 
@@ -18,15 +19,15 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 };
 
 const BUSINESS_TYPE_ICONS: Record<string, string> = {
-  demolition: "🚧",
+  demolition: "hammer",
   interior: "palette",
   waste: "recycle",
-  sign: "🪧",
-  pos: "🖥️",
-  cctv: "📹",
-  cleaning: "🧹",
-  tax: "📋",
-  labor: "⚖️",
+  sign: "signpost",
+  pos: "monitor",
+  cctv: "camera",
+  cleaning: "waves",
+  tax: "file",
+  labor: "scale",
 };
 
 export default function BusinessDetailScreen() {
@@ -50,7 +51,7 @@ export default function BusinessDetailScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
+          <LucideIcon name="alert-circle" size={36} color="#93908A" strokeWidth={1.5} />
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>
             업체를 찾을 수 없습니다.
           </Text>
@@ -94,7 +95,7 @@ export default function BusinessDetailScreen() {
               borderColor: colors.border,
             }}
           >
-            <Text style={{ fontSize: 36 }}>{BUSINESS_TYPE_ICONS[business.type] ?? "🏢"}</Text>
+            <LucideIcon name={(BUSINESS_TYPE_ICONS[business.type] ?? "building") as any} size={28} color={colors.primary} strokeWidth={1.5} />
           </View>
           <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, marginBottom: 4 }}>
             {business.name}
@@ -184,8 +185,16 @@ export default function BusinessDetailScreen() {
                 opacity: pressed ? 0.8 : 1,
               },
             ]}
+            onPress={() => {
+              Linking.openURL(`tel:${business.phone}`).catch(() =>
+                Alert.alert("오류", "전화 앱을 열 수 없습니다.")
+              );
+            }}
           >
-            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>📞 전화하기</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <LucideIcon name="phone" size={15} color={colors.foreground} strokeWidth={1.8} />
+              <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>전화하기</Text>
+            </View>
           </Pressable>
         ) : null}
         <Pressable
@@ -200,8 +209,20 @@ export default function BusinessDetailScreen() {
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
           ]}
+          onPress={() => {
+            if (business.phone) {
+              Linking.openURL(`tel:${business.phone}`).catch(() =>
+                Alert.alert("오류", "연락처 정보가 없습니다.")
+              );
+            } else {
+              Alert.alert("안내", "등록된 연락처가 없습니다.");
+            }
+          }}
         >
-          <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>message-circle 문의하기</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <LucideIcon name="message" size={15} color="#0E0E10" strokeWidth={1.8} />
+            <Text style={{ fontSize: 15, fontWeight: "700", color: "#0E0E10" }}>문의하기</Text>
+          </View>
         </Pressable>
       </View>
     </ScreenContainer>

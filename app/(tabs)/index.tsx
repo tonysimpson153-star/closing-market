@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Pressable, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -20,24 +20,28 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
   demolition: "철거업체",
   interior: "인테리어업체",
   waste: "폐기물처리업체",
-  sign: "간판업체",
-  pos: "POS업체",
-  cctv: "CCTV업체",
-  cleaning: "청소업체",
-  tax: "세무사",
-  labor: "노무사",
+  signage: "간판·사인업체",
+  pos: "POS·키오스크업체",
+  cctv: "CCTV·보안업체",
+  cleaning: "청소·방역업체",
+  tax: "전문 상담 (세무사)",
+  labor: "전문 상담 (노무사)",
+  kitchen: "주방기기업체",
+  consulting: "창업 컨설팅",
 };
 
 const BUSINESS_TYPE_ICONS: Record<string, string> = {
   demolition: "hammer",
   interior: "palette",
   waste: "recycle",
-  sign: "signpost",
+  signage: "signpost",
   pos: "monitor",
   cctv: "camera",
   cleaning: "waves",
   tax: "file",
   labor: "scale",
+  kitchen: "utensils",
+  consulting: "trending-up",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -63,7 +67,7 @@ export default function HomeScreen() {
     limit: 10,
   });
 
-  const { data: businesses, isLoading: bizLoading } = trpc.businesses.list.useQuery({});
+  const { data: businesses, isLoading: bizLoading } = trpc.companies.list.useQuery({});
 
   return (
     <ScreenContainer className="bg-background">
@@ -79,8 +83,8 @@ export default function HomeScreen() {
           borderBottomColor: colors.border,
         }}
       >
-        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.primary, letterSpacing: 1 }}>
-          CLOSING
+        <Text style={{ fontSize: 20, fontWeight: "700", color: colors.primary, letterSpacing: 2 }}>
+          클로징마켓
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
           <Pressable
@@ -112,7 +116,7 @@ export default function HomeScreen() {
             {CATEGORIES.map((cat) => (
               <Pressable
                 key={cat.id}
-                onPress={() => router.push(`/products?category=${cat.id}` as any)}
+                onPress={() => router.push(`/(tabs)/category?category=${cat.id}` as any)}
                 style={({ pressed }) => [
                   {
                     alignItems: "center",
@@ -169,7 +173,7 @@ export default function HomeScreen() {
                 borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 48, marginBottom: 12 }}>📦</Text>
+              <LucideIcon name="package" size={36} color={colors.muted} strokeWidth={1.5} />
               <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
                 아직 등록된 물품이 없습니다
               </Text>
@@ -200,9 +204,14 @@ export default function HomeScreen() {
                       backgroundColor: colors.border,
                       justifyContent: "center",
                       alignItems: "center",
+                      overflow: "hidden",
                     }}
                   >
-                    <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
+                    {product.mainImageUrl ? (
+                      <Image source={{ uri: product.mainImageUrl }} style={{ width: "100%", height: 120 }} resizeMode="cover" />
+                    ) : (
+                      <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
+                    )}
                   </View>
                   <View style={{ padding: 12 }}>
                     <Text
@@ -215,9 +224,10 @@ export default function HomeScreen() {
                       {formatPrice(product.price)}
                     </Text>
                     {product.location ? (
-                      <Text style={{ fontSize: 11, color: colors.muted }}>
-                        📍 {product.location}
-                      </Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                        <LucideIcon name="map-pin" size={10} color={colors.muted} />
+                        <Text style={{ fontSize: 11, color: colors.muted }}>{product.location}</Text>
+                      </View>
                     ) : null}
                   </View>
                 </Pressable>
@@ -232,7 +242,7 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, letterSpacing: 0.5 }}>
               추천 업체
             </Text>
-            <Pressable onPress={() => router.push("/search" as any)}>
+            <Pressable onPress={() => router.push("/(tabs)/companies" as any)}>
               <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "600" }}>더보기 →</Text>
             </Pressable>
           </View>
@@ -270,7 +280,7 @@ export default function HomeScreen() {
                     borderColor: colors.border,
                   },
                 ]}
-                onPress={() => router.push(`/business/${biz.id}`)}
+                onPress={() => router.push(`/company/${biz.id}` as any)}
               >
                 <View
                   style={{
@@ -285,7 +295,11 @@ export default function HomeScreen() {
                     borderColor: colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 24 }}>{BUSINESS_TYPE_ICONS[biz.type] ?? "🏢"}</Text>
+                  <LucideIcon
+                    name={(BUSINESS_TYPE_ICONS[biz.type] ?? "building") as any}
+                    size={22}
+                    color={colors.primary}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground }}>
@@ -332,7 +346,7 @@ export default function HomeScreen() {
                 borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 48, marginBottom: 12 }}>📋</Text>
+              <LucideIcon name="file" size={36} color={colors.muted} strokeWidth={1.5} />
               <Text style={{ fontSize: 15, fontWeight: "500", color: colors.foreground }}>
                 등록된 물품이 없습니다
               </Text>
@@ -364,7 +378,11 @@ export default function HomeScreen() {
                     alignItems: "center",
                   }}
                 >
-                  <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
+                  {product.mainImageUrl ? (
+                    <Image source={{ uri: product.mainImageUrl }} style={{ width: 100, height: 100 }} resizeMode="cover" />
+                  ) : (
+                    <LucideIcon name={(CATEGORIES.find((c) => c.id === product.category)?.icon ?? "package") as any} size={32} color={colors.primary} />
+                  )}
                 </View>
                 <View style={{ flex: 1, padding: 14 }}>
                   <Text
@@ -378,7 +396,10 @@ export default function HomeScreen() {
                   </Text>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     {product.location ? (
-                      <Text style={{ fontSize: 11, color: colors.muted }}>📍 {product.location}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                        <LucideIcon name="map-pin" size={10} color={colors.muted} />
+                        <Text style={{ fontSize: 11, color: colors.muted }}>{product.location}</Text>
+                      </View>
                     ) : null}
                     <Text style={{ fontSize: 11, color: colors.muted }}>
                       {CATEGORY_LABELS[product.category]}

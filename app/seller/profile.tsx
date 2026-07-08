@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -37,7 +38,7 @@ function ReviewCard({ item }: { item: any }) {
     <View style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
         <View style={[styles.reviewAvatar, { backgroundColor: colors.primary + "20" }]}>
-          <Text style={{ fontSize: 18 }}>👤</Text>
+          <LucideIcon name="user" size={16} color={colors.primary} strokeWidth={1.5} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>
@@ -108,7 +109,7 @@ export default function SellerProfileScreen() {
               {/* 판매자 정보 카드 */}
               <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={[styles.bigAvatar, { backgroundColor: colors.primary + "20" }]}>
-                  <Text style={{ fontSize: 40 }}>👤</Text>
+                  <LucideIcon name="user" size={32} color={colors.primary} strokeWidth={1.5} />
                 </View>
                 <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, marginTop: 12 }}>
                   {userName ?? "판매자"}
@@ -171,8 +172,8 @@ export default function SellerProfileScreen() {
           )}
           ListEmptyComponent={
             <View style={{ alignItems: "center", paddingVertical: 48 }}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>📭</Text>
-              <Text style={{ fontSize: 15, color: colors.muted }}>아직 거래 후기가 없습니다.</Text>
+              <LucideIcon name="file" size={30} color={colors.muted} strokeWidth={1.5} />
+              <Text style={{ fontSize: 15, color: colors.muted, marginTop: 12 }}>아직 거래 후기가 없습니다.</Text>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 32 }}

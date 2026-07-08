@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 
 interface NotifSettings {
   chatNotification: boolean;
@@ -70,19 +71,19 @@ export default function NotificationSettingsScreen() {
       key: "priceDropNotification" as const,
       label: "찜 가격 변동 알림",
       desc: "찜한 상품의 가격이 변경되면 알림을 받습니다.",
-      emoji: "💰",
+      emoji: "dollar",
     },
     {
       key: "tradeNotification" as const,
       label: "거래 알림",
       desc: "거래 상태 변경(예약, 완료 등) 시 알림을 받습니다.",
-      emoji: "🤝",
+      emoji: "handshake",
     },
     {
       key: "marketingNotification" as const,
       label: "마케팅 알림",
       desc: "이벤트, 프로모션 등 마케팅 정보를 받습니다.",
-      emoji: "📢",
+      emoji: "megaphone",
     },
   ];
 
@@ -114,7 +115,7 @@ export default function NotificationSettingsScreen() {
               >
                 <View style={styles.rowLeft}>
                   <View style={[styles.emojiBox, { backgroundColor: colors.primary + "15" }]}>
-                    <Text style={styles.emoji}>{item.emoji}</Text>
+                    <LucideIcon name={item.emoji as any} size={18} color={colors.primary} strokeWidth={1.5} />
                   </View>
                   <View style={styles.rowText}>
                     <Text style={[styles.rowLabel, { color: colors.foreground }]}>{item.label}</Text>

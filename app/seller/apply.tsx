@@ -29,7 +29,7 @@ const SELLER_TYPES = [
     id: "closed" as const,
     label: "폐업 완료",
     desc: "이미 폐업한 사업자",
-    icon: "🔒",
+    icon: "lock",
   },
   {
     id: "relocating" as const,
@@ -41,13 +41,13 @@ const SELLER_TYPES = [
     id: "inventory" as const,
     label: "재고 정리",
     desc: "잉여 재고를 처분하려는 사업자",
-    icon: "📦",
+    icon: "package",
   },
   {
     id: "transfer" as const,
     label: "사업 양도",
     desc: "사업 전체를 양도하려는 사업자",
-    icon: "🤝",
+    icon: "handshake",
   },
 ];
 
@@ -88,6 +88,8 @@ export default function SellerApplyScreen() {
     return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5, 10)}`;
   };
 
+  const uploadDocMutation = trpc.upload.sellerDocument.useMutation();
+
   const uploadImage = async (type: "cert" | "photo") => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -99,20 +101,32 @@ export default function SellerApplyScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
+      base64: true,
     });
 
     if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    if (!asset.base64) {
+      Alert.alert("업로드 실패", "이미지를 읽을 수 없습니다. 다시 시도해주세요.");
+      return;
+    }
 
-    if (type === "cert") {
-      setUploadingCert(true);
-      // 실제 환경에서는 서버 스토리지에 업로드 후 URL 저장
-      // 현재는 로컬 URI를 임시로 사용
-      setBusinessCertUrl(result.assets[0].uri);
-      setUploadingCert(false);
-    } else {
-      setUploadingPhoto(true);
-      setBusinessPhotoUrl(result.assets[0].uri);
-      setUploadingPhoto(false);
+    const setUploading = type === "cert" ? setUploadingCert : setUploadingPhoto;
+    const setUrl = type === "cert" ? setBusinessCertUrl : setBusinessPhotoUrl;
+
+    setUploading(true);
+    try {
+      const uploaded = await uploadDocMutation.mutateAsync({
+        base64: asset.base64,
+        mimeType: asset.mimeType ?? "image/jpeg",
+        fileName: asset.fileName ?? "photo.jpg",
+        docType: type,
+      });
+      setUrl(uploaded.url);
+    } catch (err: any) {
+      Alert.alert("업로드 실패", err?.message ?? "이미지 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -139,25 +153,17 @@ export default function SellerApplyScreen() {
       }
       setStep(3);
     } else if (step === 3) {
-      // 사업자등록증은 선택 사항
-      const certUrl = businessCertUrl
-        ? businessCertUrl.startsWith("http")
-          ? businessCertUrl
-          : `https://placeholder.example.com/cert/${Date.now()}`
-        : undefined;
-      const photoUrl = businessPhotoUrl
-        ? businessPhotoUrl.startsWith("http")
-          ? businessPhotoUrl
-          : `https://placeholder.example.com/photo/${Date.now()}`
-        : undefined;
-
+      if (!businessCertUrl) {
+        Alert.alert("입력 오류", "사업자등록증 사진을 업로드해주세요.");
+        return;
+      }
       applyMutation.mutate({
         sellerType: sellerType!,
         businessNumber: businessNumber.replace(/\D/g, ""),
         businessName: businessName.trim(),
         representativeName: representativeName.trim(),
-        businessCertUrl: certUrl,
-        businessPhotoUrl: photoUrl,
+        businessCertUrl,
+        businessPhotoUrl: businessPhotoUrl || undefined,
       });
     }
   };
@@ -339,7 +345,7 @@ export default function SellerApplyScreen() {
                   ]}
                   onPress={() => setSellerType(type.id)}
                 >
-                  <Text style={s.typeEmoji}>{type.icon}</Text>
+                  <LucideIcon name={type.icon as any} size={24} color={sellerType === type.id ? colors.primary : colors.muted} strokeWidth={1.5} />
                   <View style={{ flex: 1 }}>
                     <Text style={[s.typeLabel, { color: selected ? colors.primary : colors.foreground }]}>
                       {type.label}
@@ -478,7 +484,7 @@ export default function SellerApplyScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 32 }}>🏪</Text>
+                  <LucideIcon name="store" size={28} color={colors.muted} strokeWidth={1.5} />
                   <Text style={[s.uploadLabel, { color: colors.muted }]}>사업장 사진 업로드</Text>
                   <Text style={[s.uploadSub, { color: colors.muted }]}>선택 사항입니다</Text>
                 </>
@@ -492,7 +498,7 @@ export default function SellerApplyScreen() {
       <Pressable
         style={({ pressed }) => [s.nextBtn, { opacity: pressed ? 0.85 : 1 }]}
         onPress={handleNext}
-        disabled={applyMutation.isPending}
+        disabled={applyMutation.isPending || uploadingCert || uploadingPhoto}
       >
         {applyMutation.isPending ? (
           <ActivityIndicator color="#fff" />

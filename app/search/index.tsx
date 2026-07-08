@@ -1,8 +1,9 @@
-import { ScrollView, Text, View, Pressable, TextInput, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Pressable, TextInput, ActivityIndicator, Image } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 
@@ -16,9 +17,9 @@ const CATEGORIES = [
   { id: "transfer", name: "사업양도" },
 ];
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  cafe: "☕", pcroom: "🎮", restaurant: "🍽️", gym: "🏋️",
-  office: "🏢", warehouse: "📦", transfer: "🏪",
+const CATEGORY_ICONS: Record<string, string> = {
+  cafe: "coffee", pcroom: "gamepad2", restaurant: "utensils", gym: "dumbbell",
+  office: "briefcase", warehouse: "package", transfer: "store",
 };
 
 function formatPrice(price: number) {
@@ -129,8 +130,8 @@ export default function SearchScreen() {
           </View>
         ) : !products || products.length === 0 ? (
           <View style={{ padding: 48, alignItems: "center" }}>
-            <Text style={{ fontSize: 44, marginBottom: 12 }}>🔍</Text>
-            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
+            <LucideIcon name="search" size={36} color={colors.muted} strokeWidth={1.5} />
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 16, marginBottom: 4 }}>
               검색 결과가 없습니다.
             </Text>
             <Text style={{ fontSize: 13, color: colors.muted, textAlign: "center" }}>
@@ -168,7 +169,11 @@ export default function SearchScreen() {
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ fontSize: 32 }}>{CATEGORY_EMOJIS[product.category] ?? "📦"}</Text>
+                  {product.mainImageUrl ? (
+                    <Image source={{ uri: product.mainImageUrl }} style={{ width: 90, height: 90 }} resizeMode="cover" />
+                  ) : (
+                    <LucideIcon name={(CATEGORY_ICONS[product.category] ?? "package") as any} size={26} color={colors.primary} strokeWidth={1.5} />
+                  )}
                 </View>
                 <View style={{ flex: 1, padding: 12 }}>
                   <Text
@@ -181,7 +186,10 @@ export default function SearchScreen() {
                     {formatPrice(product.price)}
                   </Text>
                   {product.location ? (
-                    <Text style={{ fontSize: 11, color: colors.muted }}>📍 {product.location}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                      <LucideIcon name="map-pin" size={10} color={colors.muted} />
+                      <Text style={{ fontSize: 11, color: colors.muted }}>{product.location}</Text>
+                    </View>
                   ) : null}
                 </View>
               </Pressable>

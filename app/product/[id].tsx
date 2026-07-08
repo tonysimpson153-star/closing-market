@@ -6,10 +6,14 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Image,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
@@ -42,14 +46,14 @@ const STATUS_COLORS: Record<string, string> = {
   sold: "#808080",
 };
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  cafe: "☕",
-  pcroom: "🎮",
-  restaurant: "🍽️",
-  gym: "🏋️",
-  office: "🏢",
-  warehouse: "📦",
-  transfer: "🏪",
+const CATEGORY_ICONS: Record<string, string> = {
+  cafe: "coffee",
+  pcroom: "gamepad2",
+  restaurant: "utensils",
+  gym: "dumbbell",
+  office: "briefcase",
+  warehouse: "package",
+  transfer: "store",
 };
 
 function formatPrice(price: number) {
@@ -62,8 +66,20 @@ export default function ProductDetailScreen() {
   const colors = useColors();
   const { user, token } = useAuthStore();
   const isAuthenticated = !!token;
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const screenWidth = Dimensions.get("window").width;
 
   const { data: product, isLoading } = trpc.products.detail.useQuery({ id: Number(id) });
+
+  // 최근 본 상품 기록
+  const trackViewMutation = trpc.recentViews.track.useMutation();
+  useEffect(() => {
+    if (isAuthenticated && product?.id) {
+      trackViewMutation.mutate({ productId: product.id });
+    }
+    // product?.id만 의존성으로 두어 같은 상품 재조회 시 중복 호출 방지
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, product?.id]);
 
   // 찜하기
   const favMutation = trpc.favorites.toggle.useMutation({
@@ -130,7 +146,7 @@ export default function ProductDetailScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
+          <LucideIcon name="alert-circle" size={36} color={colors.muted} strokeWidth={1.5} />
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>
             상품을 찾을 수 없습니다
           </Text>
@@ -161,6 +177,21 @@ export default function ProductDetailScreen() {
           상품 상세
         </Text>
         <Pressable
+          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 16 }]}
+          onPress={() => {
+            Alert.alert("상품 옵션", undefined, [
+              {
+                text: "신고하기",
+                style: "destructive",
+                onPress: () => router.push(`/report?targetType=product&targetId=${product.id}` as any),
+              },
+              { text: "취소", style: "cancel" },
+            ]);
+          }}
+        >
+          <IconSymbol name="ellipsis" size={22} color={colors.foreground} />
+        </Pressable>
+        <Pressable
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           onPress={handleFavorite}
         >
@@ -169,9 +200,50 @@ export default function ProductDetailScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 이미지 영역 - 고급스러운 배경 */}
-        <View style={[styles.imageArea, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-          <Text style={{ fontSize: 96 }}>{CATEGORY_EMOJIS[product.category] ?? "📦"}</Text>
+        {/* 이미지 영역 */}
+        <View style={[styles.imageArea, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, padding: 0 }]}>
+          {product.images && product.images.length > 0 ? (
+            <>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(e) => {
+                  const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+                  setGalleryIndex(idx);
+                }}
+              >
+                {product.images.map((img: any) => (
+                  <Image
+                    key={img.id}
+                    source={{ uri: img.imageUrl }}
+                    style={{ width: screenWidth, height: 280 }}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
+              {product.images.length > 1 && (
+                <View style={{
+                  position: "absolute", bottom: 12, alignSelf: "center",
+                  flexDirection: "row", gap: 6,
+                }}>
+                  {product.images.map((img: any, i: number) => (
+                    <View
+                      key={img.id}
+                      style={{
+                        width: i === galleryIndex ? 16 : 6, height: 6, borderRadius: 3,
+                        backgroundColor: i === galleryIndex ? "#fff" : "#ffffff80",
+                      }}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={{ width: "100%", height: 280, justifyContent: "center", alignItems: "center" }}>
+              <LucideIcon name={(CATEGORY_ICONS[product.category] ?? "package") as any} size={64} color={colors.muted} strokeWidth={1} />
+            </View>
+          )}
         </View>
 
         {/* 상품 정보 */}
@@ -249,8 +321,8 @@ export default function ProductDetailScreen() {
               })
             }
           >
-            <View style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: colors.primary + "20", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.primary }}>
-              <Text style={{ fontSize: 28 }}>👤</Text>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary + "12", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.primary }}>
+              <LucideIcon name="user" size={22} color={colors.primary} strokeWidth={1.5} />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -258,8 +330,9 @@ export default function ProductDetailScreen() {
                   {product.sellerName ?? "판매자"}
                 </Text>
                 {product.isSellerVerified && (
-                  <View style={{ backgroundColor: colors.primary + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: colors.primary }}>
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>✓ 인증판매자</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary + "12", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: colors.primary }}>
+                    <LucideIcon name="check" size={11} color={colors.primary} strokeWidth={2} />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary, letterSpacing: 0.2 }}>인증판매자</Text>
                   </View>
                 )}
               </View>

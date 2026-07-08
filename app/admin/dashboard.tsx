@@ -22,7 +22,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
 
-type TabType = "overview" | "products" | "sellers" | "companies" | "reports" | "users" | "notices";
+type TabType = "overview" | "products" | "sellers" | "companies" | "reports" | "users" | "notices" | "inquiries";
 
 export default function AdminDashboard() {
   const colors = useColors();
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
         style={[styles.tabBar, { borderBottomColor: colors.border }]}
         contentContainerStyle={{ paddingHorizontal: 16 }}
       >
-        {(["overview", "products", "sellers", "companies", "reports", "users", "notices"] as TabType[]).map((tab) => {
+        {(["overview", "products", "sellers", "companies", "reports", "users", "notices", "inquiries"] as TabType[]).map((tab) => {
           const getTabIcon = (tab: TabType) => {
             const iconMap: Record<TabType, string> = {
               overview: "bar-chart",
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
               reports: "alert-triangle",
               users: "users",
               notices: "bell",
+              inquiries: "message",
             };
             return iconMap[tab];
           };
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
             reports: "신고",
             users: "회원",
             notices: "공지",
+            inquiries: "문의",
           };
           const isActive = activeTab === tab;
           return (
@@ -123,6 +125,7 @@ export default function AdminDashboard() {
       {activeTab === "companies" && <CompanyApplicationsTab colors={colors} />}
       {activeTab === "reports" && <ReportsTab colors={colors} />}
       {activeTab === "users" && <UsersTab colors={colors} />}
+      {activeTab === "inquiries" && <InquiriesTab colors={colors} />}
       {activeTab === "notices" && (
         <NoticesTab
           colors={colors}
@@ -144,7 +147,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
   const { data: stats, isLoading, refetch } = trpc.admin.stats.useQuery();
 
   const statCards = [
-    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "users", color: "#3B82F6" },
+    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "users", color: colors.primary },
     { label: "전체 상품", value: stats?.totalProducts ?? 0, icon: "package", color: "#10B981" },
     { label: "전체 신고", value: stats?.totalReports ?? 0, icon: "alert-triangle", color: "#EF4444" },
     { label: "미처리 신고", value: stats?.pendingReports ?? 0, icon: "alert-circle", color: "#F59E0B" },
@@ -157,7 +160,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
     >
       {/* 플랫폼 현황 */}
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>bar-chart 플랫폼 현황</Text>
+      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>플랫폼 현황</Text>
 
       <View style={styles.statsGrid}>
         {statCards.map((card) => (
@@ -291,6 +294,117 @@ function ProductsTab({ colors }: { colors: any }) {
 
 // ─── 신고 관리 탭 ─────────────────────────────────────────────
 
+function InquiriesTab({ colors }: { colors: any }) {
+  const { data: inquiries, isLoading, refetch } = trpc.admin.allInquiries.useQuery();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [answerText, setAnswerText] = useState("");
+
+  const answerMutation = trpc.admin.answerInquiry.useMutation({
+    onSuccess: () => {
+      Alert.alert("완료", "답변이 등록되었습니다.");
+      setExpandedId(null);
+      setAnswerText("");
+      refetch();
+    },
+    onError: (e: any) => Alert.alert("오류", e.message),
+  });
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    account: "계정", product: "상품", payment: "결제", report: "신고",
+    seller: "판매회원", company: "업체회원", etc: "기타",
+  };
+
+  if (isLoading) {
+    return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
+  }
+
+  return (
+    <FlatList
+      data={inquiries ?? []}
+      keyExtractor={(item: any) => String(item.id)}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+      ListEmptyComponent={
+        <View style={styles.center}>
+          <LucideIcon name="message" size={40} color={colors.primary} />
+          <Text style={[styles.emptyTitle, { color: colors.muted }]}>문의 내역이 없습니다.</Text>
+        </View>
+      }
+      renderItem={({ item }: { item: any }) => {
+        const expanded = expandedId === item.id;
+        return (
+          <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <View style={[styles.badge, { backgroundColor: colors.border }]}>
+                <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>
+                  {CATEGORY_LABELS[item.category] ?? "기타"}
+                </Text>
+              </View>
+              <View style={[styles.badge, { backgroundColor: (item.status === "answered" ? colors.primary : "#F59E0B") + "20" }]}>
+                <Text style={{ fontSize: 10, fontWeight: "700", color: item.status === "answered" ? colors.primary : "#F59E0B" }}>
+                  {item.status === "answered" ? "답변완료" : "답변대기"}
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 6 }}>
+              {item.title}
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 10 }}>{item.content}</Text>
+
+            {item.status === "answered" ? (
+              <View style={{ backgroundColor: colors.primary + "08", borderRadius: 8, padding: 10, borderWidth: 1, borderColor: colors.primary }}>
+                <Text style={{ fontSize: 12, color: colors.foreground }}>{item.answerContent}</Text>
+              </View>
+            ) : expanded ? (
+              <View>
+                <TextInput
+                  value={answerText}
+                  onChangeText={setAnswerText}
+                  placeholder="답변을 입력하세요"
+                  placeholderTextColor={colors.muted}
+                  multiline
+                  style={{
+                    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+                    padding: 10, minHeight: 80, color: colors.foreground,
+                    backgroundColor: colors.background, fontSize: 13, marginBottom: 8,
+                  }}
+                />
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <Pressable
+                    style={{ flex: 1, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
+                    onPress={() => {
+                      if (!answerText.trim()) {
+                        Alert.alert("입력 필요", "답변 내용을 입력해주세요.");
+                        return;
+                      }
+                      answerMutation.mutate({ inquiryId: item.id, answerContent: answerText.trim() });
+                    }}
+                  >
+                    <Text style={{ color: "#222222", fontWeight: "700", fontSize: 13 }}>답변 등록</Text>
+                  </Pressable>
+                  <Pressable
+                    style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}
+                    onPress={() => { setExpandedId(null); setAnswerText(""); }}
+                  >
+                    <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 13 }}>취소</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                style={{ alignSelf: "flex-start", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: colors.primary + "15" }}
+                onPress={() => { setExpandedId(item.id); setAnswerText(""); }}
+              >
+                <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 12 }}>답변하기</Text>
+              </Pressable>
+            )}
+          </View>
+        );
+      }}
+    />
+  );
+}
+
 function ReportsTab({ colors }: { colors: any }) {
   const { data: reports, isLoading, refetch } = trpc.admin.allReports.useQuery();
   const resolveMutation = trpc.admin.resolveReport.useMutation({
@@ -391,6 +505,43 @@ function ReportsTab({ colors }: { colors: any }) {
 function UsersTab({ colors }: { colors: any }) {
   const { data: users, isLoading, refetch } = trpc.admin.allUsers.useQuery();
 
+  const suspendMutation = trpc.admin.suspendUser.useMutation({
+    onSuccess: () => refetch(),
+    onError: (err) => Alert.alert("처리 실패", err.message),
+  });
+  const reactivateMutation = trpc.admin.reactivateUser.useMutation({
+    onSuccess: () => refetch(),
+    onError: (err) => Alert.alert("처리 실패", err.message),
+  });
+
+  const handleSuspend = (userId: number, name: string) => {
+    Alert.prompt
+      ? Alert.prompt(
+          "회원 정지",
+          `${name} 님을 정지하시겠습니까? 정지 사유를 입력해주세요. (선택)`,
+          [
+            { text: "취소", style: "cancel" },
+            {
+              text: "정지",
+              style: "destructive",
+              onPress: (reason?: string) => suspendMutation.mutate({ userId, reason: reason || undefined }),
+            },
+          ],
+          "plain-text"
+        )
+      : Alert.alert("회원 정지", `${name} 님을 정지하시겠습니까?`, [
+          { text: "취소", style: "cancel" },
+          { text: "정지", style: "destructive", onPress: () => suspendMutation.mutate({ userId }) },
+        ]);
+  };
+
+  const handleReactivate = (userId: number, name: string) => {
+    Alert.alert("정지 해제", `${name} 님의 정지를 해제하시겠습니까?`, [
+      { text: "취소", style: "cancel" },
+      { text: "해제", onPress: () => reactivateMutation.mutate({ userId }) },
+    ]);
+  };
+
   const SELLER_STATUS: Record<string, { label: string; color: string }> = {
     pending: { label: "심사중", color: "#F59E0B" },
     approved: { label: "인증완료", color: "#10B981" },
@@ -415,6 +566,8 @@ function UsersTab({ colors }: { colors: any }) {
       }
       renderItem={({ item }: { item: any }) => {
         const sellerInfo = item.sellerStatus ? SELLER_STATUS[item.sellerStatus] : null;
+        const isSuspended = !!item.suspendedAt;
+        const isDeleted = !!item.deletedAt;
         return (
           <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.listCardRow}>
@@ -422,13 +575,13 @@ function UsersTab({ colors }: { colors: any }) {
                 <IconSymbol name="person.fill" size={20} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <Text style={[styles.listCardTitle, { color: colors.foreground }]}>
                     {item.name ?? "이름 없음"}
                   </Text>
                   {item.role === "admin" && (
-                    <View style={[styles.badge, { backgroundColor: "#3B82F620" }]}>
-                      <Text style={{ color: "#3B82F6", fontSize: 10, fontWeight: "600" }}>관리자</Text>
+                    <View style={[styles.badge, { backgroundColor: colors.primary + "15" }]}>
+                      <Text style={{ color: colors.primary, fontSize: 10, fontWeight: "600" }}>관리자</Text>
                     </View>
                   )}
                   {sellerInfo && item.isVerified && (
@@ -436,6 +589,16 @@ function UsersTab({ colors }: { colors: any }) {
                       <Text style={{ color: sellerInfo.color, fontSize: 10, fontWeight: "600" }}>
                         {sellerInfo.label}
                       </Text>
+                    </View>
+                  )}
+                  {isDeleted && (
+                    <View style={[styles.badge, { backgroundColor: "#6B728020" }]}>
+                      <Text style={{ color: "#6B7280", fontSize: 10, fontWeight: "600" }}>탈퇴</Text>
+                    </View>
+                  )}
+                  {isSuspended && (
+                    <View style={[styles.badge, { backgroundColor: "#EF444420" }]}>
+                      <Text style={{ color: "#EF4444", fontSize: 10, fontWeight: "600" }}>정지됨</Text>
                     </View>
                   )}
                 </View>
@@ -450,8 +613,31 @@ function UsersTab({ colors }: { colors: any }) {
                         : "일반회원"}{" "}
                   · {new Date(item.createdAt).toLocaleDateString("ko-KR")}
                 </Text>
+                {isSuspended && item.suspendedReason && (
+                  <Text style={{ color: "#EF4444", fontSize: 11, marginTop: 2 }}>사유: {item.suspendedReason}</Text>
+                )}
               </View>
             </View>
+
+            {!isDeleted && item.role !== "admin" && (
+              <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10, gap: 8 }}>
+                {isSuspended ? (
+                  <TouchableOpacity
+                    style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: colors.primary + "15" }}
+                    onPress={() => handleReactivate(item.id, item.name ?? "회원")}
+                  >
+                    <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>정지 해제</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: "#EF444415" }}
+                    onPress={() => handleSuspend(item.id, item.name ?? "회원")}
+                  >
+                    <Text style={{ color: "#EF4444", fontSize: 12, fontWeight: "700" }}>정지</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
         );
       }}
@@ -591,11 +777,14 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
     demolition: "철거업체",
     interior: "인테리어업체",
     waste: "폐기물처리업체",
-    signage: "간판업체",
-    pos: "POS업체",
-    cleaning: "청소업체",
-    tax: "세무사",
-    labor: "노무사",
+    signage: "간판·사인업체",
+    pos: "POS·키오스크업체",
+    cctv: "CCTV·보안업체",
+    kitchen: "주방기기업체",
+    cleaning: "청소·방역업체",
+    tax: "전문 상담 (세무사)",
+    labor: "전문 상담 (노무사)",
+    consulting: "창업 컨설팅",
   };
 
   const handleReview = (id: number, action: "approve" | "reject") => {
@@ -740,7 +929,7 @@ function NoticesTab({
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       {/* 작성 폼 */}
       <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>bell 공지사항 작성</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>공지사항 작성</Text>
         <TextInput
           style={[
             styles.input,
@@ -784,9 +973,12 @@ function NoticesTab({
           ]}
           onPress={() => setNoticePinned(!noticePinned)}
         >
-          <Text style={{ color: noticePinned ? colors.primary : colors.muted, fontSize: 14, fontWeight: "600" }}>
-            {noticePinned ? "📌 상단 고정" : "📌 상단 고정 (비활성)"}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <LucideIcon name="pin" size={14} color={noticePinned ? colors.primary : colors.muted} strokeWidth={1.8} />
+            <Text style={{ color: noticePinned ? colors.primary : colors.muted, fontSize: 14, fontWeight: "600" }}>
+              {noticePinned ? "상단 고정" : "상단 고정 (비활성)"}
+            </Text>
+          </View>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
@@ -823,8 +1015,9 @@ function NoticesTab({
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   {notice.isPinned && (
-                    <View style={[styles.badge, { backgroundColor: "#3B82F620" }]}>
-                      <Text style={{ color: "#3B82F6", fontSize: 10, fontWeight: "600" }}>📌 고정</Text>
+                    <View style={[styles.badge, { backgroundColor: colors.primary + "15", flexDirection: "row", alignItems: "center", gap: 3 }]}>
+                      <LucideIcon name="pin" size={10} color={colors.primary} strokeWidth={1.8} />
+                      <Text style={{ color: colors.primary, fontSize: 10, fontWeight: "600" }}>고정</Text>
                     </View>
                   )}
                   <Text style={[styles.listCardTitle, { color: colors.foreground }]} numberOfLines={1}>

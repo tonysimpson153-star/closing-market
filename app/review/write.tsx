@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -82,7 +83,7 @@ export default function WriteReviewScreen() {
     }
     createMutation.mutate({
       targetUserId: Number(targetUserId),
-      chatRoomId: Number(chatRoomId),
+      chatRoomId: chatRoomId ? Number(chatRoomId) : undefined,
       rating,
       content: content.trim() || undefined,
     });
@@ -107,7 +108,7 @@ export default function WriteReviewScreen() {
         {/* 대상 정보 */}
         <View style={[styles.targetCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[styles.avatar, { backgroundColor: colors.primary + "20" }]}>
-            <Text style={{ fontSize: 24 }}>👤</Text>
+            <LucideIcon name="user" size={20} color={colors.primary} strokeWidth={1.5} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>

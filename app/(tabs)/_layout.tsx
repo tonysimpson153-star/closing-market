@@ -37,10 +37,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="companies"
+        options={{
+          title: "업체찾기",
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="storefront.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="category"
         options={{
-          title: "카테고리",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen

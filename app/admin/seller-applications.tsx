@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 
@@ -223,7 +224,7 @@ export default function AdminSellerApplicationsScreen() {
         </View>
       ) : !applications || applications.length === 0 ? (
         <View style={s.emptyContainer}>
-          <Text style={{ fontSize: 40 }}>📋</Text>
+          <LucideIcon name="file" size={30} color={colors.muted} strokeWidth={1.5} />
           <Text style={s.emptyText}>신청 내역이 없습니다.</Text>
         </View>
       ) : (
@@ -275,13 +276,19 @@ export default function AdminSellerApplicationsScreen() {
                       style={({ pressed }) => [s.approveBtn, { opacity: pressed ? 0.8 : 1 }]}
                       onPress={() => handleApprove(app.id)}
                     >
-                      <Text style={s.actionBtnText}>✓ 승인</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <LucideIcon name="check" size={13} color="#fff" strokeWidth={2} />
+                        <Text style={s.actionBtnText}>승인</Text>
+                      </View>
                     </Pressable>
                     <Pressable
                       style={({ pressed }) => [s.rejectBtn, { opacity: pressed ? 0.8 : 1 }]}
                       onPress={() => handleReject(app.id)}
                     >
-                      <Text style={s.actionBtnText}>✗ 반려</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <LucideIcon name="x" size={13} color="#fff" strokeWidth={2} />
+                        <Text style={s.actionBtnText}>반려</Text>
+                      </View>
                     </Pressable>
                   </View>
                 )}
@@ -291,7 +298,10 @@ export default function AdminSellerApplicationsScreen() {
                       style={({ pressed }) => [s.suspendBtn, { opacity: pressed ? 0.8 : 1 }]}
                       onPress={() => handleSuspend(app.id)}
                     >
-                      <Text style={s.actionBtnText}>⛔ 판매자 정지</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <LucideIcon name="x-circle" size={13} color="#fff" strokeWidth={2} />
+                        <Text style={s.actionBtnText}>판매자 정지</Text>
+                      </View>
                     </Pressable>
                   </View>
                 )}

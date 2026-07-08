@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   StyleSheet,
   Switch,
+  Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
@@ -19,19 +21,56 @@ import { useColors } from "@/hooks/use-colors";
 export default function AccountSettingsScreen() {
   const router = useRouter();
   const colors = useColors();
-  const { user, setAuth, token } = useAuthStore();
+  const { user, setAuth, token, clearAuth } = useAuthStore();
 
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(user?.profileImageUrl ?? null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const uploadPhotoMutation = trpc.upload.profilePhoto.useMutation();
+
+  const handlePickProfilePhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("권한 필요", "사진 접근 권한이 필요합니다.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const uploaded = await uploadPhotoMutation.mutateAsync({
+        base64: result.assets[0].base64,
+        mimeType: result.assets[0].mimeType ?? "image/jpeg",
+        fileName: result.assets[0].fileName ?? "profile.jpg",
+      });
+      setProfileImageUrl(uploaded.url);
+      // 업로드 즉시 서버에 반영
+      updateProfileMutation.mutate({ profileImageUrl: uploaded.url });
+    } catch (err: any) {
+      Alert.alert("업로드 실패", err?.message ?? "사진 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [showDeleteSection, setShowDeleteSection] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: (data) => {
       if (token && user) {
-        setAuth(token, { ...user, name: data.name ?? user.name, phone: data.phone ?? user.phone });
+        setAuth(token, { ...user, name: data.name ?? user.name, phone: data.phone ?? user.phone, profileImageUrl: data.profileImageUrl ?? user.profileImageUrl });
       }
       Alert.alert("저장 완료", "프로필이 업데이트되었습니다.");
     },
@@ -50,6 +89,18 @@ export default function AccountSettingsScreen() {
     },
     onError: (err) => {
       Alert.alert("변경 실패", err.message);
+    },
+  });
+
+  const deleteAccountMutation = trpc.user.deleteAccount.useMutation({
+    onSuccess: async () => {
+      await clearAuth();
+      Alert.alert("탈퇴 완료", "그동안 클로징마켓을 이용해주셔서 감사합니다.", [
+        { text: "확인", onPress: () => router.replace("/" as any) },
+      ]);
+    },
+    onError: (err) => {
+      Alert.alert("탈퇴 실패", err.message);
     },
   });
 
@@ -80,6 +131,27 @@ export default function AccountSettingsScreen() {
     changePasswordMutation.mutate({ currentPassword, newPassword });
   };
 
+  const handleDeleteAccount = () => {
+    if (user?.loginMethod !== "kakao" && !deletePassword) {
+      Alert.alert("입력 오류", "비밀번호를 입력해주세요.");
+      return;
+    }
+    Alert.alert(
+      "정말 탈퇴하시겠습니까?",
+      "탈퇴 시 로그인 정보와 개인정보는 삭제되며 되돌릴 수 없습니다.\n(등록한 상품, 채팅, 후기 등 다른 이용자와 연결된 기록은 유지됩니다.)",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "탈퇴하기",
+          style: "destructive",
+          onPress: () => {
+            deleteAccountMutation.mutate({ password: deletePassword || undefined });
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -94,6 +166,35 @@ export default function AccountSettingsScreen() {
         {/* 프로필 정보 */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.muted }]}>기본 정보</Text>
+
+          <View style={{ alignItems: "center", marginBottom: 20 }}>
+            <TouchableOpacity onPress={handlePickProfilePhoto} disabled={isUploadingPhoto}>
+              <View
+                style={{
+                  width: 84,
+                  height: 84,
+                  borderRadius: 42,
+                  backgroundColor: colors.background,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  overflow: "hidden",
+                }}
+              >
+                {isUploadingPhoto ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : profileImageUrl ? (
+                  <Image source={{ uri: profileImageUrl }} style={{ width: 84, height: 84 }} resizeMode="cover" />
+                ) : (
+                  <Text style={{ fontSize: 30, color: colors.muted }}>{(name || "?").charAt(0).toUpperCase()}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600", marginTop: 10 }} onPress={handlePickProfilePhoto}>
+              프로필 사진 {profileImageUrl ? "변경" : "등록"}
+            </Text>
+          </View>
 
           <Text style={[styles.label, { color: colors.foreground }]}>이름 <Text style={styles.required}>*</Text></Text>
           <TextInput
@@ -199,6 +300,55 @@ export default function AccountSettingsScreen() {
             )}
           </View>
         )}
+
+        {/* 회원 탈퇴 */}
+        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 16 }]}>
+          <TouchableOpacity
+            style={styles.passwordToggleRow}
+            onPress={() => setShowDeleteSection(!showDeleteSection)}
+          >
+            <Text style={[styles.sectionTitle, { color: "#EF4444", marginBottom: 0 }]}>회원 탈퇴</Text>
+            <Text style={{ color: colors.muted, fontSize: 14, fontWeight: "600" }}>
+              {showDeleteSection ? "접기 ▲" : "펼치기 ▼"}
+            </Text>
+          </TouchableOpacity>
+
+          {showDeleteSection && (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20, marginBottom: 16 }}>
+                탈퇴 시 로그인에 사용되는 개인정보(이메일, 전화번호, 비밀번호 등)는 즉시 삭제되며 복구할 수 없습니다.{"\n"}
+                다만 등록한 상품, 채팅 내역, 거래 후기 등 다른 이용자와 연결된 기록은 서비스 신뢰도 유지를 위해 보존됩니다.
+              </Text>
+
+              {user?.loginMethod !== "kakao" && (
+                <>
+                  <Text style={[styles.label, { color: colors.foreground }]}>비밀번호 확인</Text>
+                  <TextInput
+                    style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
+                    placeholder="현재 비밀번호를 입력하세요"
+                    placeholderTextColor={colors.muted}
+                    secureTextEntry
+                    value={deletePassword}
+                    onChangeText={setDeletePassword}
+                    returnKeyType="done"
+                  />
+                </>
+              )}
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: "#EF4444" }, deleteAccountMutation.isPending && styles.btnDisabled]}
+                onPress={handleDeleteAccount}
+                disabled={deleteAccountMutation.isPending}
+              >
+                {deleteAccountMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveBtnText}>탈퇴하기</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </ScreenContainer>
   );

@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
@@ -206,11 +207,33 @@ export default function ChatRoomScreen() {
             )}
           </Text>
           {room?.product && (
-            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }} numberOfLines={1}>
-              📦 {room.product.title}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+              <LucideIcon name="package" size={10} color={colors.muted} strokeWidth={1.8} />
+              <Text style={{ fontSize: 11, color: colors.muted }} numberOfLines={1}>
+                {room.product.title}
+              </Text>
+            </View>
           )}
         </View>
+
+        {/* 신고하기 */}
+        {room?.otherUser?.id && (
+          <Pressable
+            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 8 }]}
+            onPress={() => {
+              Alert.alert("채팅방 옵션", undefined, [
+                {
+                  text: `${room.otherUser?.name ?? "상대방"} 신고하기`,
+                  style: "destructive",
+                  onPress: () => router.push(`/report?targetType=user&targetId=${room.otherUser?.id}` as any),
+                },
+                { text: "취소", style: "cancel" },
+              ]);
+            }}
+          >
+            <IconSymbol name="ellipsis" size={22} color={colors.foreground} />
+          </Pressable>
+        )}
 
         {/* 거래 관리 버튼 */}
         {room?.status === "active" && (
@@ -223,8 +246,9 @@ export default function ChatRoomScreen() {
         )}
 
         {room?.status === "completed" && (
-          <View style={[styles.tradeBtn, { backgroundColor: colors.primary + "20", borderWidth: 1, borderColor: colors.primary }]}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primary }}>✓ 거래완료</Text>
+          <View style={[styles.tradeBtn, { backgroundColor: colors.primary + "12", borderWidth: 1, borderColor: colors.primary, flexDirection: "row", alignItems: "center", gap: 4 }]}>
+            <LucideIcon name="check" size={12} color={colors.primary} strokeWidth={2} />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primary }}>거래완료</Text>
           </View>
         )}
         {/* 구매자 후기 작성 버튼 */}
@@ -243,7 +267,10 @@ export default function ChatRoomScreen() {
               })
             }
           >
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>star 후기작성</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+              <LucideIcon name="star" size={12} color="#0E0E10" strokeWidth={2} />
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#000000" }}>후기작성</Text>
+            </View>
           </Pressable>
         )}
         {room?.status === "cancelled" && (
@@ -260,7 +287,7 @@ export default function ChatRoomScreen() {
             <Image source={{ uri: room.product.mainImageUrl }} style={styles.productImg} />
           ) : (
             <View style={[styles.productImg, { backgroundColor: colors.border, justifyContent: "center", alignItems: "center" }]}>
-              <Text style={{ fontSize: 20 }}>📦</Text>
+              <LucideIcon name="package" size={18} color={colors.muted} strokeWidth={1.5} />
             </View>
           )}
           <View style={{ flex: 1, marginLeft: 12 }}>
@@ -297,8 +324,8 @@ export default function ChatRoomScreen() {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>message-circle</Text>
-              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", fontWeight: "500" }}>
+              <LucideIcon name="message-circle" size={32} color={colors.muted} strokeWidth={1.5} />
+              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", fontWeight: "500", marginTop: 10 }}>
                 {room?.otherUser?.name ?? "상대방"}님과의 대화를{"\n"}시작해보세요.
               </Text>
             </View>
