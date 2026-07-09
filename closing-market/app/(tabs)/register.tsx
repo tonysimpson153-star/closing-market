@@ -47,8 +47,11 @@ export default function RegisterScreen() {
     enabled: isAuthenticated,
   });
 
-  const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
+  const isVerifiedSeller =
+    (sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved") ||
+    sellerProfile?.role === "admin";
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
+
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

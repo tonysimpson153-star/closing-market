@@ -341,14 +341,16 @@ export const appRouter = router({
           throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 상품을 등록했습니다. 잠시 후 다시 시도해주세요." });
         }
 
-        // 판매자 인증 여부 확인
+         // 판매자 인증 여부 확인 (관리자는 테스트/운영 목적으로 예외 허용)
         const user = await db.getUserById(ctx.user.id);
-        if (!user || !user.isVerified || user.sellerStatus !== "approved") {
+        const isAdmin = user?.role === "admin";
+        if (!user || (!isAdmin && (!user.isVerified || user.sellerStatus !== "approved"))) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "인증된 판매자만 상품을 등록할 수 있습니다.",
           });
         }
+
         const { images, ...productFields } = input;
         return db.createProduct({
           ...productFields,
