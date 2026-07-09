@@ -78,7 +78,6 @@ import {
   Store,
   Camera,
   Gift,
-  Waves,
   Tag,
   Handshake,
   Megaphone,
