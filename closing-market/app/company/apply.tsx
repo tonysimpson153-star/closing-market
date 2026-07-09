@@ -164,6 +164,10 @@ export default function CompanyApplyScreen() {
         Alert.alert("입력 오류", "업체 주소를 입력해주세요.");
         return;
       }
+      if (!businessNumber.trim()) {
+        Alert.alert("입력 오류", "사업자등록번호를 입력해주세요.");
+        return;
+      }
       applyMutation.mutate({
         companyType: companyType!,
         companyName: companyName.trim(),
@@ -500,7 +504,8 @@ export default function CompanyApplyScreen() {
             </View>
 
             <View style={s.inputGroup}>
-              <Text style={s.label}>사업자등록번호 (선택)</Text>
+              <Text style={s.label}>사업자등록번호 *</Text>
+
               <TextInput
                 style={s.input}
                 placeholder="000-00-00000"

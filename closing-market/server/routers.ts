@@ -724,7 +724,7 @@ export const appRouter = router({
         companyPhone: z.string().min(9).max(20),
         companyAddress: z.string().min(1).max(500),
         companyDesc: z.string().max(1000).optional(),
-        businessNumber: z.string().min(10).max(20).optional(),
+        businessNumber: z.string().min(10).max(20),
         companyLogoUrl: z.string().url().optional(),
         images: z.array(z.string().url()).max(10).optional(),
       }))
