@@ -40,11 +40,15 @@ export const API_BASE_URL = env.apiBaseUrl;
  * Get the API base URL, deriving from current hostname if not set.
  */
 export function getApiBaseUrl(): string {
-  // Manus 개발 환경(웹) - 터널 서브도메인에서 자동 추론합니다.
-  // .env에 남아있을 수 있는 예전/운영용 EXPO_PUBLIC_API_BASE_URL 값보다
-  // 이 자동 감지를 먼저 시도해서, Manus에서 테스트할 때 항상 올바른
-  // 개발 서버를 바라보도록 합니다. (운영 빌드에는 이런 터널 주소가 없으므로
-  // 이 로직은 자연스럽게 건너뛰어지고 아래 명시적 설정값이 사용됩니다.)
+  // 명시적으로 설정된 값이 있으면 항상 최우선으로 사용합니다.
+  // (운영 서버를 가리키도록 일부러 설정한 경우, Manus 자체 개발 서버 자동 감지보다
+  //  이 값이 우선해야 실제 배포된 서버(Render 등)로 테스트할 수 있습니다.)
+  if (API_BASE_URL) {
+    return API_BASE_URL.replace(/\/$/, "");
+  }
+
+  // Manus 개발 환경(웹) - EXPO_PUBLIC_API_BASE_URL이 설정 안 되어 있을 때만
+  // 터널 서브도메인에서 Manus 자체 개발 서버 주소를 자동 추론합니다.
   if (ReactNative.Platform.OS === "web" && typeof window !== "undefined" && window.location) {
     const { protocol, hostname } = window.location;
     const apiHostname = hostname.replace(/^8081-/, "3000-");
@@ -52,6 +56,26 @@ export function getApiBaseUrl(): string {
       return `${protocol}//${apiHostname}`;
     }
   }
+
+  // 네이티브(Expo Go 등) - Metro 패키저 호스트에서 API 서버 주소를 추론합니다.
+  const hostUri: string | undefined =
+    (Constants.expoConfig as any)?.hostUri ||
+    (Constants as any).expoGoConfig?.debuggerHost ||
+    (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+
+  if (hostUri) {
+    const host = hostUri.split(":")[0];
+    if (host.startsWith("8081-")) {
+      // Manus 터널 형태의 서브도메인 (예: 8081-xxxx.sg1.manus.computer)
+      const apiHost = host.replace(/^8081-/, "3000-");
+      return `https://${apiHost}`;
+    }
+    // LAN IP 등 일반적인 개발 환경 - 포트만 3000으로 교체
+    return `http://${host}:3000`;
+  }
+
+  return "";
+}
 
   // 네이티브(Expo Go 등) - Metro 패키저 호스트에서 API 서버 주소를 추론합니다.
   const hostUri: string | undefined =
