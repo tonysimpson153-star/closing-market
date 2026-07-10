@@ -11,7 +11,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "seller", "company", "admin"]).default("user").notNull(),
   // 판매회원 관련
-  sellerStatus: mysqlEnum("sellerStatus", ["pending", "approved", "rejected", "suspended"]).default("pending"),
+  sellerStatus: mysqlEnum("sellerStatus", ["pending", "approved", "rejected", "suspended"]),
   sellerType: mysqlEnum("sellerType", ["closing_soon", "closed", "relocating", "inventory", "transfer"]),
   businessNumber: varchar("businessNumber", { length: 20 }),
   businessName: varchar("businessName", { length: 255 }),
@@ -19,7 +19,7 @@ export const users = mysqlTable("users", {
   businessCertUrl: text("businessCertUrl"),
   businessPhotoUrl: text("businessPhotoUrl"),
   // 업체회원 관련
-  companyStatus: mysqlEnum("companyStatus", ["pending", "approved", "rejected", "suspended"]).default("pending"),
+  companyStatus: mysqlEnum("companyStatus", ["pending", "approved", "rejected", "suspended"]),
   companyType: mysqlEnum("companyType", ["demolition", "interior", "waste", "signage", "pos", "cctv", "cleaning", "tax", "labor", "kitchen", "consulting"]),
   companyName: varchar("companyName", { length: 255 }),
   companyDesc: text("companyDesc"),
