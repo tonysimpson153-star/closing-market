@@ -77,32 +77,6 @@ export function getApiBaseUrl(): string {
   return "";
 }
 
-  // 네이티브(Expo Go 등) - Metro 패키저 호스트에서 API 서버 주소를 추론합니다.
-  const hostUri: string | undefined =
-    (Constants.expoConfig as any)?.hostUri ||
-    (Constants as any).expoGoConfig?.debuggerHost ||
-    (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
-
-  if (hostUri) {
-    const host = hostUri.split(":")[0];
-    if (host.startsWith("8081-")) {
-      // Manus 터널 형태의 서브도메인 (예: 8081-xxxx.sg1.manus.computer)
-      const apiHost = host.replace(/^8081-/, "3000-");
-      return `https://${apiHost}`;
-    }
-    // LAN IP 등 일반적인 개발 환경 - 포트만 3000으로 교체
-    return `http://${host}:3000`;
-  }
-
-  // 위 자동 감지가 전부 실패한 경우에만 명시적으로 설정된 값을 사용합니다.
-  // (운영 배포 빌드는 여기로만 도달합니다.)
-  if (API_BASE_URL) {
-    return API_BASE_URL.replace(/\/$/, "");
-  }
-
-  return "";
-}
-
 export const SESSION_TOKEN_KEY = "app_session_token";
 export const USER_INFO_KEY = "manus-runtime-user-info";
 
