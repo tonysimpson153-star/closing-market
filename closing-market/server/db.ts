@@ -814,9 +814,6 @@ export async function updateChatRoomStatus(roomId: number, userId: number, statu
     throw new Error("거래완료/취소는 판매자만 설정할 수 있습니다.");
   }
 
-  await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
-  return { success: true };
-}
 
 
   await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
