@@ -413,6 +413,18 @@ export const appRouter = router({
         return db.getApprovedCompanyById(input.id);
       }),
   }),
+    // 찜 여부 확인 (인증 필요)
+    check: protectedProcedure
+      .input(
+        z.object({
+          productId: z.number().optional(),
+          businessId: z.number().optional(),
+        })
+      )
+      .query(({ ctx, input }) => {
+        return db.isFavorited(ctx.user.id, input.productId, input.businessId);
+      }),
+
 
   favorites: router({
     // 찜 목록 (인증 필요)

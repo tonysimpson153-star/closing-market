@@ -1,5 +1,7 @@
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -32,6 +34,8 @@ const SETTINGS_ITEMS = [
 
 export default function MyPageScreen() {
   const colors = useColors();
+    const queryClient = useQueryClient();
+
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
   const isAuthenticated = !!token && !!user;
@@ -47,15 +51,30 @@ export default function MyPageScreen() {
 
   const MENU_ITEMS = isApprovedCompany ? [...COMPANY_MENU_ITEMS, ...BASE_MENU_ITEMS] : BASE_MENU_ITEMS;
 
-  const handleLogout = () => {
+   const handleLogout = () => {
     if (Platform.OS === "web") {
-      // react-native-web에서는 Alert.alert의 버튼 콜백이 동작하지 않는 경우가 있어
-      // 브라우저 기본 confirm으로 대체합니다.
       if (window.confirm("정말 로그아웃하시겠습니까?")) {
-        clearAuth().then(() => router.replace("/" as any));
+        clearAuth().then(() => {
+          queryClient.clear();
+          router.replace("/" as any);
+        });
       }
       return;
     }
+    Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "로그아웃",
+        style: "destructive",
+        onPress: async () => {
+          await clearAuth();
+          queryClient.clear();
+          router.replace("/" as any);
+        },
+      },
+    ]);
+  };
+
     Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
       { text: "취소", style: "cancel" },
       {

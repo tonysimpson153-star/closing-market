@@ -301,6 +301,17 @@ export async function getFavorites(userId: number) {
 
   return result;
 }
+export async function isFavorited(userId: number, productId?: number, businessId?: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const conditions = [eq(favorites.userId, userId)];
+  if (productId) conditions.push(eq(favorites.productId, productId));
+  else if (businessId) conditions.push(eq(favorites.businessId, businessId));
+  else return false;
+  const existing = await db.select({ id: favorites.id }).from(favorites).where(and(...conditions)).limit(1);
+  return existing.length > 0;
+}
+
 
 export async function toggleFavorite(
   userId: number,
@@ -799,6 +810,14 @@ export async function updateChatRoomStatus(roomId: number, userId: number, statu
   if (!room || (room.buyerId !== userId && room.sellerId !== userId)) {
     throw new Error("채팅방에 접근할 수 없습니다.");
   }
+  if (room.sellerId !== userId) {
+    throw new Error("거래완료/취소는 판매자만 설정할 수 있습니다.");
+  }
+
+  await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
+  return { success: true };
+}
+
 
   await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
   return { success: true };

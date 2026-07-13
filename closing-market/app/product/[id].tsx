@@ -1,16 +1,6 @@
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Image,
-  Dimensions,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -34,44 +24,21 @@ const TRADE_TYPE_LABELS: Record<string, string> = {
   negotiable: "협의",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  selling: "판매중",
-  reserved: "예약중",
-  sold: "판매완료",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  selling: "#D4AF37",
-  reserved: "#B0B0B0",
-  sold: "#808080",
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  cafe: "coffee",
-  pcroom: "gamepad2",
-  restaurant: "utensils",
-  gym: "dumbbell",
-  office: "briefcase",
-  warehouse: "package",
-  transfer: "store",
-};
-
-function formatPrice(price: number) {
-  return price.toLocaleString("ko-KR") + "원";
-}
-
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const colors = useColors();
-  const { user, token } = useAuthStore();
+  const router = useRouter();
+  const { token, user } = useAuthStore();
   const isAuthenticated = !!token;
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const screenWidth = Dimensions.get("window").width;
+  const productId = Number(id);
 
-  const { data: product, isLoading } = trpc.products.detail.useQuery({ id: Number(id) });
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // 최근 본 상품 기록
+  const { data: product, isLoading, refetch } = trpc.products.detail.useQuery(
+    { id: productId },
+    { enabled: !!productId }
+  );
+
   const trackViewMutation = trpc.recentViews.track.useMutation();
   useEffect(() => {
     if (isAuthenticated && product?.id) {
@@ -81,10 +48,17 @@ export default function ProductDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, product?.id]);
 
+  // 찜 여부 조회
+  const { data: isFavorited, refetch: refetchFavorited } = trpc.favorites.check.useQuery(
+    { productId: product?.id },
+    { enabled: isAuthenticated && !!product?.id }
+  );
+
   // 찜하기
   const favMutation = trpc.favorites.toggle.useMutation({
-    onSuccess: () => {
-      Alert.alert("완료", "찜 목록이 업데이트되었습니다.");
+    onSuccess: (data) => {
+      refetchFavorited();
+      Alert.alert("완료", data.favorited ? "찜 목록에 추가되었습니다." : "찜 목록에서 삭제되었습니다.");
     },
     onError: () => {
       Alert.alert("오류", "로그인이 필요합니다.");
@@ -101,35 +75,40 @@ export default function ProductDetailScreen() {
     },
   });
 
-  const handleChat = () => {
+  const handleFavorite = () => {
     if (!isAuthenticated) {
-      Alert.alert("로그인 필요", "채팅을 시작하려면 로그인이 필요합니다.");
+      Alert.alert("로그인 필요", "찜하기를 위해 로그인이 필요합니다.");
       return;
     }
     if (!product) return;
-
-    const myId = (user as any)?.id;
-    if (myId === product.userId) {
-      Alert.alert("알림", "본인의 상품에는 채팅할 수 없습니다.");
-      return;
-    }
-    if (product.status === "sold") {
-      Alert.alert("알림", "이미 판매 완료된 상품입니다.");
-      return;
-    }
-
-    getOrCreateChatMutation.mutate({
-      sellerId: product.userId,
-      productId: product.id,
-    });
+    favMutation.mutate({ productId: product.id });
   };
 
-  const handleFavorite = () => {
+  const handleChat = () => {
     if (!isAuthenticated) {
-      Alert.alert("로그인 필요", "찜하기는 로그인이 필요합니다.");
+      Alert.alert("로그인 필요", "채팅을 위해 로그인이 필요합니다.", [
+        { text: "취소", style: "cancel" },
+        { text: "로그인", onPress: () => router.push("/auth/login" as any) },
+      ]);
       return;
     }
-    favMutation.mutate({ productId: Number(id) });
+    if (!product) return;
+    if (product.sellerId === user?.id) {
+      Alert.alert("알림", "본인이 등록한 상품입니다.");
+      return;
+    }
+    getOrCreateChatMutation.mutate({ sellerId: product.sellerId, productId: product.id });
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    try {
+      await Share.share({
+        message: `${product.title} - ${product.price?.toLocaleString()}원`,
+      });
+    } catch {
+      // 공유 취소 시 무시
+    }
   };
 
   if (isLoading) {
@@ -145,47 +124,47 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <ScreenContainer>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <LucideIcon name="alert-circle" size={36} color={colors.muted} strokeWidth={1.5} />
-          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
+          <LucideIcon name="package" size={40} color={colors.muted} strokeWidth={1.5} />
+          <Text style={{ fontSize: 15, color: colors.foreground, fontWeight: "600", marginTop: 16 }}>
             상품을 찾을 수 없습니다
           </Text>
-          <Pressable
-            style={({ pressed }) => [{ marginTop: 24, opacity: pressed ? 0.7 : 1 }]}
-            onPress={() => router.back()}
-          >
-            <Text style={{ color: colors.primary, fontWeight: "700" }}>← 뒤로 가기</Text>
+          <Pressable style={{ marginTop: 20 }} onPress={() => router.back()}>
+            <Text style={{ color: colors.primary, fontWeight: "700" }}>뒤로 가기</Text>
           </Pressable>
         </View>
       </ScreenContainer>
     );
   }
 
-  const isMine = (user as any)?.id === product.userId;
+  const images = product.images && product.images.length > 0 ? product.images : [];
 
   return (
-    <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
-      {/* 헤더 */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Pressable
-          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 16 }]}
-          onPress={() => router.back()}
-        >
+    <ScreenContainer edges={["top", "left", "right"]}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
+        <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} onPress={() => router.back()}>
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, flex: 1, letterSpacing: 0.5 }}>
-          상품 상세
-        </Text>
         <Pressable
-          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 16 }]}
+          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           onPress={() => {
-            Alert.alert("상품 옵션", undefined, [
-              {
-                text: "신고하기",
-                style: "destructive",
-                onPress: () => router.push(`/report?targetType=product&targetId=${product.id}` as any),
-              },
+            Alert.alert("신고하기", "이 상품을 신고하시겠습니까?", [
               { text: "취소", style: "cancel" },
+              {
+                text: "신고",
+                style: "destructive",
+                onPress: () => router.push({ pathname: "/report" as any, params: { productId: product.id } }),
+              },
             ]);
           }}
         >
@@ -195,7 +174,7 @@ export default function ProductDetailScreen() {
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           onPress={handleFavorite}
         >
-          <IconSymbol name="heart" size={24} color={colors.primary} />
+          <IconSymbol name={isFavorited ? "heart.fill" : "heart"} size={24} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -209,30 +188,27 @@ export default function ProductDetailScreen() {
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(e) => {
-                  const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-                  setGalleryIndex(idx);
+                  const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+                  setActiveImageIndex(index);
                 }}
               >
-                {product.images.map((img: any) => (
+                {images.map((uri: string, index: number) => (
                   <Image
-                    key={img.id}
-                    source={{ uri: img.imageUrl }}
-                    style={{ width: screenWidth, height: 280 }}
+                    key={index}
+                    source={{ uri }}
+                    style={{ width: 375, height: 280 }}
                     resizeMode="cover"
                   />
                 ))}
               </ScrollView>
-              {product.images.length > 1 && (
-                <View style={{
-                  position: "absolute", bottom: 12, alignSelf: "center",
-                  flexDirection: "row", gap: 6,
-                }}>
-                  {product.images.map((img: any, i: number) => (
+              {images.length > 1 && (
+                <View style={{ position: "absolute", bottom: 12, alignSelf: "center", flexDirection: "row", gap: 6 }}>
+                  {images.map((_: string, index: number) => (
                     <View
-                      key={img.id}
+                      key={index}
                       style={{
-                        width: i === galleryIndex ? 16 : 6, height: 6, borderRadius: 3,
-                        backgroundColor: i === galleryIndex ? "#fff" : "#ffffff80",
+                        width: 6, height: 6, borderRadius: 3,
+                        backgroundColor: index === activeImageIndex ? "#fff" : "rgba(255,255,255,0.5)",
                       }}
                     />
                   ))}
@@ -240,162 +216,129 @@ export default function ProductDetailScreen() {
               )}
             </>
           ) : (
-            <View style={{ width: "100%", height: 280, justifyContent: "center", alignItems: "center" }}>
-              <LucideIcon name={(CATEGORY_ICONS[product.category] ?? "package") as any} size={64} color={colors.muted} strokeWidth={1} />
+            <View style={{ width: "100%", height: 280, alignItems: "center", justifyContent: "center" }}>
+              <LucideIcon name="image" size={40} color={colors.muted} strokeWidth={1.5} />
             </View>
           )}
         </View>
 
-        {/* 상품 정보 */}
-        <View style={{ padding: 20 }}>
-          {/* 상태 배지 */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <View style={[styles.badge, { backgroundColor: STATUS_COLORS[product.status] + "20", borderWidth: 1, borderColor: STATUS_COLORS[product.status] }]}>
-              <Text style={[styles.badgeText, { color: STATUS_COLORS[product.status], fontWeight: "700" }]}>
-                {STATUS_LABELS[product.status]}
-              </Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
-              <Text style={[styles.badgeText, { color: colors.muted }]}>
-                {CATEGORY_LABELS[product.category]}
-              </Text>
-            </View>
-          </View>
-
-          {/* 제목 */}
-          <Text style={{ fontSize: 22, fontWeight: "800", color: colors.foreground, marginBottom: 12, lineHeight: 32 }}>
+        <View style={{ padding: 18 }}>
+          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "700", marginBottom: 8 }}>
+            {CATEGORY_LABELS[product.category] ?? product.category} · {product.location ?? "지역 미정"}
+          </Text>
+          <Text style={{ fontSize: 19, fontWeight: "800", color: colors.foreground, lineHeight: 27 }}>
             {product.title}
           </Text>
-
-          {/* 가격 - 골드 강조 */}
-          <Text style={{ fontSize: 28, fontWeight: "800", color: colors.primary, marginBottom: 20, letterSpacing: 1 }}>
-            {formatPrice(product.price)}
+          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.primary, marginTop: 10 }}>
+            {product.price?.toLocaleString()}원
           </Text>
 
-          {/* 메타 정보 - 구분선 추가 */}
-          <View style={[styles.metaRow, { borderColor: colors.border }]}>
-            {product.location ? (
-              <View style={styles.metaItem}>
-                <IconSymbol name="location.fill" size={14} color={colors.primary} />
-                <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>{product.location}</Text>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+            <View style={{ backgroundColor: colors.surface, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 }}>
+              <Text style={{ fontSize: 12, color: colors.muted }}>{TRADE_TYPE_LABELS[product.tradeType] ?? product.tradeType}</Text>
+            </View>
+            {product.status !== "selling" && (
+              <View style={{ backgroundColor: colors.error + "15", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 }}>
+                <Text style={{ fontSize: 12, color: colors.error, fontWeight: "700" }}>
+                  {product.status === "reserved" ? "예약중" : "판매완료"}
+                </Text>
               </View>
-            ) : null}
-            <View style={styles.metaItem}>
-              <IconSymbol name="shippingbox.fill" size={14} color={colors.primary} />
-              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>
-                {TRADE_TYPE_LABELS[product.tradeType]}
-              </Text>
-            </View>
-            <View style={styles.metaItem}>
-              <IconSymbol name="number" size={14} color={colors.primary} />
-              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>수량 {product.quantity}개</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <IconSymbol name="eye.fill" size={14} color={colors.primary} />
-              <Text style={[styles.metaText, { color: colors.foreground, fontWeight: "600" }]}>조회 {product.viewCount}</Text>
-            </View>
+            )}
           </View>
 
-          {/* 판매자 정보 카드 - 고급스럽게 개편 */}
-          <Pressable
-            style={({ pressed }) => [{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 14,
-              padding: 16,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: colors.primary,
-              backgroundColor: colors.surface,
-              marginBottom: 28,
-              marginTop: 12,
-              opacity: pressed ? 0.85 : 1,
-            }]}
-            onPress={() =>
-              router.push({
-                pathname: "/seller/profile" as any,
-                params: {
-                  userId: product.userId?.toString() ?? "",
-                  userName: product.sellerName ?? "판매자",
-                },
-              })
-            }
-          >
-            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary + "12", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.primary }}>
-              <LucideIcon name="user" size={22} color={colors.primary} strokeWidth={1.5} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground }}>
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 20 }} />
+
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+            <Pressable
+              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+              onPress={() =>
+                router.push({
+                  pathname: "/seller/profile" as any,
+                  params: { userId: String(product.sellerId), userName: product.sellerName ?? "판매자" },
+                })
+              }
+            >
+              <View
+                style={{
+                  width: 44, height: 44, borderRadius: 22,
+                  backgroundColor: colors.primary + "10", borderWidth: 1, borderColor: colors.primary,
+                  alignItems: "center", justifyContent: "center", marginRight: 12,
+                }}
+              >
+                <LucideIcon name="store" size={18} color={colors.primary} strokeWidth={1.5} />
+              </View>
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
                   {product.sellerName ?? "판매자"}
                 </Text>
-                {product.isSellerVerified && (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary + "12", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: colors.primary }}>
-                    <LucideIcon name="check" size={11} color={colors.primary} strokeWidth={2} />
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary, letterSpacing: 0.2 }}>인증판매자</Text>
+                {product.sellerIsVerified && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                    <LucideIcon name="check-circle" size={11} color={colors.primary} strokeWidth={2} />
+                    <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "600" }}>인증판매자</Text>
                   </View>
                 )}
               </View>
-              <Text style={{ fontSize: 12, color: colors.muted }}>후기 보기 ›</Text>
-            </View>
-            <IconSymbol name="chevron.right" size={18} color={colors.primary} />
-          </Pressable>
+            </Pressable>
+            <Pressable onPress={handleShare} hitSlop={8}>
+              <LucideIcon name="share" size={20} color={colors.muted} strokeWidth={1.5} />
+            </Pressable>
+          </View>
 
-          {/* 상품 설명 */}
           {product.description ? (
-            <View style={{ marginBottom: 32, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground, marginBottom: 12, letterSpacing: 0.5 }}>
-                상품 설명
+            <>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 10 }}>
+                상세 설명
               </Text>
-              <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 24, fontWeight: "500" }}>
+              <Text style={{ fontSize: 14, color: colors.foreground, lineHeight: 22 }}>
                 {product.description}
               </Text>
-            </View>
+            </>
           ) : null}
         </View>
       </ScrollView>
 
-      {/* 하단 버튼 - 고급스러운 스타일 */}
-      <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-        {isMine ? (
-          <View style={[styles.myProductBanner, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
-            <Text style={{ fontSize: 14, color: colors.muted, fontWeight: "600" }}>
-              내가 등록한 상품입니다
-            </Text>
-          </View>
-        ) : (
+      <View
+        style={{
+          flexDirection: "row",
+          padding: 16,
+          gap: 10,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          backgroundColor: colors.background,
+        }}
+      >
+        {product.sellerId !== user?.id && (
           <>
             <Pressable
               style={({ pressed }) => [
                 styles.favBtn,
-                { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1.5, opacity: pressed ? 0.8 : 1 },
+                {
+                  backgroundColor: isFavorited ? colors.primary : colors.surface,
+                  borderColor: colors.primary,
+                  borderWidth: 1.5,
+                  opacity: pressed ? 0.8 : 1,
+                },
               ]}
               onPress={handleFavorite}
               disabled={favMutation.isPending}
             >
-              <IconSymbol name="heart" size={20} color={colors.primary} />
-              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary, marginLeft: 6 }}>
+              <IconSymbol name={isFavorited ? "heart.fill" : "heart"} size={20} color={isFavorited ? "#fff" : colors.primary} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: isFavorited ? "#fff" : colors.primary, marginLeft: 6 }}>
                 찜
               </Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
                 styles.chatBtn,
-                {
-                  backgroundColor: product.status === "sold" ? colors.muted : colors.primary,
-                  opacity: pressed ? 0.9 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                },
+                { backgroundColor: colors.primary, opacity: pressed || getOrCreateChatMutation.isPending ? 0.85 : 1 },
               ]}
               onPress={handleChat}
-              disabled={getOrCreateChatMutation.isPending || product.status === "sold"}
+              disabled={getOrCreateChatMutation.isPending}
             >
               {getOrCreateChatMutation.isPending ? (
-                <ActivityIndicator size="small" color="#000000" />
+                <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#000000" }}>
-                  {product.status === "sold" ? "판매완료" : "채팅하기"}
-                </Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>채팅으로 문의하기</Text>
               )}
             </Pressable>
           </>
@@ -406,68 +349,22 @@ export default function ProductDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
   imageArea: {
-    height: 280,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 14,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    marginBottom: 16,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  metaText: {
-    fontSize: 13,
-  },
-  bottomBar: {
-    flexDirection: "row",
-    padding: 16,
-    gap: 12,
-    borderTopWidth: 1,
+    width: "100%",
   },
   favBtn: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingHorizontal: 18,
   },
   chatBtn: {
     flex: 1,
+    borderRadius: 10,
     paddingVertical: 14,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-  },
-  myProductBanner: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
   },
 });

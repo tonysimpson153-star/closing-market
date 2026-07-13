@@ -235,8 +235,9 @@ export default function ChatRoomScreen() {
           </Pressable>
         )}
 
-        {/* 거래 관리 버튼 */}
-        {room?.status === "active" && (
+                {/* 거래 관리 버튼 - 판매자만 거래완료/취소를 결정할 수 있음 */}
+        {room?.status === "active" && room?.myRole === "seller" && (
+
           <Pressable
             style={({ pressed }) => [styles.tradeBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 }]}
             onPress={handleTradeAction}

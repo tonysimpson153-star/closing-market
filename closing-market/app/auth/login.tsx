@@ -12,6 +12,8 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -22,6 +24,8 @@ import { startOAuthLogin } from "@/constants/oauth";
 export default function LoginScreen() {
   const colors = useColors();
   const router = useRouter();
+    const queryClient = useQueryClient();
+
   const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -30,9 +34,11 @@ export default function LoginScreen() {
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
+      queryClient.clear();
       setAuth(data.token, data.user);
       router.replace("/(tabs)/" as any);
     },
+
     onError: (err) => {
       if (Platform.OS === "web") {
         window.alert(`로그인 실패: ${err.message}`);
