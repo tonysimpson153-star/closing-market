@@ -42,13 +42,16 @@ async function startServer() {
     "http://localhost:8081",
   ].filter(Boolean);
   const isRenderPreview = (origin: string) => /\.onrender\.com$/.test(new URL(origin).hostname);
+    const isManusPreview = (origin: string) => /\.manus\.computer$/.test(new URL(origin).hostname);
+
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin) {
       let allow = false;
       try {
-        allow = allowedOrigins.includes(origin) || isRenderPreview(origin);
+        allow = allow = allowedOrigins.includes(origin) || isRenderPreview(origin) || isManusPreview(origin);
+
       } catch {
         allow = false;
       }
