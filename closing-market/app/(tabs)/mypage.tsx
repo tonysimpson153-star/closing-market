@@ -1,7 +1,6 @@
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -34,8 +33,7 @@ const SETTINGS_ITEMS = [
 
 export default function MyPageScreen() {
   const colors = useColors();
-    const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
   const isAuthenticated = !!token && !!user;
@@ -51,7 +49,7 @@ export default function MyPageScreen() {
 
   const MENU_ITEMS = isApprovedCompany ? [...COMPANY_MENU_ITEMS, ...BASE_MENU_ITEMS] : BASE_MENU_ITEMS;
 
-   const handleLogout = () => {
+  const handleLogout = () => {
     if (Platform.OS === "web") {
       if (window.confirm("정말 로그아웃하시겠습니까?")) {
         clearAuth().then(() => {
@@ -75,24 +73,10 @@ export default function MyPageScreen() {
     ]);
   };
 
-    Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "로그아웃",
-        style: "destructive",
-        onPress: async () => {
-          await clearAuth();
-          router.replace("/" as any);
-        },
-      },
-    ]);
-  };
-
   const handleLogin = () => {
     router.push("/auth/login" as any);
   };
 
-  // 회원 유형 배지 렌더링
   const renderRoleBadge = () => {
     if (user?.role === "admin") {
       return (
@@ -144,16 +128,13 @@ export default function MyPageScreen() {
 
   return (
     <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
-      {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>마이페이지</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* 프로필 카드 - 고급스러운 디자인 */}
         <View style={styles.profileCardContainer}>
           <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {/* 프로필 이미지 */}
             <View style={[styles.profileImageBg, { backgroundColor: isAuthenticated ? colors.primary + "15" : colors.border }]}>
               <IconSymbol
                 name="person.fill"
@@ -162,7 +143,6 @@ export default function MyPageScreen() {
               />
             </View>
 
-            {/* 프로필 정보 */}
             <View style={styles.profileInfo}>
               {isAuthenticated && user ? (
                 <>
@@ -190,7 +170,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 판매/업체 회원 신청 버튼 */}
         {isAuthenticated && user?.role === "user" && (
           <View style={styles.actionButtonsContainer}>
             {!isPendingSeller && (
@@ -220,7 +199,6 @@ export default function MyPageScreen() {
           </View>
         )}
 
-        {/* 관리자 대시보드 버튼 */}
         {isAuthenticated && user?.role === "admin" && (
           <View style={styles.adminButtonContainer}>
             <Pressable
@@ -236,7 +214,6 @@ export default function MyPageScreen() {
           </View>
         )}
 
-        {/* 로그인/로그아웃 버튼 */}
         <View style={styles.authButtonsContainer}>
           {isAuthenticated ? (
             <Pressable
@@ -281,7 +258,6 @@ export default function MyPageScreen() {
           )}
         </View>
 
-        {/* 나의 활동 메뉴 */}
         <View style={styles.menuSection}>
           <Text style={[styles.sectionTitle, { color: colors.muted }]}>나의 활동</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -342,7 +318,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 설정 메뉴 */}
         <View style={styles.menuSection}>
           <Text style={[styles.sectionTitle, { color: colors.muted }]}>설정</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -392,7 +367,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 앱 정보 */}
         <View style={styles.infoSection}>
           <Text style={[styles.infoText, { color: colors.muted }]}>클로징마켓 v1.0.0</Text>
           <Text style={[styles.infoText, { color: colors.muted }]}>© 2026 Closing Market. All rights reserved.</Text>
