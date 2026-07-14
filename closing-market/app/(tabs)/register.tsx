@@ -8,7 +8,10 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -363,15 +366,23 @@ export default function RegisterScreen() {
               </Pressable>
             </View>
           )}
-        </ScrollView>
-      </ScreenContainer>
-    );
+            </ScrollView>
+      </KeyboardAvoidingView>
+    </ScreenContainer>
+  );
+
   }
 
-  // 상품 등록 폼
+   // 상품 등록 폼
   return (
     <ScreenContainer>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
+
         <Pressable onPress={() => setMode("select")}>
           <Text style={{ fontSize: 15, color: colors.primary, fontWeight: "600" }}>← 뒤로</Text>
         </Pressable>
