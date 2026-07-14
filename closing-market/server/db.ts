@@ -553,12 +553,19 @@ export async function reviewSellerApplication(
     })
     .where(eq(sellerApplications.id, applicationId));
 
-  // 승인 시 users 테이블 업데이트
+    // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
   if (action === "approved") {
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, app[0].userId)).limit(1);
+    const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db
       .update(users)
-      .set({ role: "seller", sellerStatus: "approved", isVerified: true })
+      .set({
+        ...(shouldChangeRole ? { role: "seller" as const } : {}),
+        sellerStatus: "approved",
+        isVerified: true,
+      })
       .where(eq(users.id, app[0].userId));
+
   } else if (action === "rejected") {
     await db
       .update(users)
@@ -1299,13 +1306,16 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
 export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  if (action === "approved") {
+   if (action === "approved") {
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db.update(users).set({
-      role: "company",
+      ...(shouldChangeRole ? { role: "company" as const } : {}),
       companyStatus: "approved",
       isVerified: true,
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
+
   } else if (action === "rejected") {
     await db.update(users).set({
       companyStatus: "rejected",
