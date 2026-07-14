@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -45,7 +44,6 @@ export default function RegisterScreen() {
   const isAuthenticated = !!token;
   const [mode, setMode] = useState<RegisterMode>("select");
 
-  // 판매자 프로필 조회 (로그인 시에만)
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -54,7 +52,6 @@ export default function RegisterScreen() {
     (sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved") ||
     sellerProfile?.role === "admin";
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
-
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -172,7 +169,6 @@ export default function RegisterScreen() {
       ]);
       return;
     }
-    // 이미 업체회원이면 바로 프로필 관리로
     if (user?.role === "company") {
       Alert.alert("업체회원", "이미 업체회원으로 등록되어 있습니다.");
       return;
@@ -209,7 +205,6 @@ export default function RegisterScreen() {
     });
   };
 
-  // 선택 화면
   if (mode === "select") {
     return (
       <ScreenContainer>
@@ -221,7 +216,6 @@ export default function RegisterScreen() {
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-          {/* 물품 등록 카드 */}
           <Pressable
             style={({ pressed }) => [
               {
@@ -262,7 +256,6 @@ export default function RegisterScreen() {
                 </View>
               ))}
             </View>
-            {/* 상태 배지 */}
             {isAuthenticated && (
               <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
                 {isVerifiedSeller ? (
@@ -285,7 +278,6 @@ export default function RegisterScreen() {
             )}
           </Pressable>
 
-          {/* 업체 등록 카드 */}
           <Pressable
             style={({ pressed }) => [
               {
@@ -326,7 +318,6 @@ export default function RegisterScreen() {
                 </View>
               ))}
             </View>
-            {/* 상태 배지 */}
             {isAuthenticated && user?.role === "company" && (
               <View style={{ marginTop: 16, alignSelf: "flex-start" }}>
                 <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 }}>
@@ -339,7 +330,6 @@ export default function RegisterScreen() {
             )}
           </Pressable>
 
-          {/* 비로그인 안내 */}
           {!isAuthenticated && (
             <View style={{
               backgroundColor: colors.primary + "10",
@@ -366,14 +356,11 @@ export default function RegisterScreen() {
               </Pressable>
             </View>
           )}
-            </ScrollView>
-      </KeyboardAvoidingView>
-    </ScreenContainer>
-  );
-
+        </ScrollView>
+      </ScreenContainer>
+    );
   }
 
-   // 상품 등록 폼
   return (
     <ScreenContainer>
       <KeyboardAvoidingView
@@ -382,7 +369,6 @@ export default function RegisterScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
-
         <Pressable onPress={() => setMode("select")}>
           <Text style={{ fontSize: 15, color: colors.primary, fontWeight: "600" }}>← 뒤로</Text>
         </Pressable>
@@ -390,7 +376,6 @@ export default function RegisterScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
-        {/* 이미지 업로드 */}
         <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 10 }}>
             상품 이미지 <Text style={{ color: colors.error }}>*</Text>
@@ -460,7 +445,6 @@ export default function RegisterScreen() {
           </Text>
         </View>
 
-        {/* 제목 */}
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
             상품명 <Text style={{ color: colors.error }}>*</Text>
@@ -479,7 +463,6 @@ export default function RegisterScreen() {
           />
         </View>
 
-        {/* 업종 */}
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 10 }}>
             업종 <Text style={{ color: colors.error }}>*</Text>
@@ -510,7 +493,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        {/* 가격 */}
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
             가격 <Text style={{ color: colors.error }}>*</Text>
@@ -533,7 +515,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        {/* 수량 */}
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>수량</Text>
           <View style={{
@@ -554,7 +535,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        {/* 거래 유형 */}
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 10 }}>거래 유형</Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
@@ -581,7 +561,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        {/* 거래 지역 */}
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>거래 지역</Text>
           <TextInput
@@ -598,13 +577,12 @@ export default function RegisterScreen() {
           />
         </View>
 
-        {/* 상세 설명 */}
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>상세 설명</Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="상품에 대한 상세 설명을 입력하세요&#10;(구매 시기, 상태, 특이사항 등)"
+            placeholder="상품에 대한 상세 설명을 입력하세요 (구매 시기, 상태, 특이사항 등)"
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={5}
@@ -617,7 +595,6 @@ export default function RegisterScreen() {
           />
         </View>
 
-        {/* 등록 버튼 */}
         <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
           <Pressable
             style={({ pressed }) => [{
@@ -637,6 +614,7 @@ export default function RegisterScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
