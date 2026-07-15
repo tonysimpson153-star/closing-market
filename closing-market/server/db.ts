@@ -518,13 +518,29 @@ export async function getAllSellerApplications(input?: { status?: "pending" | "a
   if (input?.status) conditions.push(eq(sellerApplications.status, input.status));
 
   const query = db
-    .select()
+    .select({
+      id: sellerApplications.id,
+      userId: sellerApplications.userId,
+      sellerType: sellerApplications.sellerType,
+      businessNumber: sellerApplications.businessNumber,
+      businessName: sellerApplications.businessName,
+      representativeName: sellerApplications.representativeName,
+      businessCertUrl: sellerApplications.businessCertUrl,
+      businessPhotoUrl: sellerApplications.businessPhotoUrl,
+      status: sellerApplications.status,
+      rejectionReason: sellerApplications.rejectionReason,
+      createdAt: sellerApplications.createdAt,
+      name: users.name,
+      email: users.email,
+    })
     .from(sellerApplications)
+    .leftJoin(users, eq(sellerApplications.userId, users.id))
     .orderBy(desc(sellerApplications.createdAt))
     .limit(100);
 
   return conditions.length > 0 ? query.where(and(...conditions)) : query;
 }
+
 
 export async function reviewSellerApplication(
   applicationId: number,
