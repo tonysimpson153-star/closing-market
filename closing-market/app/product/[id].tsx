@@ -137,7 +137,10 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const images = product.images && product.images.length > 0 ? product.images : [];
+    const images = product.images && product.images.length > 0
+    ? product.images.map((img: any) => typeof img === "string" ? img : img.imageUrl)
+    : [];
+
 
   return (
     <ScreenContainer edges={["top", "left", "right"]}>
