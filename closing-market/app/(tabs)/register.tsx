@@ -114,10 +114,13 @@ export default function RegisterScreen() {
   const handleRemoveImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
+  const utils = trpc.useUtils();
 
-  const createMutation = trpc.products.create.useMutation({
+    const createMutation = trpc.products.create.useMutation({
     onSuccess: () => {
+      utils.products.list.invalidate();
       Alert.alert("등록 완료", "상품이 성공적으로 등록되었습니다.", [
+
         { text: "확인", onPress: () => {
           setTitle(""); setDescription(""); setPrice(""); setQuantity("1");
           setLocation(""); setSelectedCategory(""); setSelectedTradeType("direct");
