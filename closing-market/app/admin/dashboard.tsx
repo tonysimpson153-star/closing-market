@@ -466,9 +466,10 @@ function ReportsTab({ colors }: { colors: any }) {
                     {item.status === "pending" ? "미처리" : item.status === "resolved" ? "처리완료" : "기각"}
                   </Text>
                 </View>
-                <Text style={[{ fontSize: 12, color: colors.muted }]}>
-                  {TARGET_LABELS[item.targetType] ?? item.targetType} #{item.targetId}
+                                <Text style={[{ fontSize: 12, color: colors.muted }]}>
+                  {TARGET_LABELS[item.targetType] ?? item.targetType}: {item.targetName ?? `#${item.targetId}`}
                 </Text>
+
               </View>
               <Text style={[styles.listCardTitle, { color: colors.foreground }]} numberOfLines={2}>
                 {item.reason}

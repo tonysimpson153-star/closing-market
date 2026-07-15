@@ -1032,11 +1032,34 @@ export async function getAdminReports(input?: { limit?: number; offset?: number;
     .limit(input?.limit ?? 30)
     .offset(input?.offset ?? 0);
 
-  if (conditions.length > 0) {
-    return query.where(and(...conditions));
-  }
-  return query;
+  const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+
+  // 신고 대상(targetType)에 따라 실제 이름/제목을 조회해서 붙여줍니다.
+  const result = await Promise.all(
+    rows.map(async (row) => {
+      let targetName: string | null = null;
+      try {
+        if (row.targetType === "product") {
+          const p = await db.select({ title: products.title }).from(products).where(eq(products.id, row.targetId)).limit(1);
+          targetName = p[0]?.title ?? null;
+        } else if (row.targetType === "user") {
+          const u = await db.select({ name: users.name }).from(users).where(eq(users.id, row.targetId)).limit(1);
+          targetName = u[0]?.name ?? null;
+        } else if (row.targetType === "chat") {
+          targetName = `채팅방 #${row.targetId}`;
+        } else if (row.targetType === "comment") {
+          targetName = `댓글 #${row.targetId}`;
+        }
+      } catch {
+        targetName = null;
+      }
+      return { ...row, targetName };
+    })
+  );
+
+  return result;
 }
+
 
 export async function updateReportStatus(reportId: number, status: "resolved" | "dismissed") {
   const db = await getDb();

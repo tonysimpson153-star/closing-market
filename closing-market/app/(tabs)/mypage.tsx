@@ -41,6 +41,9 @@ export default function MyPageScreen() {
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { data: sellerApplication } = trpc.seller.myApplication.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
@@ -78,14 +81,22 @@ export default function MyPageScreen() {
   };
 
   const renderRoleBadge = () => {
-    if (user?.role === "admin") {
+        if (user?.role === "seller" && isRejectedSeller) {
       return (
-        <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
-          <LucideIcon name="lock" size={11} color={colors.primary} strokeWidth={2} />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>관리자</Text>
+        <View>
+          <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
+            <LucideIcon name="x-circle" size={11} color={colors.error} strokeWidth={2} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: colors.error }}>판매회원 반려</Text>
+          </View>
+          {sellerApplication?.rejectionReason && (
+            <Text style={{ fontSize: 12, color: colors.error, marginTop: 6 }}>
+              반려 사유: {sellerApplication.rejectionReason}
+            </Text>
+          )}
         </View>
       );
     }
+
     if (user?.role === "seller" && isVerifiedSeller) {
       return (
         <View style={[styles.badge, { backgroundColor: colors.success + "15", borderColor: colors.success, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
@@ -110,6 +121,30 @@ export default function MyPageScreen() {
         </View>
       );
     }
+        if (user?.companyStatus === "rejected") {
+      return (
+        <View>
+          <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
+            <LucideIcon name="x-circle" size={11} color={colors.error} strokeWidth={2} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: colors.error }}>업체회원 반려</Text>
+          </View>
+          {user?.companyRejectionReason && (
+            <Text style={{ fontSize: 12, color: colors.error, marginTop: 6 }}>
+              반려 사유: {user.companyRejectionReason}
+            </Text>
+          )}
+        </View>
+      );
+    }
+    if (user?.role === "company") {
+      return (
+        <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
+          <LucideIcon name="building" size={11} color={colors.primary} strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>업체회원</Text>
+        </View>
+      );
+    }
+
     if (user?.role === "company") {
       return (
         <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
