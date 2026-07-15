@@ -81,7 +81,7 @@ export default function MyPageScreen() {
   };
 
   const renderRoleBadge = () => {
-        if (user?.role === "seller" && isRejectedSeller) {
+            if (isRejectedSeller) {
       return (
         <View>
           <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
@@ -96,6 +96,7 @@ export default function MyPageScreen() {
         </View>
       );
     }
+
 
     if (user?.role === "seller" && isVerifiedSeller) {
       return (
