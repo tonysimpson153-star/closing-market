@@ -26,6 +26,8 @@ export const users = mysqlTable("users", {
   companyPhone: varchar("companyPhone", { length: 20 }),
   companyAddress: varchar("companyAddress", { length: 500 }),
   companyLogoUrl: text("companyLogoUrl"),
+  companyBusinessCertUrl: text("companyBusinessCertUrl"),
+
   isVerified: boolean("isVerified").default(false).notNull(),
   profileImageUrl: text("profileImageUrl"),
   phone: varchar("phone", { length: 20 }),

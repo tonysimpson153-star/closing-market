@@ -301,6 +301,7 @@ export async function getFavorites(userId: number) {
 
   return result;
 }
+
 export async function isFavorited(userId: number, productId?: number, businessId?: number) {
   const db = await getDb();
   if (!db) return false;
@@ -311,7 +312,6 @@ export async function isFavorited(userId: number, productId?: number, businessId
   const existing = await db.select({ id: favorites.id }).from(favorites).where(and(...conditions)).limit(1);
   return existing.length > 0;
 }
-
 
 export async function toggleFavorite(
   userId: number,
@@ -541,7 +541,6 @@ export async function getAllSellerApplications(input?: { status?: "pending" | "a
   return conditions.length > 0 ? query.where(and(...conditions)) : query;
 }
 
-
 export async function reviewSellerApplication(
   applicationId: number,
   action: "approved" | "rejected" | "suspended",
@@ -569,7 +568,7 @@ export async function reviewSellerApplication(
     })
     .where(eq(sellerApplications.id, applicationId));
 
-    // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
+  // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
   if (action === "approved") {
     const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, app[0].userId)).limit(1);
     const shouldChangeRole = targetUser[0]?.role !== "admin";
@@ -581,7 +580,6 @@ export async function reviewSellerApplication(
         isVerified: true,
       })
       .where(eq(users.id, app[0].userId));
-
   } else if (action === "rejected") {
     await db
       .update(users)
@@ -836,8 +834,6 @@ export async function updateChatRoomStatus(roomId: number, userId: number, statu
   if (room.sellerId !== userId) {
     throw new Error("거래완료/취소는 판매자만 설정할 수 있습니다.");
   }
-
-
 
   await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
   return { success: true };
@@ -1273,6 +1269,7 @@ export async function updateUserCompanyInfo(userId: number, data: {
   companyDesc: string | null;
   businessNumber: string | null;
   companyLogoUrl: string | null;
+  companyBusinessCertUrl: string | null;
   representativeName: string;
 }) {
   const db = await getDb();
@@ -1286,6 +1283,7 @@ export async function updateUserCompanyInfo(userId: number, data: {
     companyDesc: data.companyDesc ?? undefined,
     businessNumber: data.businessNumber ?? undefined,
     companyLogoUrl: data.companyLogoUrl ?? undefined,
+    companyBusinessCertUrl: data.companyBusinessCertUrl ?? undefined,
     representativeName: data.representativeName,
     updatedAt: new Date(),
   }).where(eq(users.id, userId));
@@ -1307,6 +1305,9 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
     companyDesc: users.companyDesc,
     businessNumber: users.businessNumber,
     representativeName: users.representativeName,
+    companyLogoUrl: users.companyLogoUrl,
+    companyBusinessCertUrl: users.companyBusinessCertUrl,
+    companyRejectionReason: users.companyRejectionReason,
     createdAt: users.createdAt,
   }).from(users).$dynamic();
   if (input?.status) {
@@ -1322,7 +1323,7 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
 export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-   if (action === "approved") {
+  if (action === "approved") {
     const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
     const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db.update(users).set({
@@ -1331,10 +1332,10 @@ export async function reviewCompanyApplication(userId: number, action: "approved
       isVerified: true,
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
-
   } else if (action === "rejected") {
     await db.update(users).set({
       companyStatus: "rejected",
+      companyRejectionReason: rejectionReason ?? null,
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
   } else if (action === "suspended") {

@@ -947,13 +947,38 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
 
               {/* 업체 로고/사진 */}
               {item.companyLogoUrl && (
-                <View style={{ marginTop: 12 }}>
-                  <Pressable onPress={() => setPreviewImage(item.companyLogoUrl)}>
-                    <Image source={{ uri: item.companyLogoUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
-                    <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>업체 로고</Text>
-                  </Pressable>
+                              <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
+                <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                  사업자등록번호: {item.businessNumber ?? "-"} · 대표자: {item.representativeName ?? "-"}
+                </Text>
+                <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                  연락: {item.companyPhone ?? "-"} · 주소: {item.companyAddress ?? "-"}
+                </Text>
+                {item.companyRejectionReason && (
+                  <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
+                    반려 사유: {item.companyRejectionReason}
+                  </Text>
+                )}
+              </View>
+
+              {/* 업체 로고 & 사업자등록증 */}
+              {(item.companyLogoUrl || item.companyBusinessCertUrl) && (
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+                  {item.companyLogoUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.companyLogoUrl)}>
+                      <Image source={{ uri: item.companyLogoUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>업체 로고</Text>
+                    </Pressable>
+                  )}
+                  {item.companyBusinessCertUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.companyBusinessCertUrl)}>
+                      <Image source={{ uri: item.companyBusinessCertUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>사업자등록증</Text>
+                    </Pressable>
+                  )}
                 </View>
               )}
+
 
               {isPending && rejectingId !== item.id && (
                 <View style={[styles.actionRow, { borderTopColor: colors.border }]}>

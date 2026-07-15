@@ -548,11 +548,33 @@ export const appRouter = router({
           buffer,
           input.mimeType
         );
+                return { url: result.url };
+      }),
+
+    // 업체 사업자등록증 업로드 (인증 필요)
+    companyBusinessCert: protectedProcedure
+      .input(z.object({
+        base64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+        fileName: z.string().default("photo.jpg"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
+        const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
+        const ext = input.mimeType.split("/")[1] ?? "jpg";
+        const result = await storagePut(
+          `company/cert/${ctx.user.id}_${Date.now()}.${ext}`,
+          buffer,
+          input.mimeType
+        );
         return { url: result.url };
       }),
 
     // 개인 프로필 사진 업로드 (인증 필요)
     profilePhoto: protectedProcedure
+
       .input(z.object({
         base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
