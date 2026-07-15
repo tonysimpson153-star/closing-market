@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share, useWindowDimensions} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -27,12 +27,15 @@ const TRADE_TYPE_LABELS: Record<string, string> = {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
+    const { width: screenWidth } = useWindowDimensions();
+
   const router = useRouter();
   const { token, user } = useAuthStore();
   const isAuthenticated = !!token;
   const productId = Number(id);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const { data: product, isLoading, refetch } = trpc.products.detail.useQuery(
     { id: productId },
@@ -116,10 +119,21 @@ export default function ProductDetailScreen() {
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </ScreenContainer>
-    );
-  }
+              </View>
+
+      {/* 사진 확대보기 */}
+      {fullscreenImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
+          onPress={() => setFullscreenImage(null)}
+        >
+          <Image source={{ uri: fullscreenImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
+        </Pressable>
+      )}
+    </ScreenContainer>
+  );
+}
+
 
   if (!product) {
     return (
@@ -184,7 +198,7 @@ export default function ProductDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 이미지 영역 */}
         <View style={[styles.imageArea, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, padding: 0 }]}>
-          {product.images && product.images.length > 0 ? (
+                    {product.images && product.images.length > 0 ? (
             <>
               <ScrollView
                 horizontal
@@ -196,14 +210,16 @@ export default function ProductDetailScreen() {
                 }}
               >
                 {images.map((uri: string, index: number) => (
-                  <Image
-                    key={index}
-                    source={{ uri }}
-                    style={{ width: 375, height: 280 }}
-                    resizeMode="cover"
-                  />
+                  <Pressable key={index} onPress={() => setFullscreenImage(uri)}>
+                    <Image
+                      source={{ uri }}
+                      style={{ width: screenWidth, height: 280 }}
+                      resizeMode="cover"
+                    />
+                  </Pressable>
                 ))}
               </ScrollView>
+
               {images.length > 1 && (
                 <View style={{ position: "absolute", bottom: 12, alignSelf: "center", flexDirection: "row", gap: 6 }}>
                   {images.map((_: string, index: number) => (
