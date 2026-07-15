@@ -43,7 +43,6 @@ const SELLER_TYPES = [
     desc: "잉여 재고를 처분하려는 사업자",
     icon: "package",
   },
-  {
 ];
 
 type SellerType = "closing_soon" | "closed" | "relocating" | "inventory" | "transfer";
