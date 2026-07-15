@@ -936,19 +936,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
               </View>
               <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
                 <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  연락: {item.companyPhone ?? "-"} · 주소: {item.companyAddress ?? "-"}
-                </Text>
-                {item.companyRejectionReason && (
-                  <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
-                    반려 사유: {item.companyRejectionReason}
-                  </Text>
-                )}
-              </View>
-
-              {/* 업체 로고/사진 */}
-              {item.companyLogoUrl && (
-                              <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
-                <Text style={[styles.listCardSub, { color: colors.muted }]}>
                   사업자등록번호: {item.businessNumber ?? "-"} · 대표자: {item.representativeName ?? "-"}
                 </Text>
                 <Text style={[styles.listCardSub, { color: colors.muted }]}>
@@ -978,7 +965,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
                   )}
                 </View>
               )}
-
 
               {isPending && rejectingId !== item.id && (
                 <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
