@@ -312,11 +312,12 @@ export default function ChatRoomScreen() {
       )}
 
       {/* 메시지 목록 */}
-      <KeyboardAvoidingView
+            <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
+
         <FlatList
           ref={flatListRef}
           data={messages ?? []}
