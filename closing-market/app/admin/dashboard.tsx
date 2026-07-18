@@ -63,7 +63,7 @@ export default function AdminDashboard() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* 탭 바 - 프리미엄 스타일 */}
+      {/* 탭 바 */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -160,7 +160,6 @@ function OverviewTab({ colors, router, setActiveTab }: { colors: any; router: an
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
     >
-      {/* 플랫폼 현황 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground }]}>플랫폼 현황</Text>
 
       <View style={styles.statsGrid}>
@@ -180,7 +179,6 @@ function OverviewTab({ colors, router, setActiveTab }: { colors: any; router: an
         ))}
       </View>
 
-      {/* 빠른 메뉴 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}> 빠른 메뉴</Text>
       <View style={styles.quickMenu}>
         {[
@@ -296,7 +294,7 @@ function ProductsTab({ colors }: { colors: any }) {
   );
 }
 
-// ─── 신고 관리 탭 ─────────────────────────────────────────────
+// ─── 문의 탭 ─────────────────────────────────────────────
 
 function InquiriesTab({ colors }: { colors: any }) {
   const { data: inquiries, isLoading, refetch } = trpc.admin.allInquiries.useQuery();
@@ -466,10 +464,9 @@ function ReportsTab({ colors }: { colors: any }) {
                     {item.status === "pending" ? "미처리" : item.status === "resolved" ? "처리완료" : "기각"}
                   </Text>
                 </View>
-                                <Text style={[{ fontSize: 12, color: colors.muted }]}>
+                <Text style={[{ fontSize: 12, color: colors.muted }]}>
                   {TARGET_LABELS[item.targetType] ?? item.targetType}: {item.targetName ?? `#${item.targetId}`}
                 </Text>
-
               </View>
               <Text style={[styles.listCardTitle, { color: colors.foreground }]} numberOfLines={2}>
                 {item.reason}
@@ -677,7 +674,6 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
 
   const handleReview = (id: number, action: "approve" | "reject") => {
     if (action === "reject") {
-      // Alert.prompt는 iOS 전용 API라 안드로이드/웹에서는 별도 입력 폼으로 대체
       setRejectingId(id);
       setRejectReasonInput("");
     } else {
@@ -751,7 +747,6 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
                 )}
               </View>
 
-              {/* 첨부 서류/사진 */}
               {(item.businessCertUrl || item.businessPhotoUrl) && (
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
                   {item.businessCertUrl && (
@@ -792,7 +787,6 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
                 </View>
               )}
 
-              {/* 반려 사유 입력 폼 (Android/웹 호환) */}
               {isPending && rejectingId === item.id && (
                 <View style={{ marginTop: 12 }}>
                   <TextInput
@@ -828,7 +822,6 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
         }}
       />
 
-      {/* 사진 전체화면 미리보기 */}
       {previewImage && (
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000E6", justifyContent: "center", alignItems: "center" }}
@@ -874,7 +867,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
 
   const handleReview = (id: number, action: "approve" | "reject") => {
     if (action === "reject") {
-      // Alert.prompt는 iOS 전용 API라 안드로이드/웹에서는 별도 입력 폼으로 대체
       setRejectingId(id);
       setRejectReasonInput("");
     } else {
@@ -949,7 +941,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
                 )}
               </View>
 
-              {/* 업체 로고 & 사업자등록증 */}
               {(item.companyLogoUrl || item.companyBusinessCertUrl) && (
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
                   {item.companyLogoUrl && (
@@ -990,7 +981,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
                 </View>
               )}
 
-              {/* 반려 사유 입력 폼 (Android/웹 호환) */}
               {isPending && rejectingId === item.id && (
                 <View style={{ marginTop: 12 }}>
                   <TextInput
@@ -1026,7 +1016,6 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
         }}
       />
 
-      {/* 사진 전체화면 미리보기 */}
       {previewImage && (
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000E6", justifyContent: "center", alignItems: "center" }}
@@ -1085,33 +1074,17 @@ function NoticesTab({
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      {/* 작성 폼 */}
       <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>공지사항 작성</Text>
         <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: colors.border,
-              color: colors.foreground,
-              backgroundColor: colors.background,
-            },
-          ]}
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
           placeholder="제목"
           placeholderTextColor={colors.muted}
           value={noticeTitle}
           onChangeText={setNoticeTitle}
         />
         <TextInput
-          style={[
-            styles.input,
-            styles.textarea,
-            {
-              borderColor: colors.border,
-              color: colors.foreground,
-              backgroundColor: colors.background,
-            },
-          ]}
+          style={[styles.input, styles.textarea, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
           placeholder="내용을 입력하세요..."
           placeholderTextColor={colors.muted}
           value={noticeContent}
@@ -1141,10 +1114,7 @@ function NoticesTab({
         <Pressable
           style={({ pressed }) => [
             styles.submitBtn,
-            {
-              backgroundColor: colors.primary,
-              opacity: createMutation.isPending ? 0.6 : pressed ? 0.85 : 1,
-            },
+            { backgroundColor: colors.primary, opacity: createMutation.isPending ? 0.6 : pressed ? 0.85 : 1 },
           ]}
           onPress={handleCreate}
           disabled={createMutation.isPending}
@@ -1155,7 +1125,6 @@ function NoticesTab({
         </Pressable>
       </View>
 
-      {/* 공지 목록 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}>공지사항 목록</Text>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
@@ -1165,10 +1134,7 @@ function NoticesTab({
         </Text>
       ) : (
         (notices ?? []).map((notice: any) => (
-          <View
-            key={notice.id}
-            style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          >
+          <View key={notice.id} style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.listCardHeader}>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -1192,18 +1158,11 @@ function NoticesTab({
             </View>
             <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.deleteBtn,
-                  { borderColor: colors.error, opacity: pressed ? 0.6 : 1 },
-                ]}
+                style={({ pressed }) => [styles.deleteBtn, { borderColor: colors.error, opacity: pressed ? 0.6 : 1 }]}
                 onPress={() =>
                   Alert.alert("삭제 확인", "이 공지사항을 삭제하시겠습니까?", [
                     { text: "취소", style: "cancel" },
-                    {
-                      text: "삭제",
-                      style: "destructive",
-                      onPress: () => deleteMutation.mutate({ noticeId: notice.id }),
-                    },
+                    { text: "삭제", style: "destructive", onPress: () => deleteMutation.mutate({ noticeId: notice.id }) },
                   ])
                 }
               >
@@ -1218,188 +1177,37 @@ function NoticesTab({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 40,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  tabBar: {
-    borderBottomWidth: 1,
-    maxHeight: 48,
-  },
-  tabItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 4,
-  },
-  tabLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    marginBottom: 12,
-    letterSpacing: 0.3,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  statCard: {
-    width: "47%",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  statLabel: {
-    fontSize: 12,
-    textAlign: "center",
-    fontWeight: "500",
-  },
-  quickMenu: {
-    gap: 12,
-  },
-  quickItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  quickLabel: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  listCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  listCardHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-  },
-  listCardRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-  },
-  listCardFooter: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    gap: 6,
-  },
-  listCardTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  listCardSub: {
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: "500",
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  deleteBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-  },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  formCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  textarea: {
-    height: 120,
-    paddingTop: 12,
-  },
-  pinToggle: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  submitBtn: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  emptyDesc: {
-    fontSize: 14,
-    marginTop: 6,
-  },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  backBtn: { width: 40, alignItems: "flex-start", justifyContent: "center", paddingVertical: 8 },
+  headerTitle: { fontSize: 22, fontWeight: "800", letterSpacing: 0.5 },
+  tabBar: { borderBottomWidth: 1, maxHeight: 48 },
+  tabItem: { paddingHorizontal: 16, paddingVertical: 12, marginRight: 4 },
+  tabLabel: { fontSize: 14, fontWeight: "600" },
+  sectionTitle: { fontSize: 16, fontWeight: "800", marginBottom: 12, letterSpacing: 0.3 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  statCard: { width: "47%", padding: 16, borderRadius: 16, borderWidth: 1, alignItems: "center", gap: 6 },
+  statValue: { fontSize: 24, fontWeight: "800" },
+  statLabel: { fontSize: 12, textAlign: "center", fontWeight: "500" },
+  quickMenu: { gap: 12 },
+  quickItem: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 16, borderWidth: 1 },
+  quickLabel: { flex: 1, fontSize: 15, fontWeight: "600" },
+  listCard: { borderRadius: 16, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
+  listCardHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  listCardRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  listCardFooter: { paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, gap: 6 },
+  listCardTitle: { fontSize: 15, fontWeight: "600" },
+  listCardSub: { fontSize: 12, marginTop: 2, fontWeight: "500" },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  deleteBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  actionRow: { flexDirection: "row", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
+  actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center" },
+  avatar: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  formCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontWeight: "500" },
+  textarea: { height: 120, paddingTop: 12 },
+  pinToggle: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, alignItems: "center" },
+  submitBtn: { paddingVertical: 14, borderRadius: 12, alignItems: "center" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
+  emptyTitle: { fontSize: 16, fontWeight: "600" },
+  emptyDesc: { fontSize: 14, marginTop: 6 },
 });
