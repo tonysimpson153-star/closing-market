@@ -81,7 +81,7 @@ export default function MyPageScreen() {
   };
 
   const renderRoleBadge = () => {
-            if (isRejectedSeller) {
+    if (isRejectedSeller) {
       return (
         <View>
           <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
@@ -96,7 +96,6 @@ export default function MyPageScreen() {
         </View>
       );
     }
-
 
     if (user?.role === "seller" && isVerifiedSeller) {
       return (
@@ -122,7 +121,7 @@ export default function MyPageScreen() {
         </View>
       );
     }
-        if (user?.companyStatus === "rejected") {
+    if (user?.companyStatus === "rejected") {
       return (
         <View>
           <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
@@ -137,6 +136,14 @@ export default function MyPageScreen() {
         </View>
       );
     }
+    if (user?.companyStatus === "pending") {
+      return (
+        <View style={[styles.badge, { backgroundColor: colors.warning + "15", borderColor: colors.warning, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
+          <LucideIcon name="clock" size={11} color={colors.warning} strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.warning }}>업체회원 심사중</Text>
+        </View>
+      );
+    }
     if (user?.role === "company") {
       return (
         <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
@@ -145,12 +152,11 @@ export default function MyPageScreen() {
         </View>
       );
     }
-
-    if (user?.role === "company") {
+    if (user?.role === "admin") {
       return (
         <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
-          <LucideIcon name="building" size={11} color={colors.primary} strokeWidth={2} />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>업체회원</Text>
+          <LucideIcon name="lock" size={11} color={colors.primary} strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>관리자</Text>
         </View>
       );
     }
@@ -472,14 +478,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 16,
     gap: 10,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 14,
-    paddingVertical: 14,
-    gap: 8,
   },
   actionButtonIcon: {
     fontSize: 18,
