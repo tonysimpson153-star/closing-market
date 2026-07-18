@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, Linking, Alert, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -47,10 +48,12 @@ export default function CompanyDetailScreen() {
   const { token } = useAuthStore();
   const isAuthenticated = !!token;
   const companyId = Number(id);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { data: company, isLoading } = trpc.companies.detail.useQuery({ id: companyId });
   const { data: ratingSummary } = trpc.reviews.ratingSummary.useQuery({ targetUserId: companyId });
   const { data: reviewList } = trpc.reviews.listBySeller.useQuery({ targetUserId: companyId, limit: 5 });
+  const { data: myChatRooms } = trpc.chats.list.useQuery(undefined, { enabled: isAuthenticated });
 
   const startChatMutation = trpc.chats.getOrCreate.useMutation({
     onSuccess: (room) => {
@@ -113,6 +116,11 @@ export default function CompanyDetailScreen() {
       Alert.alert("로그인 필요", "후기 작성은 로그인이 필요합니다.");
       return;
     }
+    const hasContactedCompany = myChatRooms?.some((room: any) => room.sellerId === company.id);
+    if (!hasContactedCompany) {
+      Alert.alert("작성 불가", "채팅으로 문의한 업체에 대해서만 후기를 작성할 수 있습니다.");
+      return;
+    }
     router.push(
       `/review/write?targetUserId=${company.id}&targetName=${encodeURIComponent(company.name ?? "업체")}` as any
     );
@@ -142,7 +150,9 @@ export default function CompanyDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={{ width: "100%", height: 220, backgroundColor: colors.surface }}>
           {company.logoUrl ? (
-            <Image source={{ uri: company.logoUrl }} style={{ width: "100%", height: 220 }} resizeMode="cover" />
+            <Pressable onPress={() => setPreviewImage(company.logoUrl)}>
+              <Image source={{ uri: company.logoUrl }} style={{ width: "100%", height: 220 }} resizeMode="cover" />
+            </Pressable>
           ) : (
             <View style={{ width: "100%", height: 220, justifyContent: "center", alignItems: "center" }}>
               <LucideIcon
@@ -200,12 +210,13 @@ export default function CompanyDetailScreen() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, alignItems: "flex-start" }}>
               {images.map((img: any) => (
-                <Image
-                  key={img.id}
-                  source={{ uri: img.imageUrl }}
-                  style={{ width: 140, height: 100, borderRadius: 8, backgroundColor: colors.surface }}
-                  resizeMode="cover"
-                />
+                <Pressable key={img.id} onPress={() => setPreviewImage(img.imageUrl)}>
+                  <Image
+                    source={{ uri: img.imageUrl }}
+                    style={{ width: 140, height: 100, borderRadius: 8, backgroundColor: colors.surface }}
+                    resizeMode="cover"
+                  />
+                </Pressable>
               ))}
             </ScrollView>
           </View>
@@ -352,6 +363,15 @@ export default function CompanyDetailScreen() {
           )}
         </Pressable>
       </View>
+
+      {previewImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
+          onPress={() => setPreviewImage(null)}
+        >
+          <Image source={{ uri: previewImage }} style={{ width: "100%", height: "70%" }} resizeMode="contain" />
+        </Pressable>
+      )}
     </ScreenContainer>
   );
 }
