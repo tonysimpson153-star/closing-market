@@ -293,13 +293,18 @@ export default function HomeScreen() {
                     marginRight: 14,
                     borderWidth: 1,
                     borderColor: colors.border,
+                    overflow: "hidden",
                   }}
                 >
-                  <LucideIcon
-                    name={(BUSINESS_TYPE_ICONS[biz.type] ?? "building") as any}
-                    size={22}
-                    color={colors.primary}
-                  />
+                  {biz.logoUrl ? (
+                    <Image source={{ uri: biz.logoUrl }} style={{ width: 56, height: 56 }} resizeMode="cover" />
+                  ) : (
+                    <LucideIcon
+                      name={(BUSINESS_TYPE_ICONS[biz.type] ?? "building") as any}
+                      size={22}
+                      color={colors.primary}
+                    />
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground }}>
