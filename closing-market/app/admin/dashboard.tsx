@@ -837,7 +837,8 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
 // ─── 업체 신청 탭 ─────────────────────────────
 
 function CompanyApplicationsTab({ colors }: { colors: any }) {
-  const { data: applications, isLoading, refetch } = trpc.admin.companyApplications.useQuery();
+  const { data: applications, isLoading, refetch } = trpc.admin.companyApplications.useQuery({ status: "pending" });
+
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectReasonInput, setRejectReasonInput] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
