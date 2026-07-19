@@ -1315,7 +1315,8 @@ export async function updateUserCompanyInfo(userId: number, data: {
 export async function getCompanyApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
   const db = await getDb();
   if (!db) return [];
-  let query = db.select({
+
+  const selectFields = {
     id: users.id,
     name: users.name,
     email: users.email,
@@ -1332,16 +1333,23 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
     companyBusinessCertUrl: users.companyBusinessCertUrl,
     companyRejectionReason: users.companyRejectionReason,
     createdAt: users.createdAt,
-  }).from(users).$dynamic();
+  };
+
+  const { isNotNull } = await import("drizzle-orm");
+
   if (input?.status) {
-    query = query.where(eq(users.companyStatus, input.status));
-  } else {
-    // 업체회원 신청자만 (companyStatus가 null이 아닌 경우)
-    const { isNotNull } = await import("drizzle-orm");
-    query = query.where(isNotNull(users.companyType));
+    return db.select(selectFields).from(users)
+      .where(eq(users.companyStatus, input.status))
+      .orderBy(desc(users.createdAt))
+      .limit(100);
   }
-  return query.orderBy(desc(users.createdAt)).limit(100);
+
+  return db.select(selectFields).from(users)
+    .where(isNotNull(users.companyType))
+    .orderBy(desc(users.createdAt))
+    .limit(100);
 }
+
 
 export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
