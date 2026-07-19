@@ -1468,7 +1468,7 @@ export async function deleteAccount(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 채팅/후기/상품 등 다른 회원과 연결된 기록은 그대로 남기고,
+  // 채팅/후기 등 다른 회원과 연결된 기록은 그대로 남기고,
   // 개인 식별 정보만 지우고 재로그인이 불가능하도록 처리 (소프트 삭제)
   await db
     .update(users)
@@ -1484,13 +1484,23 @@ export async function deleteAccount(userId: number) {
       businessPhotoUrl: null,
       companyLogoUrl: null,
       expoPushToken: null,
+      role: "user",
+      companyStatus: null,
+      sellerStatus: null,
       deletedAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
 
+  // 탈퇴한 회원이 올린 판매중인 상품은 더 이상 목록에 노출되지 않도록 판매완료 처리
+  await db
+    .update(products)
+    .set({ status: "sold" })
+    .where(and(eq(products.userId, userId), eq(products.status, "selling")));
+
   return { success: true };
 }
+
 
 // ─── 관리자 - 회원 정지/해제 ─────────────────────────────────────
 
