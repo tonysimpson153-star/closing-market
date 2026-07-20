@@ -34,6 +34,10 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     companyPhone: null,
     companyAddress: null,
     companyLogoUrl: null,
+    companyBusinessCertUrl: null,
+    companyRejectionReason: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
     isVerified: false,
     profileImageUrl: null,
     phone: null,
@@ -47,6 +51,9 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
+    deletedAt: null,
+    suspendedAt: null,
+    suspendedReason: null,
   };
   
   const ctx: TrpcContext = {

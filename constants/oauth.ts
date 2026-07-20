@@ -40,10 +40,15 @@ export const API_BASE_URL = env.apiBaseUrl;
  * Get the API base URL, deriving from current hostname if not set.
  */
 export function getApiBaseUrl(): string {
+  // 명시적으로 설정된 값이 있으면 항상 최우선으로 사용합니다.
+  // (운영 서버를 가리키도록 일부러 설정한 경우, Manus 자체 개발 서버 자동 감지보다
+  //  이 값이 우선해야 실제 배포된 서버(Render 등)로 테스트할 수 있습니다.)
   if (API_BASE_URL) {
     return API_BASE_URL.replace(/\/$/, "");
   }
 
+  // Manus 개발 환경(웹) - EXPO_PUBLIC_API_BASE_URL이 설정 안 되어 있을 때만
+  // 터널 서브도메인에서 Manus 자체 개발 서버 주소를 자동 추론합니다.
   if (ReactNative.Platform.OS === "web" && typeof window !== "undefined" && window.location) {
     const { protocol, hostname } = window.location;
     const apiHostname = hostname.replace(/^8081-/, "3000-");
@@ -53,8 +58,6 @@ export function getApiBaseUrl(): string {
   }
 
   // 네이티브(Expo Go 등) - Metro 패키저 호스트에서 API 서버 주소를 추론합니다.
-  // EXPO_PUBLIC_API_BASE_URL이 없을 때, window.location이 없는 네이티브 환경에서도
-  // 동작하도록 expo-constants의 hostUri를 사용합니다.
   const hostUri: string | undefined =
     (Constants.expoConfig as any)?.hostUri ||
     (Constants as any).expoGoConfig?.debuggerHost ||

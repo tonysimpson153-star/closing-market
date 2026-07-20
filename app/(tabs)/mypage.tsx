@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -32,11 +33,15 @@ const SETTINGS_ITEMS = [
 
 export default function MyPageScreen() {
   const colors = useColors();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
   const isAuthenticated = !!token && !!user;
 
   const { data: sellerProfile } = trpc.seller.myProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: sellerApplication } = trpc.seller.myApplication.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -49,10 +54,11 @@ export default function MyPageScreen() {
 
   const handleLogout = () => {
     if (Platform.OS === "web") {
-      // react-native-web에서는 Alert.alert의 버튼 콜백이 동작하지 않는 경우가 있어
-      // 브라우저 기본 confirm으로 대체합니다.
       if (window.confirm("정말 로그아웃하시겠습니까?")) {
-        clearAuth().then(() => router.replace("/" as any));
+        clearAuth().then(() => {
+          queryClient.clear();
+          router.replace("/" as any);
+        });
       }
       return;
     }
@@ -63,6 +69,7 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           await clearAuth();
+          queryClient.clear();
           router.replace("/" as any);
         },
       },
@@ -73,16 +80,23 @@ export default function MyPageScreen() {
     router.push("/auth/login" as any);
   };
 
-  // 회원 유형 배지 렌더링
   const renderRoleBadge = () => {
-    if (user?.role === "admin") {
+    if (isRejectedSeller) {
       return (
-        <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
-          <LucideIcon name="lock" size={11} color={colors.primary} strokeWidth={2} />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>관리자</Text>
+        <View>
+          <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
+            <LucideIcon name="x-circle" size={11} color={colors.error} strokeWidth={2} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: colors.error }}>판매회원 반려</Text>
+          </View>
+          {sellerApplication?.rejectionReason && (
+            <Text style={{ fontSize: 12, color: colors.error, marginTop: 6 }}>
+              반려 사유: {sellerApplication.rejectionReason}
+            </Text>
+          )}
         </View>
       );
     }
+
     if (user?.role === "seller" && isVerifiedSeller) {
       return (
         <View style={[styles.badge, { backgroundColor: colors.success + "15", borderColor: colors.success, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
@@ -107,11 +121,42 @@ export default function MyPageScreen() {
         </View>
       );
     }
+    if (user?.companyStatus === "rejected") {
+      return (
+        <View>
+          <View style={[styles.badge, { backgroundColor: colors.error + "15", borderColor: colors.error, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }]}>
+            <LucideIcon name="x-circle" size={11} color={colors.error} strokeWidth={2} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: colors.error }}>업체회원 반려</Text>
+          </View>
+          {(user as any)?.companyRejectionReason && (
+            <Text style={{ fontSize: 12, color: colors.error, marginTop: 6 }}>
+              반려 사유: {(user as any).companyRejectionReason}
+            </Text>
+          )}
+        </View>
+      );
+    }
+    if (user?.companyStatus === "pending") {
+      return (
+        <View style={[styles.badge, { backgroundColor: colors.warning + "15", borderColor: colors.warning, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
+          <LucideIcon name="clock" size={11} color={colors.warning} strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.warning }}>업체회원 심사중</Text>
+        </View>
+      );
+    }
     if (user?.role === "company") {
       return (
         <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
           <LucideIcon name="building" size={11} color={colors.primary} strokeWidth={2} />
           <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>업체회원</Text>
+        </View>
+      );
+    }
+    if (user?.role === "admin") {
+      return (
+        <View style={[styles.badge, { backgroundColor: colors.primary + "12", borderColor: colors.primary, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 5 }]}>
+          <LucideIcon name="lock" size={11} color={colors.primary} strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primary }}>관리자</Text>
         </View>
       );
     }
@@ -125,16 +170,13 @@ export default function MyPageScreen() {
 
   return (
     <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
-      {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>마이페이지</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* 프로필 카드 - 고급스러운 디자인 */}
         <View style={styles.profileCardContainer}>
           <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {/* 프로필 이미지 */}
             <View style={[styles.profileImageBg, { backgroundColor: isAuthenticated ? colors.primary + "15" : colors.border }]}>
               <IconSymbol
                 name="person.fill"
@@ -143,7 +185,6 @@ export default function MyPageScreen() {
               />
             </View>
 
-            {/* 프로필 정보 */}
             <View style={styles.profileInfo}>
               {isAuthenticated && user ? (
                 <>
@@ -171,7 +212,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 판매/업체 회원 신청 버튼 */}
         {isAuthenticated && user?.role === "user" && (
           <View style={styles.actionButtonsContainer}>
             {!isPendingSeller && (
@@ -201,7 +241,6 @@ export default function MyPageScreen() {
           </View>
         )}
 
-        {/* 관리자 대시보드 버튼 */}
         {isAuthenticated && user?.role === "admin" && (
           <View style={styles.adminButtonContainer}>
             <Pressable
@@ -217,7 +256,6 @@ export default function MyPageScreen() {
           </View>
         )}
 
-        {/* 로그인/로그아웃 버튼 */}
         <View style={styles.authButtonsContainer}>
           {isAuthenticated ? (
             <Pressable
@@ -262,7 +300,6 @@ export default function MyPageScreen() {
           )}
         </View>
 
-        {/* 나의 활동 메뉴 */}
         <View style={styles.menuSection}>
           <Text style={[styles.sectionTitle, { color: colors.muted }]}>나의 활동</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -323,7 +360,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 설정 메뉴 */}
         <View style={styles.menuSection}>
           <Text style={[styles.sectionTitle, { color: colors.muted }]}>설정</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -373,7 +409,6 @@ export default function MyPageScreen() {
           </View>
         </View>
 
-        {/* 앱 정보 */}
         <View style={styles.infoSection}>
           <Text style={[styles.infoText, { color: colors.muted }]}>클로징마켓 v1.0.0</Text>
           <Text style={[styles.infoText, { color: colors.muted }]}>© 2026 Closing Market. All rights reserved.</Text>

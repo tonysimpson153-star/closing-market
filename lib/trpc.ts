@@ -35,13 +35,10 @@ export function createTRPCClient() {
             return {};
           }
         },
-        // Custom fetch to include credentials for cookie-based auth
-        fetch(url, options) {
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-          });
+              fetch(url, options) {
+          return fetch(url, options);
         },
+
       }),
     ],
   });

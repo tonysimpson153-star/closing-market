@@ -302,6 +302,17 @@ export async function getFavorites(userId: number) {
   return result;
 }
 
+export async function isFavorited(userId: number, productId?: number, businessId?: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const conditions = [eq(favorites.userId, userId)];
+  if (productId) conditions.push(eq(favorites.productId, productId));
+  else if (businessId) conditions.push(eq(favorites.businessId, businessId));
+  else return false;
+  const existing = await db.select({ id: favorites.id }).from(favorites).where(and(...conditions)).limit(1);
+  return existing.length > 0;
+}
+
 export async function toggleFavorite(
   userId: number,
   productId?: number,
@@ -507,8 +518,23 @@ export async function getAllSellerApplications(input?: { status?: "pending" | "a
   if (input?.status) conditions.push(eq(sellerApplications.status, input.status));
 
   const query = db
-    .select()
+    .select({
+      id: sellerApplications.id,
+      userId: sellerApplications.userId,
+      sellerType: sellerApplications.sellerType,
+      businessNumber: sellerApplications.businessNumber,
+      businessName: sellerApplications.businessName,
+      representativeName: sellerApplications.representativeName,
+      businessCertUrl: sellerApplications.businessCertUrl,
+      businessPhotoUrl: sellerApplications.businessPhotoUrl,
+      status: sellerApplications.status,
+      rejectionReason: sellerApplications.rejectionReason,
+      createdAt: sellerApplications.createdAt,
+      name: users.name,
+      email: users.email,
+    })
     .from(sellerApplications)
+    .leftJoin(users, eq(sellerApplications.userId, users.id))
     .orderBy(desc(sellerApplications.createdAt))
     .limit(100);
 
@@ -542,11 +568,17 @@ export async function reviewSellerApplication(
     })
     .where(eq(sellerApplications.id, applicationId));
 
-  // 승인 시 users 테이블 업데이트
+  // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
   if (action === "approved") {
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, app[0].userId)).limit(1);
+    const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db
       .update(users)
-      .set({ role: "seller", sellerStatus: "approved", isVerified: true })
+      .set({
+        ...(shouldChangeRole ? { role: "seller" as const } : {}),
+        sellerStatus: "approved",
+        isVerified: true,
+      })
       .where(eq(users.id, app[0].userId));
   } else if (action === "rejected") {
     await db
@@ -799,6 +831,9 @@ export async function updateChatRoomStatus(roomId: number, userId: number, statu
   if (!room || (room.buyerId !== userId && room.sellerId !== userId)) {
     throw new Error("채팅방에 접근할 수 없습니다.");
   }
+  if (room.sellerId !== userId) {
+    throw new Error("거래완료/취소는 판매자만 설정할 수 있습니다.");
+  }
 
   await db.update(chatRooms).set({ status }).where(eq(chatRooms.id, roomId));
   return { success: true };
@@ -997,11 +1032,34 @@ export async function getAdminReports(input?: { limit?: number; offset?: number;
     .limit(input?.limit ?? 30)
     .offset(input?.offset ?? 0);
 
-  if (conditions.length > 0) {
-    return query.where(and(...conditions));
-  }
-  return query;
+  const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+
+  // 신고 대상(targetType)에 따라 실제 이름/제목을 조회해서 붙여줍니다.
+  const result = await Promise.all(
+    rows.map(async (row) => {
+      let targetName: string | null = null;
+      try {
+        if (row.targetType === "product") {
+          const p = await db.select({ title: products.title }).from(products).where(eq(products.id, row.targetId)).limit(1);
+          targetName = p[0]?.title ?? null;
+        } else if (row.targetType === "user") {
+          const u = await db.select({ name: users.name }).from(users).where(eq(users.id, row.targetId)).limit(1);
+          targetName = u[0]?.name ?? null;
+        } else if (row.targetType === "chat") {
+          targetName = `채팅방 #${row.targetId}`;
+        } else if (row.targetType === "comment") {
+          targetName = `댓글 #${row.targetId}`;
+        }
+      } catch {
+        targetName = null;
+      }
+      return { ...row, targetName };
+    })
+  );
+
+  return result;
 }
+
 
 export async function updateReportStatus(reportId: number, status: "resolved" | "dismissed") {
   const db = await getDb();
@@ -1227,13 +1285,14 @@ export async function updateCompanyProfile(userId: number, data: {
 
 export async function updateUserCompanyInfo(userId: number, data: {
   companyStatus: "pending" | "approved" | "rejected" | "suspended";
-  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cleaning" | "tax" | "labor";
+  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cctv" | "cleaning" | "tax" | "labor" | "kitchen" | "consulting";
   companyName: string;
   companyPhone: string;
   companyAddress: string;
   companyDesc: string | null;
   businessNumber: string | null;
   companyLogoUrl: string | null;
+  companyBusinessCertUrl: string | null;
   representativeName: string;
 }) {
   const db = await getDb();
@@ -1247,6 +1306,7 @@ export async function updateUserCompanyInfo(userId: number, data: {
     companyDesc: data.companyDesc ?? undefined,
     businessNumber: data.businessNumber ?? undefined,
     companyLogoUrl: data.companyLogoUrl ?? undefined,
+    companyBusinessCertUrl: data.companyBusinessCertUrl ?? undefined,
     representativeName: data.representativeName,
     updatedAt: new Date(),
   }).where(eq(users.id, userId));
@@ -1255,7 +1315,8 @@ export async function updateUserCompanyInfo(userId: number, data: {
 export async function getCompanyApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
   const db = await getDb();
   if (!db) return [];
-  let query = db.select({
+
+  const selectFields = {
     id: users.id,
     name: users.name,
     email: users.email,
@@ -1268,24 +1329,36 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
     companyDesc: users.companyDesc,
     businessNumber: users.businessNumber,
     representativeName: users.representativeName,
+    companyLogoUrl: users.companyLogoUrl,
+    companyBusinessCertUrl: users.companyBusinessCertUrl,
+    companyRejectionReason: users.companyRejectionReason,
     createdAt: users.createdAt,
-  }).from(users).$dynamic();
+  };
+
+  const { isNotNull } = await import("drizzle-orm");
+
   if (input?.status) {
-    query = query.where(eq(users.companyStatus, input.status));
-  } else {
-    // 업체회원 신청자만 (companyStatus가 null이 아닌 경우)
-    const { isNotNull } = await import("drizzle-orm");
-    query = query.where(isNotNull(users.companyType));
+    return db.select(selectFields).from(users)
+      .where(eq(users.companyStatus, input.status))
+      .orderBy(desc(users.createdAt))
+      .limit(100);
   }
-  return query.orderBy(desc(users.createdAt)).limit(100);
+
+  return db.select(selectFields).from(users)
+    .where(isNotNull(users.companyType))
+    .orderBy(desc(users.createdAt))
+    .limit(100);
 }
+
 
 export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (action === "approved") {
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db.update(users).set({
-      role: "company",
+      ...(shouldChangeRole ? { role: "company" as const } : {}),
       companyStatus: "approved",
       isVerified: true,
       updatedAt: new Date(),
@@ -1293,6 +1366,7 @@ export async function reviewCompanyApplication(userId: number, action: "approved
   } else if (action === "rejected") {
     await db.update(users).set({
       companyStatus: "rejected",
+      companyRejectionReason: rejectionReason ?? null,
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
   } else if (action === "suspended") {
@@ -1315,6 +1389,47 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+// ─── 로그인 브루트포스 방어 ─────────────────────────────────────
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
+
+/** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
+export async function getAccountLockStatus(userId: number): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ lockedUntil: users.lockedUntil }).from(users).where(eq(users.id, userId)).limit(1);
+  const lockedUntil = rows[0]?.lockedUntil;
+  if (!lockedUntil) return null;
+  const remainingMs = lockedUntil.getTime() - Date.now();
+  if (remainingMs <= 0) return null;
+  return Math.ceil(remainingMs / 60000);
+}
+
+/** 로그인 실패 기록. 5회 누적 시 10분간 잠금 처리 */
+export async function recordFailedLogin(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const rows = await db.select({ failedLoginAttempts: users.failedLoginAttempts }).from(users).where(eq(users.id, userId)).limit(1);
+  const nextCount = (rows[0]?.failedLoginAttempts ?? 0) + 1;
+
+  if (nextCount >= MAX_FAILED_ATTEMPTS) {
+    await db.update(users).set({
+      failedLoginAttempts: nextCount,
+      lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS),
+    }).where(eq(users.id, userId));
+  } else {
+    await db.update(users).set({ failedLoginAttempts: nextCount }).where(eq(users.id, userId));
+  }
+}
+
+/** 로그인 성공 시 실패 카운트 초기화 */
+export async function resetFailedLogin(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(users.id, userId));
 }
 
 // ─── 비밀번호 재설정 (이메일 로그인 전용) ─────────────────────────
@@ -1353,7 +1468,7 @@ export async function deleteAccount(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 채팅/후기/상품 등 다른 회원과 연결된 기록은 그대로 남기고,
+  // 채팅/후기 등 다른 회원과 연결된 기록은 그대로 남기고,
   // 개인 식별 정보만 지우고 재로그인이 불가능하도록 처리 (소프트 삭제)
   await db
     .update(users)
@@ -1369,13 +1484,23 @@ export async function deleteAccount(userId: number) {
       businessPhotoUrl: null,
       companyLogoUrl: null,
       expoPushToken: null,
+      role: "user",
+      companyStatus: null,
+      sellerStatus: null,
       deletedAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
 
+  // 탈퇴한 회원이 올린 판매중인 상품은 더 이상 목록에 노출되지 않도록 판매완료 처리
+  await db
+    .update(products)
+    .set({ status: "sold" })
+    .where(and(eq(products.userId, userId), eq(products.status, "selling")));
+
   return { success: true };
 }
+
 
 // ─── 관리자 - 회원 정지/해제 ─────────────────────────────────────
 

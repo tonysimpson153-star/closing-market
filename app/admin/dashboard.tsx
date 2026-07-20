@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Pressable,
+  Image,
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
@@ -62,7 +63,7 @@ export default function AdminDashboard() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* 탭 바 - 프리미엄 스타일 */}
+      {/* 탭 바 */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -119,7 +120,7 @@ export default function AdminDashboard() {
       </ScrollView>
 
       {/* 탭 콘텐츠 */}
-      {activeTab === "overview" && <OverviewTab colors={colors} router={router} />}
+      {activeTab === "overview" && <OverviewTab colors={colors} router={router} setActiveTab={setActiveTab} />}
       {activeTab === "products" && <ProductsTab colors={colors} />}
       {activeTab === "sellers" && <SellerApplicationsTab colors={colors} />}
       {activeTab === "companies" && <CompanyApplicationsTab colors={colors} />}
@@ -143,15 +144,15 @@ export default function AdminDashboard() {
 
 // ─── 개요 탭 ─────────────────────────────────────────────────
 
-function OverviewTab({ colors, router }: { colors: any; router: any }) {
+function OverviewTab({ colors, router, setActiveTab }: { colors: any; router: any; setActiveTab: (tab: TabType) => void }) {
   const { data: stats, isLoading, refetch } = trpc.admin.stats.useQuery();
 
-  const statCards = [
-    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "users", color: colors.primary },
-    { label: "전체 상품", value: stats?.totalProducts ?? 0, icon: "package", color: "#10B981" },
-    { label: "전체 신고", value: stats?.totalReports ?? 0, icon: "alert-triangle", color: "#EF4444" },
-    { label: "미처리 신고", value: stats?.pendingReports ?? 0, icon: "alert-circle", color: "#F59E0B" },
-    { label: "판매자 심사 대기", value: stats?.pendingSellers ?? 0, icon: "briefcase", color: "#8B5CF6" },
+  const statCards: { label: string; value: number; icon: string; color: string; tab?: TabType }[] = [
+    { label: "전체 회원", value: stats?.totalUsers ?? 0, icon: "users", color: colors.primary, tab: "users" },
+    { label: "전체 상품", value: stats?.totalProducts ?? 0, icon: "package", color: "#10B981", tab: "products" },
+    { label: "전체 신고", value: stats?.totalReports ?? 0, icon: "alert-triangle", color: "#EF4444", tab: "reports" },
+    { label: "미처리 신고", value: stats?.pendingReports ?? 0, icon: "alert-circle", color: "#F59E0B", tab: "reports" },
+    { label: "판매자 심사 대기", value: stats?.pendingSellers ?? 0, icon: "briefcase", color: "#8B5CF6", tab: "sellers" },
   ];
 
   return (
@@ -159,29 +160,32 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
     >
-      {/* 플랫폼 현황 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground }]}>플랫폼 현황</Text>
 
       <View style={styles.statsGrid}>
         {statCards.map((card) => (
-          <View
+          <Pressable
             key={card.label}
-            style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={({ pressed }) => [
+              styles.statCard,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => card.tab && setActiveTab(card.tab)}
           >
             <LucideIcon name={card.icon as any} size={28} color={card.color} />
             <Text style={[styles.statValue, { color: card.color }]}>{card.value.toLocaleString()}</Text>
             <Text style={[styles.statLabel, { color: colors.muted }]}>{card.label}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
 
-      {/* 빠른 메뉴 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}> 빠른 메뉴</Text>
       <View style={styles.quickMenu}>
         {[
-          { label: "판매자 신청 관리", icon: "briefcase", path: "/admin/seller-applications" },
-          { label: "신고 처리", icon: "alert-triangle", action: "reports" },
-          { label: "공지사항 작성", icon: "bell", action: "notices" },
+          { label: "판매자 신청 관리", icon: "briefcase", tab: "sellers" as TabType },
+          { label: "업체 신청 관리", icon: "building", tab: "companies" as TabType },
+          { label: "신고 처리", icon: "alert-triangle", tab: "reports" as TabType },
+          { label: "공지사항 작성", icon: "bell", tab: "notices" as TabType },
         ].map((item) => (
           <Pressable
             key={item.label}
@@ -189,9 +193,7 @@ function OverviewTab({ colors, router }: { colors: any; router: any }) {
               styles.quickItem,
               { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
             ]}
-            onPress={() => {
-              if (item.path) router.push(item.path as any);
-            }}
+            onPress={() => setActiveTab(item.tab)}
           >
             <LucideIcon name={item.icon as any} size={24} color={colors.primary} />
             <Text style={[styles.quickLabel, { color: colors.foreground }]}>{item.label}</Text>
@@ -292,7 +294,7 @@ function ProductsTab({ colors }: { colors: any }) {
   );
 }
 
-// ─── 신고 관리 탭 ─────────────────────────────────────────────
+// ─── 문의 탭 ─────────────────────────────────────────────
 
 function InquiriesTab({ colors }: { colors: any }) {
   const { data: inquiries, isLoading, refetch } = trpc.admin.allInquiries.useQuery();
@@ -463,7 +465,7 @@ function ReportsTab({ colors }: { colors: any }) {
                   </Text>
                 </View>
                 <Text style={[{ fontSize: 12, color: colors.muted }]}>
-                  {TARGET_LABELS[item.targetType] ?? item.targetType} #{item.targetId}
+                  {TARGET_LABELS[item.targetType] ?? item.targetType}: {item.targetName ?? `#${item.targetId}`}
                 </Text>
               </View>
               <Text style={[styles.listCardTitle, { color: colors.foreground }]} numberOfLines={2}>
@@ -649,9 +651,14 @@ function UsersTab({ colors }: { colors: any }) {
 
 function SellerApplicationsTab({ colors }: { colors: any }) {
   const { data: applications, isLoading, refetch } = trpc.admin.sellerApplications.useQuery();
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const reviewMutation = trpc.admin.reviewApplication.useMutation({
     onSuccess: () => {
       Alert.alert("완료", "처리되었습니다.");
+      setRejectingId(null);
+      setRejectReasonInput("");
       refetch();
     },
     onError: (e: any) => Alert.alert("오류", e.message),
@@ -667,15 +674,8 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
 
   const handleReview = (id: number, action: "approve" | "reject") => {
     if (action === "reject") {
-      Alert.prompt(
-        "반려 사유",
-        "반려 사유를 입력해주세요",
-        (reason) => {
-          if (!reason?.trim()) return;
-          reviewMutation.mutate({ applicationId: id, action: "rejected", rejectionReason: reason.trim() });
-        },
-        "plain-text"
-      );
+      setRejectingId(id);
+      setRejectReasonInput("");
     } else {
       Alert.alert("승인 확인", "판매자 신청을 승인하시겠습니까?", [
         { text: "취소", style: "cancel" },
@@ -684,90 +684,171 @@ function SellerApplicationsTab({ colors }: { colors: any }) {
     }
   };
 
+  const submitReject = (id: number) => {
+    if (!rejectReasonInput.trim()) {
+      Alert.alert("입력 필요", "반려 사유를 입력해주세요.");
+      return;
+    }
+    reviewMutation.mutate({ applicationId: id, action: "rejected", rejectionReason: rejectReasonInput.trim() });
+  };
+
   if (isLoading) return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
 
   return (
-    <FlatList
-      data={applications ?? []}
-      keyExtractor={(item: any) => String(item.id)}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
-      ListEmptyComponent={
-        <View style={styles.center}>
-          <LucideIcon name="briefcase" size={40} color={colors.primary} />
-          <Text style={[styles.emptyTitle, { color: colors.muted }]}>판매자 신청이 없습니다.</Text>
-        </View>
-      }
-      renderItem={({ item }: { item: any }) => {
-        const isPending = item.sellerStatus === "pending";
-        const statusColor =
-          item.sellerStatus === "approved" ? "#10B981" : item.sellerStatus === "rejected" ? "#EF4444" : "#F59E0B";
-        const statusLabel =
-          item.sellerStatus === "approved" ? "승인" : item.sellerStatus === "rejected" ? "반려" : "심사중";
-        return (
-          <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.listCardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.listCardTitle, { color: colors.foreground }]}>
-                  {item.businessName ?? "상호 없음"}
-                </Text>
-                <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  신청자: {item.name ?? "알 수 없음"} ({item.email})
-                </Text>
-                <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  유형: {SELLER_TYPE_LABELS[item.sellerType] ?? item.sellerType}
-                </Text>
+    <>
+      <FlatList
+        data={applications ?? []}
+        keyExtractor={(item: any) => String(item.id)}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <LucideIcon name="briefcase" size={40} color={colors.primary} />
+            <Text style={[styles.emptyTitle, { color: colors.muted }]}>판매자 신청이 없습니다.</Text>
+          </View>
+        }
+        renderItem={({ item }: { item: any }) => {
+          const isPending = item.status === "pending";
+          const statusColor =
+            item.status === "approved" ? "#10B981" : item.status === "rejected" ? "#EF4444" : "#F59E0B";
+          const statusLabel =
+            item.status === "approved" ? "승인" : item.status === "rejected" ? "반려" : "심사중";
+          return (
+            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.listCardHeader}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <View style={{ backgroundColor: "#8B5CF620", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#8B5CF6" }}>판매자</Text>
+                    </View>
+                    <Text style={[styles.listCardTitle, { color: colors.foreground }]}>
+                      {item.businessName ?? "상호 없음"}
+                    </Text>
+                  </View>
+                  <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                    신청자: {item.name ?? "알 수 없음"} ({item.email ?? "-"})
+                  </Text>
+                  <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                    유형: {SELLER_TYPE_LABELS[item.sellerType] ?? item.sellerType}
+                  </Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
+                  <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
+                </View>
               </View>
-              <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
-                <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
-              </View>
-            </View>
-            <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
-              <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                사업자: {item.businessNumber ?? "-"} · 대표: {item.representativeName ?? "-"}
-              </Text>
-              {item.rejectReason && (
-                <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
-                  반려 사유: {item.rejectReason}
+              <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
+                <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                  사업자: {item.businessNumber ?? "-"} · 대표: {item.representativeName ?? "-"}
                 </Text>
+                {item.rejectionReason && (
+                  <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
+                    반려 사유: {item.rejectionReason}
+                  </Text>
+                )}
+              </View>
+
+              {(item.businessCertUrl || item.businessPhotoUrl) && (
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+                  {item.businessCertUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.businessCertUrl)}>
+                      <Image source={{ uri: item.businessCertUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>사업자등록증</Text>
+                    </Pressable>
+                  )}
+                  {item.businessPhotoUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.businessPhotoUrl)}>
+                      <Image source={{ uri: item.businessPhotoUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>사업장 사진</Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+
+              {isPending && rejectingId !== item.id && (
+                <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionBtn,
+                      { backgroundColor: "#10B981", opacity: pressed ? 0.85 : 1 },
+                    ]}
+                    onPress={() => handleReview(item.id, "approve")}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionBtn,
+                      { backgroundColor: colors.error, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                    onPress={() => handleReview(item.id, "reject")}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {isPending && rejectingId === item.id && (
+                <View style={{ marginTop: 12 }}>
+                  <TextInput
+                    value={rejectReasonInput}
+                    onChangeText={setRejectReasonInput}
+                    placeholder="반려 사유를 입력해주세요"
+                    placeholderTextColor={colors.muted}
+                    multiline
+                    style={{
+                      borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+                      padding: 10, minHeight: 70, color: colors.foreground,
+                      backgroundColor: colors.background, fontSize: 13, marginBottom: 8,
+                    }}
+                  />
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Pressable
+                      style={{ flex: 1, backgroundColor: colors.error, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
+                      onPress={() => submitReject(item.id)}
+                    >
+                      <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>반려 확정</Text>
+                    </Pressable>
+                    <Pressable
+                      style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}
+                      onPress={() => { setRejectingId(null); setRejectReasonInput(""); }}
+                    >
+                      <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 13 }}>취소</Text>
+                    </Pressable>
+                  </View>
+                </View>
               )}
             </View>
-            {isPending && (
-              <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    { backgroundColor: "#10B981", opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => handleReview(item.id, "approve")}
-                >
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    { backgroundColor: colors.error, opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => handleReview(item.id, "reject")}
-                >
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        );
-      }}
-    />
+          );
+        }}
+      />
+
+      {previewImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000E6", justifyContent: "center", alignItems: "center" }}
+          onPress={() => setPreviewImage(null)}
+        >
+          <Image source={{ uri: previewImage }} style={{ width: "90%", height: "70%" }} resizeMode="contain" />
+        </Pressable>
+      )}
+    </>
   );
 }
 
 // ─── 업체 신청 탭 ─────────────────────────────
 
 function CompanyApplicationsTab({ colors }: { colors: any }) {
-  const { data: applications, isLoading, refetch } = trpc.admin.companyApplications.useQuery();
+  const { data: applications, isLoading, refetch } = trpc.admin.companyApplications.useQuery({ status: "pending" });
+
+
+
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const reviewMutation = trpc.admin.reviewCompanyApplication.useMutation({
     onSuccess: () => {
       Alert.alert("완료", "처리되었습니다.");
+      setRejectingId(null);
+      setRejectReasonInput("");
       refetch();
     },
     onError: (e: any) => Alert.alert("오류", e.message),
@@ -789,15 +870,8 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
 
   const handleReview = (id: number, action: "approve" | "reject") => {
     if (action === "reject") {
-      Alert.prompt(
-        "반려 사유",
-        "반려 사유를 입력해주세요",
-        (reason) => {
-          if (!reason?.trim()) return;
-          reviewMutation.mutate({ userId: id, action: "rejected", rejectionReason: reason.trim() });
-        },
-        "plain-text"
-      );
+      setRejectingId(id);
+      setRejectReasonInput("");
     } else {
       Alert.alert("승인 확인", "업체 등록 신청을 승인하시겠습니까?", [
         { text: "취소", style: "cancel" },
@@ -806,78 +880,154 @@ function CompanyApplicationsTab({ colors }: { colors: any }) {
     }
   };
 
+  const submitReject = (id: number) => {
+    if (!rejectReasonInput.trim()) {
+      Alert.alert("입력 필요", "반려 사유를 입력해주세요.");
+      return;
+    }
+    reviewMutation.mutate({ userId: id, action: "rejected", rejectionReason: rejectReasonInput.trim() });
+  };
+
   if (isLoading) return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
 
   return (
-    <FlatList
-      data={applications ?? []}
-      keyExtractor={(item: any) => String(item.id)}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
-      ListEmptyComponent={
-        <View style={styles.center}>
-          <LucideIcon name="building" size={40} color={colors.primary} />
-          <Text style={[styles.emptyTitle, { color: colors.muted }]}>업체 등록 신청이 없습니다.</Text>
-        </View>
-      }
-      renderItem={({ item }: { item: any }) => {
-        const isPending = item.status === "pending";
-        const statusColor = item.status === "approved" ? "#10B981" : item.status === "rejected" ? "#EF4444" : "#F59E0B";
-        const statusLabel = item.status === "approved" ? "승인" : item.status === "rejected" ? "반려" : "심사중";
-        return (
-          <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.listCardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.listCardTitle, { color: colors.foreground }]}>
-                  {item.companyName ?? "업체명 없음"}
+    <>
+      <FlatList
+        data={applications ?? []}
+        keyExtractor={(item: any) => String(item.id)}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <LucideIcon name="building" size={40} color={colors.primary} />
+            <Text style={[styles.emptyTitle, { color: colors.muted }]}>업체 등록 신청이 없습니다.</Text>
+          </View>
+        }
+        renderItem={({ item }: { item: any }) => {
+          const isPending = item.companyStatus === "pending";
+          const statusColor = item.companyStatus === "approved" ? "#10B981" : item.companyStatus === "rejected" ? "#EF4444" : "#F59E0B";
+          const statusLabel = item.companyStatus === "approved" ? "승인" : item.companyStatus === "rejected" ? "반려" : "심사중";
+          return (
+            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.listCardHeader}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <View style={{ backgroundColor: colors.primary + "20", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: colors.primary }}>업체</Text>
+                    </View>
+                    <Text style={[styles.listCardTitle, { color: colors.foreground }]}>
+                      {item.companyName ?? "업체명 없음"}
+                    </Text>
+                  </View>
+                  <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                    신청자: {item.name ?? "알 수 없음"} ({item.email})
+                  </Text>
+                  <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                    유형: {COMPANY_TYPE_LABELS[item.companyType] ?? item.companyType}
+                  </Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
+                  <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
+                </View>
+              </View>
+              <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
+                <Text style={[styles.listCardSub, { color: colors.muted }]}>
+                  사업자등록번호: {item.businessNumber ?? "-"} · 대표자: {item.representativeName ?? "-"}
                 </Text>
                 <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  신청자: {item.userName ?? "알 수 없음"} ({item.userEmail})
+                  연락: {item.companyPhone ?? "-"} · 주소: {item.companyAddress ?? "-"}
                 </Text>
-                <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                  유형: {COMPANY_TYPE_LABELS[item.companyType] ?? item.companyType}
-                </Text>
+                {item.companyRejectionReason && (
+                  <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
+                    반려 사유: {item.companyRejectionReason}
+                  </Text>
+                )}
               </View>
-              <View style={[styles.badge, { backgroundColor: statusColor + "20" }]}>
-                <Text style={{ color: statusColor, fontSize: 11, fontWeight: "700" }}>{statusLabel}</Text>
-              </View>
-            </View>
-            <View style={[styles.listCardFooter, { borderTopColor: colors.border }]}>
-              <Text style={[styles.listCardSub, { color: colors.muted }]}>
-                연락: {item.companyPhone ?? "-"} · 주소: {item.companyAddress ?? "-"}
-              </Text>
-              {item.rejectReason && (
-                <Text style={[styles.listCardSub, { color: colors.error, marginTop: 4 }]}>
-                  반려 사유: {item.rejectReason}
-                </Text>
+
+              {(item.companyLogoUrl || item.companyBusinessCertUrl) && (
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+                  {item.companyLogoUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.companyLogoUrl)}>
+                      <Image source={{ uri: item.companyLogoUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>업체 로고</Text>
+                    </Pressable>
+                  )}
+                  {item.companyBusinessCertUrl && (
+                    <Pressable onPress={() => setPreviewImage(item.companyBusinessCertUrl)}>
+                      <Image source={{ uri: item.companyBusinessCertUrl }} style={{ width: 88, height: 88, borderRadius: 8, backgroundColor: colors.border }} />
+                      <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4, textAlign: "center" }}>사업자등록증</Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+
+              {isPending && rejectingId !== item.id && (
+                <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionBtn,
+                      { backgroundColor: "#10B981", opacity: pressed ? 0.85 : 1 },
+                    ]}
+                    onPress={() => handleReview(item.id, "approve")}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionBtn,
+                      { backgroundColor: colors.error, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                    onPress={() => handleReview(item.id, "reject")}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {isPending && rejectingId === item.id && (
+                <View style={{ marginTop: 12 }}>
+                  <TextInput
+                    value={rejectReasonInput}
+                    onChangeText={setRejectReasonInput}
+                    placeholder="반려 사유를 입력해주세요"
+                    placeholderTextColor={colors.muted}
+                    multiline
+                    style={{
+                      borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+                      padding: 10, minHeight: 70, color: colors.foreground,
+                      backgroundColor: colors.background, fontSize: 13, marginBottom: 8,
+                    }}
+                  />
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Pressable
+                      style={{ flex: 1, backgroundColor: colors.error, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
+                      onPress={() => submitReject(item.id)}
+                    >
+                      <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>반려 확정</Text>
+                    </Pressable>
+                    <Pressable
+                      style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}
+                      onPress={() => { setRejectingId(null); setRejectReasonInput(""); }}
+                    >
+                      <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 13 }}>취소</Text>
+                    </Pressable>
+                  </View>
+                </View>
               )}
             </View>
-            {isPending && (
-              <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    { backgroundColor: "#10B981", opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => handleReview(item.id, "approve")}
-                >
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>승인</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    { backgroundColor: colors.error, opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => handleReview(item.id, "reject")}
-                >
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>반려</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        );
-      }}
-    />
+          );
+        }}
+      />
+
+      {previewImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000E6", justifyContent: "center", alignItems: "center" }}
+          onPress={() => setPreviewImage(null)}
+        >
+          <Image source={{ uri: previewImage }} style={{ width: "90%", height: "70%" }} resizeMode="contain" />
+        </Pressable>
+      )}
+    </>
   );
 }
 
@@ -927,33 +1077,17 @@ function NoticesTab({
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      {/* 작성 폼 */}
       <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>공지사항 작성</Text>
         <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: colors.border,
-              color: colors.foreground,
-              backgroundColor: colors.background,
-            },
-          ]}
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
           placeholder="제목"
           placeholderTextColor={colors.muted}
           value={noticeTitle}
           onChangeText={setNoticeTitle}
         />
         <TextInput
-          style={[
-            styles.input,
-            styles.textarea,
-            {
-              borderColor: colors.border,
-              color: colors.foreground,
-              backgroundColor: colors.background,
-            },
-          ]}
+          style={[styles.input, styles.textarea, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
           placeholder="내용을 입력하세요..."
           placeholderTextColor={colors.muted}
           value={noticeContent}
@@ -983,10 +1117,7 @@ function NoticesTab({
         <Pressable
           style={({ pressed }) => [
             styles.submitBtn,
-            {
-              backgroundColor: colors.primary,
-              opacity: createMutation.isPending ? 0.6 : pressed ? 0.85 : 1,
-            },
+            { backgroundColor: colors.primary, opacity: createMutation.isPending ? 0.6 : pressed ? 0.85 : 1 },
           ]}
           onPress={handleCreate}
           disabled={createMutation.isPending}
@@ -997,7 +1128,6 @@ function NoticesTab({
         </Pressable>
       </View>
 
-      {/* 공지 목록 */}
       <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}>공지사항 목록</Text>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
@@ -1007,10 +1137,7 @@ function NoticesTab({
         </Text>
       ) : (
         (notices ?? []).map((notice: any) => (
-          <View
-            key={notice.id}
-            style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          >
+          <View key={notice.id} style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.listCardHeader}>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -1034,18 +1161,11 @@ function NoticesTab({
             </View>
             <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.deleteBtn,
-                  { borderColor: colors.error, opacity: pressed ? 0.6 : 1 },
-                ]}
+                style={({ pressed }) => [styles.deleteBtn, { borderColor: colors.error, opacity: pressed ? 0.6 : 1 }]}
                 onPress={() =>
                   Alert.alert("삭제 확인", "이 공지사항을 삭제하시겠습니까?", [
                     { text: "취소", style: "cancel" },
-                    {
-                      text: "삭제",
-                      style: "destructive",
-                      onPress: () => deleteMutation.mutate({ noticeId: notice.id }),
-                    },
+                    { text: "삭제", style: "destructive", onPress: () => deleteMutation.mutate({ noticeId: notice.id }) },
                   ])
                 }
               >
@@ -1060,188 +1180,37 @@ function NoticesTab({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 40,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  tabBar: {
-    borderBottomWidth: 1,
-    maxHeight: 48,
-  },
-  tabItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 4,
-  },
-  tabLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    marginBottom: 12,
-    letterSpacing: 0.3,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  statCard: {
-    width: "47%",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  statLabel: {
-    fontSize: 12,
-    textAlign: "center",
-    fontWeight: "500",
-  },
-  quickMenu: {
-    gap: 12,
-  },
-  quickItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  quickLabel: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  listCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  listCardHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-  },
-  listCardRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-  },
-  listCardFooter: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    gap: 6,
-  },
-  listCardTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  listCardSub: {
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: "500",
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  deleteBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-  },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  formCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  textarea: {
-    height: 120,
-    paddingTop: 12,
-  },
-  pinToggle: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  submitBtn: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  emptyDesc: {
-    fontSize: 14,
-    marginTop: 6,
-  },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  backBtn: { width: 40, alignItems: "flex-start", justifyContent: "center", paddingVertical: 8 },
+  headerTitle: { fontSize: 22, fontWeight: "800", letterSpacing: 0.5 },
+  tabBar: { borderBottomWidth: 1, maxHeight: 48 },
+  tabItem: { paddingHorizontal: 16, paddingVertical: 12, marginRight: 4 },
+  tabLabel: { fontSize: 14, fontWeight: "600" },
+  sectionTitle: { fontSize: 16, fontWeight: "800", marginBottom: 12, letterSpacing: 0.3 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  statCard: { width: "47%", padding: 16, borderRadius: 16, borderWidth: 1, alignItems: "center", gap: 6 },
+  statValue: { fontSize: 24, fontWeight: "800" },
+  statLabel: { fontSize: 12, textAlign: "center", fontWeight: "500" },
+  quickMenu: { gap: 12 },
+  quickItem: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 16, borderWidth: 1 },
+  quickLabel: { flex: 1, fontSize: 15, fontWeight: "600" },
+  listCard: { borderRadius: 16, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
+  listCardHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  listCardRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  listCardFooter: { paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, gap: 6 },
+  listCardTitle: { fontSize: 15, fontWeight: "600" },
+  listCardSub: { fontSize: 12, marginTop: 2, fontWeight: "500" },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  deleteBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  actionRow: { flexDirection: "row", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
+  actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center" },
+  avatar: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  formCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontWeight: "500" },
+  textarea: { height: 120, paddingTop: 12 },
+  pinToggle: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, alignItems: "center" },
+  submitBtn: { paddingVertical: 14, borderRadius: 12, alignItems: "center" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
+  emptyTitle: { fontSize: 16, fontWeight: "600" },
+  emptyDesc: { fontSize: 14, marginTop: 6 },
 });

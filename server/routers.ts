@@ -16,15 +16,21 @@ export const appRouter = router({
   // ─── 자체 인증 ───
   auth: router({
     // 이메일 회원가입
-    register: publicProcedure
+        register: publicProcedure
       .input(z.object({
         email: z.string().email(),
         password: z.string().min(6),
         name: z.string().min(1).max(50),
-        phone: z.string().optional(),
-        // userType 제거 - 모든 신규 가입자는 일반회원(user)으로 가입
+        phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
+
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        const ip = ctx.req.ip ?? "unknown";
+        if (!checkRateLimit(`register:${ip}`, 10, 60 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 가입 시도가 감지되었습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         const normalizedEmail = input.email.trim().toLowerCase();
         const existing = await db.getUserByEmail(normalizedEmail);
         if (existing) {
@@ -58,15 +64,33 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        const ip = ctx.req.ip ?? "unknown";
+        if (!checkRateLimit(`login:${ip}`, 10, 10 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 로그인 시도가 감지되었습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         const user = await db.getUserByEmail(input.email.trim().toLowerCase());
         if (!user || !user.password) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
+
+        const lockedMinutes = await db.getAccountLockStatus(user.id);
+        if (lockedMinutes !== null) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: `로그인 시도가 너무 많아 계정이 잠겼습니다. 약 ${lockedMinutes}분 후 다시 시도해주세요.`,
+          });
+        }
+
         const valid = await bcrypt.compare(input.password, user.password);
         if (!valid) {
+          await db.recordFailedLogin(user.id);
           throw new TRPCError({ code: "UNAUTHORIZED", message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         }
+        await db.resetFailedLogin(user.id);
+
         if (user.suspendedAt) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -79,19 +103,17 @@ export const appRouter = router({
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
-    // 비밀번호 찾기 - 재설정 링크 이메일 발송 (이메일 로그인 사용자 전용, 카카오 로그인 사용자는 제외)
+    // 비밀번호 찾기 - 재설정 링크 이메일 발송
     forgotPassword: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const email = input.email.trim().toLowerCase();
         const user = await db.getUserByEmail(email);
 
-        // 사용자가 없거나, 비밀번호가 없는 카카오 전용 계정이면 실제로는 아무것도 안 하되
-        // 응답은 항상 동일하게 반환합니다 (계정 존재 여부가 노출되지 않도록 하기 위함).
         if (user && user.password && !user.deletedAt) {
           const crypto = await import("crypto");
           const token = crypto.randomBytes(32).toString("hex");
-          const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1시간
+          const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
           await db.createPasswordResetToken(user.id, token, expiresAt);
 
           const { sendEmail, buildPasswordResetEmailHtml } = await import("./_core/email");
@@ -110,7 +132,7 @@ export const appRouter = router({
         };
       }),
 
-    // 비밀번호 재설정 (이메일 링크의 토큰으로 새 비밀번호 설정)
+    // 비밀번호 재설정
     resetPassword: publicProcedure
       .input(z.object({
         token: z.string(),
@@ -139,11 +161,10 @@ export const appRouter = router({
         }
       }),
 
-    // 카카오 로그인 (카카오 액세스 토큰으로 사용자 정보 조회 후 로그인/가입)
+    // 카카오 로그인
     kakaoLogin: publicProcedure
       .input(z.object({ accessToken: z.string() }))
       .mutation(async ({ input }) => {
-        // 카카오 API로 사용자 정보 조회
         const kakaoRes = await fetch("https://kapi.kakao.com/v2/user/me", {
           headers: { Authorization: `Bearer ${input.accessToken}` },
         });
@@ -195,7 +216,6 @@ export const appRouter = router({
 
   // ─── 사용자 설정 ───
   user: router({
-    // 프로필 수정 (이름, 전화번호)
     updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(50).optional(),
@@ -207,7 +227,6 @@ export const appRouter = router({
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
         return { id: updated.id, name: updated.name, phone: updated.phone, email: updated.email, profileImageUrl: updated.profileImageUrl };
       }),
-    // 비밀번호 변경
     changePassword: protectedProcedure
       .input(z.object({
         currentPassword: z.string(),
@@ -222,7 +241,6 @@ export const appRouter = router({
         await db.updateUserPassword(ctx.user.id, hashed);
         return { success: true };
       }),
-    // 회원 탈퇴 (이메일 계정은 비밀번호 확인 필요)
     deleteAccount: protectedProcedure
       .input(z.object({ password: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
@@ -230,7 +248,6 @@ export const appRouter = router({
         if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
 
         if (user.password) {
-          // 이메일 계정: 비밀번호 확인 필수
           if (!input.password) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "비밀번호를 입력해주세요." });
           }
@@ -243,7 +260,6 @@ export const appRouter = router({
         await db.deleteAccount(ctx.user.id);
         return { success: true };
       }),
-    // 알림설정 조회
     getNotificationSettings: protectedProcedure
       .query(async ({ ctx }) => {
         const user = await db.getUserById(ctx.user.id);
@@ -255,7 +271,6 @@ export const appRouter = router({
           marketingNotification: user.notifMarketing ?? false,
         };
       }),
-    // 알림설정 저장
     updateNotificationSettings: protectedProcedure
       .input(z.object({
         chatNotification: z.boolean().optional(),
@@ -275,7 +290,6 @@ export const appRouter = router({
   }),
 
   products: router({
-    // 최신 상품 목록 (공개)
     list: publicProcedure
       .input(
         z.object({
@@ -289,14 +303,12 @@ export const appRouter = router({
         return db.getProducts(input);
       }),
 
-    // 상품 상세 (공개)
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(({ input }) => {
         return db.getProductDetail(input.id);
       }),
 
-    // 상품 등록 (인증된 판매자만 가능)
     create: protectedProcedure
       .input(
         z.object({
@@ -312,14 +324,20 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // 판매자 인증 여부 확인
+        const { checkRateLimit } = await import("./_core/rateLimit");
+        if (!checkRateLimit(`product-create:${ctx.user.id}`, 20, 60 * 60 * 1000)) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "너무 많은 상품을 등록했습니다. 잠시 후 다시 시도해주세요." });
+        }
+
         const user = await db.getUserById(ctx.user.id);
-        if (!user || !user.isVerified || user.sellerStatus !== "approved") {
+        const isAdmin = user?.role === "admin";
+        if (!user || (!isAdmin && (!user.isVerified || user.sellerStatus !== "approved"))) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "인증된 판매자만 상품을 등록할 수 있습니다.",
           });
         }
+
         const { images, ...productFields } = input;
         return db.createProduct({
           ...productFields,
@@ -328,7 +346,6 @@ export const appRouter = router({
         }, images);
       }),
 
-    // 상품 상태 변경 (인증 필요)
     updateStatus: protectedProcedure
       .input(
         z.object({
@@ -340,14 +357,12 @@ export const appRouter = router({
         return db.updateProductStatus(input.id, input.status, ctx.user.id);
       }),
 
-    // 내 상품 목록 (인증 필요)
     myProducts: protectedProcedure.query(({ ctx }) => {
       return db.getMyProducts(ctx.user.id);
     }),
   }),
 
   businesses: router({
-    // 추천 업체 목록 (공개)
     list: publicProcedure
       .input(
         z.object({
@@ -358,7 +373,6 @@ export const appRouter = router({
         return db.getBusinesses(input);
       }),
 
-    // 업체 상세 (공개)
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(({ input }) => {
@@ -368,14 +382,12 @@ export const appRouter = router({
 
   // ─── 업체회원 (실제 가입한 업체) ─────────────────────────────────
   companies: router({
-    // 승인된 업체회원 목록 (공개) - 홈 화면 "추천 업체" 등에서 사용
     list: publicProcedure
       .input(z.object({ type: z.string().optional() }).optional())
       .query(({ input }) => {
         return db.getApprovedCompanies(input);
       }),
 
-    // 업체회원 상세 (공개)
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(({ input }) => {
@@ -388,6 +400,18 @@ export const appRouter = router({
     list: protectedProcedure.query(({ ctx }) => {
       return db.getFavorites(ctx.user.id);
     }),
+
+    // 찜 여부 확인 (인증 필요)
+    check: protectedProcedure
+      .input(
+        z.object({
+          productId: z.number().optional(),
+          businessId: z.number().optional(),
+        })
+      )
+      .query(({ ctx, input }) => {
+        return db.isFavorited(ctx.user.id, input.productId, input.businessId);
+      }),
 
     // 찜 토글 (인증 필요)
     toggle: protectedProcedure
@@ -404,12 +428,10 @@ export const appRouter = router({
 
   // ─── 최근 본 상품 ─────────────────────────────────────────────
   recentViews: router({
-    // 최근 본 상품 목록 (인증 필요)
     list: protectedProcedure.query(({ ctx }) => {
       return db.getRecentViews(ctx.user.id);
     }),
 
-    // 상품 열람 기록 (인증 필요)
     track: protectedProcedure
       .input(z.object({ productId: z.number() }))
       .mutation(async ({ ctx, input }) => {
@@ -420,7 +442,6 @@ export const appRouter = router({
 
   // ─── 구매내역 ─────────────────────────────────────────────────
   purchases: router({
-    // 내 구매내역 (인증 필요) - 구매자로서 거래완료된 채팅방 기준
     list: protectedProcedure.query(({ ctx }) => {
       return db.getMyPurchases(ctx.user.id);
     }),
@@ -436,13 +457,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(`chat/images/${input.fileName.replace(/\.[^.]+$/, "")}.${ext}`, buffer, input.mimeType);
         return { url: result.url };
       }),
 
-    // 상품 등록용 이미지 업로드 (인증 필요)
     productImage: protectedProcedure
       .input(z.object({
         base64: z.string(),
@@ -451,7 +473,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `products/images/${ctx.user.id}_${input.fileName.replace(/\.[^.]+$/, "")}.${ext}`,
@@ -461,7 +485,6 @@ export const appRouter = router({
         return { url: result.url };
       }),
 
-    // 판매회원 신청용 문서 업로드 - 사업자등록증 / 사업장 사진 (인증 필요)
     sellerDocument: protectedProcedure
       .input(z.object({
         base64: z.string(),
@@ -471,7 +494,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `seller/${input.docType}/${ctx.user.id}_${Date.now()}.${ext}`,
@@ -481,7 +506,6 @@ export const appRouter = router({
         return { url: result.url };
       }),
 
-    // 업체회원 소개 사진/로고 업로드 (인증 필요)
     companyLogo: protectedProcedure
       .input(z.object({
         base64: z.string(),
@@ -490,7 +514,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `company/logo/${ctx.user.id}_${Date.now()}.${ext}`,
@@ -500,7 +526,26 @@ export const appRouter = router({
         return { url: result.url };
       }),
 
-    // 개인 프로필 사진 업로드 (인증 필요)
+    companyBusinessCert: protectedProcedure
+      .input(z.object({
+        base64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+        fileName: z.string().default("photo.jpg"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
+        const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
+        const ext = input.mimeType.split("/")[1] ?? "jpg";
+        const result = await storagePut(
+          `company/cert/${ctx.user.id}_${Date.now()}.${ext}`,
+          buffer,
+          input.mimeType
+        );
+        return { url: result.url };
+      }),
+
     profilePhoto: protectedProcedure
       .input(z.object({
         base64: z.string(),
@@ -509,7 +554,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { storagePut } = await import("./storage");
+        const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
+        validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
         const result = await storagePut(
           `user/profile/${ctx.user.id}_${Date.now()}.${ext}`,
@@ -521,17 +568,14 @@ export const appRouter = router({
   }),
 
   chats: router({
-    // 채팅 목록 (인증 필요)
     list: protectedProcedure.query(({ ctx }) => {
       return db.getChatList(ctx.user.id);
     }),
 
-    // 업체 문의함 - 상품 없이 업체로 들어온 문의 채팅만 모아보기 (인증 필요)
     myInquiryChats: protectedProcedure.query(({ ctx }) => {
       return db.getCompanyInquiryChats(ctx.user.id);
     }),
 
-    // 채팅방 생성 또는 기존 채팅방 조회
     getOrCreate: protectedProcedure
       .input(z.object({
         sellerId: z.number(),
@@ -541,14 +585,12 @@ export const appRouter = router({
         return db.getOrCreateChatRoom(ctx.user.id, input.sellerId, input.productId);
       }),
 
-    // 채팅방 상세 (메시지 포함)
     room: protectedProcedure
       .input(z.object({ roomId: z.number() }))
       .query(({ ctx, input }) => {
         return db.getChatRoomDetail(input.roomId, ctx.user.id);
       }),
 
-    // 메시지 목록 조회
     messages: protectedProcedure
       .input(z.object({
         roomId: z.number(),
@@ -559,7 +601,6 @@ export const appRouter = router({
         return db.getChatMessages(input.roomId, ctx.user.id, input.limit, input.beforeId);
       }),
 
-    // 메시지 전송
     send: protectedProcedure
       .input(z.object({
         roomId: z.number(),
@@ -572,7 +613,6 @@ export const appRouter = router({
         }
         const message = await db.sendChatMessage(input.roomId, ctx.user.id, input.content, input.imageUrl);
 
-        // 상대방에게 푸시 알림 전송 (실패해도 메시지 전송 자체는 성공 처리)
         try {
           const participants = await db.getChatRoomParticipants(input.roomId);
           if (participants) {
@@ -595,14 +635,12 @@ export const appRouter = router({
         return message;
       }),
 
-    // 읽음 처리
     markRead: protectedProcedure
       .input(z.object({ roomId: z.number() }))
       .mutation(({ ctx, input }) => {
         return db.markMessagesRead(input.roomId, ctx.user.id);
       }),
 
-    // 거래 완료 / 취소
     updateStatus: protectedProcedure
       .input(z.object({
         roomId: z.number(),
@@ -614,12 +652,10 @@ export const appRouter = router({
   }),
 
   notifications: router({
-    // 알림 목록 (인증 필요)
     list: protectedProcedure.query(({ ctx }) => {
       return db.getNotifications(ctx.user.id);
     }),
 
-    // 알림 읽음 처리
     markRead: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => {
@@ -629,17 +665,14 @@ export const appRouter = router({
 
   // ─── 판매자 인증 ─────────────────────────────────────────────
   seller: router({
-    // 내 판매자 신청 상태 조회
     myApplication: protectedProcedure.query(({ ctx }) => {
       return db.getMySellerApplication(ctx.user.id);
     }),
 
-    // 내 계정 상세 정보 조회 (판매자 상태 포함)
     myProfile: protectedProcedure.query(({ ctx }) => {
       return db.getUserById(ctx.user.id);
     }),
 
-    // 판매회원 신청 제출 (일반회원 → 판매회원 전환)
     submit: protectedProcedure
       .input(
         z.object({
@@ -668,23 +701,23 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
   // ─── 업체회원 ─────────────────────────────────────────────────
   company: router({
-    // 내 업체 프로필 조회
     myProfile: protectedProcedure.query(({ ctx }) => {
       return db.getUserById(ctx.user.id);
     }),
-    // 업체회원 신청 제출 (일반회원 → 업체회원 전환)
     submit: protectedProcedure
       .input(z.object({
-        companyType: z.enum(["demolition", "interior", "waste", "signage", "pos", "cctv", "kitchen", "cleaning", "tax", "labor", "consulting"]),
+        companyType: z.enum(["demolition", "interior", "waste", "signage", "pos", "cctv", "cleaning", "tax", "labor", "kitchen", "consulting"]),
         companyName: z.string().min(1).max(255),
         representativeName: z.string().min(1).max(100),
         companyPhone: z.string().min(9).max(20),
         companyAddress: z.string().min(1).max(500),
         companyDesc: z.string().max(1000).optional(),
-        businessNumber: z.string().min(10).max(20).optional(),
+        businessNumber: z.string().min(10).max(20),
         companyLogoUrl: z.string().url().optional(),
+        companyBusinessCertUrl: z.string().url().optional(),
         images: z.array(z.string().url()).max(10).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -697,6 +730,7 @@ export const appRouter = router({
           companyDesc: input.companyDesc ?? null,
           businessNumber: input.businessNumber ?? null,
           companyLogoUrl: input.companyLogoUrl ?? null,
+          companyBusinessCertUrl: input.companyBusinessCertUrl ?? null,
           representativeName: input.representativeName,
         });
         if (input.images && input.images.length > 0) {
@@ -705,7 +739,6 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // 업체 정보 수정 (승인된 업체회원 전용, 승인 상태는 유지됨)
     updateProfile: protectedProcedure
       .input(z.object({
         companyName: z.string().min(1).max(255).optional(),
@@ -730,10 +763,8 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── 관리자 전용 ─────────────────────────────────────────────
   // ─── 신고 ────────────────────────────────────────────────────
   reports: router({
-    // 신고 접수 (인증 필요)
     create: protectedProcedure
       .input(
         z.object({
@@ -755,7 +786,6 @@ export const appRouter = router({
 
   // ─── 1:1 고객센터 문의 ───────────────────────────────────────────
   inquiries: router({
-    // 문의 작성 (인증 필요)
     create: protectedProcedure
       .input(z.object({
         category: z.enum(["account", "product", "payment", "report", "seller", "company", "etc"]).default("etc"),
@@ -766,12 +796,10 @@ export const appRouter = router({
         return db.createInquiry({ userId: ctx.user.id, ...input });
       }),
 
-    // 내 문의 목록 (인증 필요)
     myList: protectedProcedure.query(({ ctx }) => {
       return db.getMyInquiries(ctx.user.id);
     }),
 
-    // 내 문의 상세 (인증 필요, 본인 문의만 조회 가능)
     detail: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(({ ctx, input }) => {
@@ -781,7 +809,6 @@ export const appRouter = router({
 
   // ─── 관리자 전용 ─────────────────────────────────────────────
   admin: router({
-    // 판매자 신청 목록 조회
     sellerApplications: adminProcedure
       .input(
         z.object({
@@ -792,7 +819,6 @@ export const appRouter = router({
         return db.getAllSellerApplications(input);
       }),
 
-    // 판매자 신청 승인/반려/정지
     reviewApplication: adminProcedure
       .input(
         z.object({
@@ -810,12 +836,10 @@ export const appRouter = router({
         );
       }),
 
-    // 통계
     stats: adminProcedure.query(() => {
       return db.getAdminStats();
     }),
 
-    // 전체 상품 목록
     allProducts: adminProcedure
       .input(z.object({
         limit: z.number().min(1).max(100).default(30),
@@ -826,14 +850,12 @@ export const appRouter = router({
         return db.getAdminProducts(input);
       }),
 
-    // 상품 삭제
     deleteProduct: adminProcedure
       .input(z.object({ productId: z.number() }))
       .mutation(({ input }) => {
         return db.adminDeleteProduct(input.productId);
       }),
 
-    // 신고 목록
     allReports: adminProcedure
       .input(z.object({
         limit: z.number().min(1).max(100).default(30),
@@ -844,7 +866,6 @@ export const appRouter = router({
         return db.getAdminReports(input);
       }),
 
-    // 신고 처리
     resolveReport: adminProcedure
       .input(z.object({
         reportId: z.number(),
@@ -854,7 +875,6 @@ export const appRouter = router({
         return db.updateReportStatus(input.reportId, input.status);
       }),
 
-    // 회원 목록
     allUsers: adminProcedure
       .input(z.object({
         limit: z.number().min(1).max(100).default(50),
@@ -864,7 +884,6 @@ export const appRouter = router({
         return db.getAdminUsers(input);
       }),
 
-    // 회원 정지
     suspendUser: adminProcedure
       .input(z.object({ userId: z.number(), reason: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
@@ -879,21 +898,18 @@ export const appRouter = router({
         return db.suspendUser(input.userId, input.reason);
       }),
 
-    // 회원 정지 해제
     reactivateUser: adminProcedure
       .input(z.object({ userId: z.number() }))
       .mutation(({ input }) => {
         return db.reactivateUser(input.userId);
       }),
 
-    // 공지사항 목록 (공개)
     notices: publicProcedure
       .input(z.object({ limit: z.number().default(20), offset: z.number().default(0) }).optional())
       .query(({ input }) => {
         return db.getNotices(input);
       }),
 
-    // 공지사항 작성
     createNotice: adminProcedure
       .input(z.object({
         title: z.string().min(1).max(255),
@@ -904,14 +920,12 @@ export const appRouter = router({
         return db.createNotice({ authorId: ctx.user.id, ...input });
       }),
 
-    // 공지사항 삭제
     deleteNotice: adminProcedure
       .input(z.object({ noticeId: z.number() }))
       .mutation(({ input }) => {
         return db.deleteNotice(input.noticeId);
       }),
 
-    // 1:1 문의 목록 (관리자)
     allInquiries: adminProcedure
       .input(z.object({
         status: z.enum(["pending", "answered"]).optional(),
@@ -922,14 +936,12 @@ export const appRouter = router({
         return db.getAllInquiries(input);
       }),
 
-    // 1:1 문의 답변
     answerInquiry: adminProcedure
       .input(z.object({ inquiryId: z.number(), answerContent: z.string().min(1).max(2000) }))
       .mutation(({ ctx, input }) => {
         return db.answerInquiry(input.inquiryId, ctx.user.id, input.answerContent);
       }),
 
-    // 업체회원 신청 목록 조회
     companyApplications: adminProcedure
       .input(z.object({
         status: z.enum(["pending", "approved", "rejected", "suspended"]).optional(),
@@ -937,7 +949,7 @@ export const appRouter = router({
       .query(({ input }) => {
         return db.getCompanyApplications(input);
       }),
-    // 업체회원 신청 승인/반려
+
     reviewCompanyApplication: adminProcedure
       .input(z.object({
         userId: z.number(),
@@ -952,7 +964,6 @@ export const appRouter = router({
 
   // ─── Reviews (거래 후기) ────────────────────────────────────
   reviews: router({
-    // 후기 작성 (구매자만 가능)
     create: protectedProcedure
       .input(
         z.object({
@@ -977,7 +988,6 @@ export const appRouter = router({
         });
       }),
 
-    // 특정 판매자의 후기 목록 (공개)
     listBySeller: publicProcedure
       .input(
         z.object({
@@ -990,21 +1000,18 @@ export const appRouter = router({
         return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset);
       }),
 
-    // 판매자 평균 별점 요약 (공개)
     ratingSummary: publicProcedure
       .input(z.object({ targetUserId: z.number() }))
       .query(({ input }) => {
         return db.getSellerRatingSummary(input.targetUserId);
       }),
 
-    // 후기 작성 여부 확인 (채팅방 기준)
     checkExists: protectedProcedure
       .input(z.object({ chatRoomId: z.number() }))
       .query(({ ctx, input }) => {
         return db.checkReviewExists(ctx.user.id, input.chatRoomId);
       }),
 
-    // 내가 작성한 후기 목록
     myReviews: protectedProcedure.query(({ ctx }) => {
       return db.getMyReviews(ctx.user.id);
     }),

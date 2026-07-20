@@ -49,11 +49,14 @@ export default function CompanyApplyScreen() {
   const [businessNumber, setBusinessNumber] = useState("");
   const [companyDesc, setCompanyDesc] = useState("");
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
+  const [companyBusinessCertUrl, setCompanyBusinessCertUrl] = useState<string | null>(null);
+  const [isUploadingCert, setIsUploadingCert] = useState(false);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
   const uploadLogoMutation = trpc.upload.companyLogo.useMutation();
+  const uploadCertMutation = trpc.upload.companyBusinessCert.useMutation();
 
   const MAX_GALLERY_IMAGES = 10;
   const handlePickGalleryImages = async () => {
@@ -131,6 +134,35 @@ export default function CompanyApplyScreen() {
     }
   };
 
+  const handlePickCert = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("권한 필요", "사진 접근 권한이 필요합니다.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    setIsUploadingCert(true);
+    try {
+      const uploaded = await uploadCertMutation.mutateAsync({
+        base64: result.assets[0].base64,
+        mimeType: result.assets[0].mimeType ?? "image/jpeg",
+        fileName: result.assets[0].fileName ?? "cert.jpg",
+      });
+      setCompanyBusinessCertUrl(uploaded.url);
+    } catch (err: any) {
+      Alert.alert("업로드 실패", err?.message ?? "사진 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsUploadingCert(false);
+    }
+  };
+
   const applyMutation = trpc.company.submit.useMutation({
     onSuccess: () => {
       setStep(3);
@@ -164,15 +196,24 @@ export default function CompanyApplyScreen() {
         Alert.alert("입력 오류", "업체 주소를 입력해주세요.");
         return;
       }
+      if (!businessNumber.trim()) {
+        Alert.alert("입력 오류", "사업자등록번호를 입력해주세요.");
+        return;
+      }
+      if (!companyBusinessCertUrl) {
+        Alert.alert("입력 오류", "사업자등록증 사진을 첨부해주세요.");
+        return;
+      }
       applyMutation.mutate({
         companyType: companyType!,
         companyName: companyName.trim(),
         representativeName: representativeName.trim(),
         companyPhone: companyPhone.trim(),
         companyAddress: companyAddress.trim(),
-        businessNumber: businessNumber.trim() || undefined,
+        businessNumber: businessNumber.trim(),
         companyDesc: companyDesc.trim() || undefined,
         companyLogoUrl: companyLogoUrl ?? undefined,
+        companyBusinessCertUrl: companyBusinessCertUrl ?? undefined,
         images: galleryImages.length > 0 ? galleryImages : undefined,
       });
     }
@@ -500,7 +541,7 @@ export default function CompanyApplyScreen() {
             </View>
 
             <View style={s.inputGroup}>
-              <Text style={s.label}>사업자등록번호 (선택)</Text>
+              <Text style={s.label}>사업자등록번호 *</Text>
               <TextInput
                 style={s.input}
                 placeholder="000-00-00000"
@@ -510,6 +551,36 @@ export default function CompanyApplyScreen() {
                 onChangeText={setBusinessNumber}
                 maxLength={12}
               />
+            </View>
+
+            <View style={s.inputGroup}>
+              <Text style={s.label}>사업자등록증 사진 *</Text>
+              <Pressable
+                onPress={handlePickCert}
+                disabled={isUploadingCert}
+                style={{
+                  height: 140,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  borderColor: companyBusinessCertUrl ? colors.primary : colors.border,
+                  borderStyle: companyBusinessCertUrl ? "solid" : "dashed",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  backgroundColor: colors.surface,
+                }}
+              >
+                {isUploadingCert ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : companyBusinessCertUrl ? (
+                  <Image source={{ uri: companyBusinessCertUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                ) : (
+                  <>
+                    <LucideIcon name="file" size={22} color={colors.muted} strokeWidth={1.5} />
+                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 6 }}>사업자등록증 사진을 첨부해주세요</Text>
+                  </>
+                )}
+              </Pressable>
             </View>
 
             <View style={s.inputGroup}>

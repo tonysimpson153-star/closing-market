@@ -51,7 +51,12 @@ export default function RegisterScreen() {
       Alert.alert("입력 오류", "이름, 이메일, 비밀번호는 필수 입력입니다.");
       return;
     }
+    if (!phone.trim()) {
+      Alert.alert("입력 오류", "전화번호는 필수 입력입니다.");
+      return;
+    }
     if (password !== passwordConfirm) {
+
       Alert.alert("비밀번호 불일치", "비밀번호가 일치하지 않습니다.");
       return;
     }
@@ -63,12 +68,13 @@ export default function RegisterScreen() {
       Alert.alert("동의 필요", "이용약관 및 개인정보처리방침에 동의해주세요.");
       return;
     }
-    registerMutation.mutate({
+        registerMutation.mutate({
       name: name.trim(),
       email: email.trim(),
       password,
-      phone: phone.trim() || undefined,
+      phone: phone.trim(),
     });
+ 
   };
 
   return (
@@ -149,7 +155,8 @@ export default function RegisterScreen() {
 
           {/* 전화번호 */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: colors.foreground }]}>전화번호 (선택)</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>전화번호 *</Text>
+
             <TextInput
               style={[
                 styles.input,
