@@ -479,6 +479,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 10,
   },
+    actionButtonsContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    gap: 10,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  actionButtonIcon: {
+    fontSize: 18,
+  },
+
   actionButtonIcon: {
     fontSize: 18,
   },
