@@ -155,7 +155,8 @@ export default function RegisterScreen() {
 
           {/* 전화번호 */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: colors.foreground }]}>전화번호 (선택)</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>전화번호 *</Text>
+
             <TextInput
               style={[
                 styles.input,
