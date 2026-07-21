@@ -66,7 +66,12 @@ export default function LoginScreen() {
         contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: "center" }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ alignItems: "center", marginBottom: 40 }}>
+                <View style={{ alignItems: "center", marginBottom: 40 }}>
+          <Image
+            source={require("@/assets/images/splash-icon.png")}
+            style={{ width: 88, height: 88, marginBottom: 16 }}
+            resizeMode="contain"
+          />
           <Text style={{ fontSize: 28, fontWeight: "800", color: colors.primary, letterSpacing: 1 }}>
             클로징마켓
           </Text>
@@ -74,6 +79,7 @@ export default function LoginScreen() {
             사업의 끝, 가치의 시작
           </Text>
         </View>
+
 
         <View style={{ marginBottom: 24 }}>
           <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground, marginBottom: 16 }}>
