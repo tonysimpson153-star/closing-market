@@ -96,15 +96,13 @@ export default function ProductDetailScreen() {
       return;
     }
     if (!product) return;
-        if (product.userId === user?.id) {
+    if (product.userId === user?.id) {
       Alert.alert("알림", "본인이 등록한 상품입니다.");
       return;
     }
     getOrCreateChatMutation.mutate({ sellerId: product.userId, productId: product.id });
-
-    }
-    getOrCreateChatMutation.mutate({ sellerId: product.sellerId, productId: product.id });
   };
+
 
   const handleShare = async () => {
     if (!product) return;
