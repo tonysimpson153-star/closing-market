@@ -47,6 +47,8 @@ export default function ChatRoomScreen() {
   const { user, token } = useAuthStore();
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -365,13 +367,16 @@ export default function ChatRoomScreen() {
 
                   <View style={[styles.msgContent, isMine ? styles.msgContentMine : styles.msgContentOther, { backgroundColor: isMine ? colors.primary : colors.surface, borderColor: isMine ? colors.primary : colors.border, borderWidth: 1 }]}>
                     {/* 이미지 메시지 */}
-                    {item.imageUrl ? (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.msgImage}
-                        resizeMode="cover"
-                      />
+                                        {item.imageUrl ? (
+                      <Pressable onPress={() => setPreviewImage(item.imageUrl)}>
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.msgImage}
+                          resizeMode="cover"
+                        />
+                      </Pressable>
                     ) : (
+
                       <Text style={[
                         styles.msgText,
                         { color: isMine ? "#000000" : colors.foreground, fontWeight: "500" }
@@ -444,10 +449,20 @@ export default function ChatRoomScreen() {
             )}
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+
+      {previewImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
+          onPress={() => setPreviewImage(null)}
+        >
+          <Image source={{ uri: previewImage }} style={{ width: "100%", height: "70%" }} resizeMode="contain" />
+        </Pressable>
+      )}
     </ScreenContainer>
   );
 }
+
 
 const styles = StyleSheet.create({
   header: {

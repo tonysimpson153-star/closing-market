@@ -1,16 +1,50 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, Platform } from "react-native";
+import { View, Platform, Text } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { useAuthStore } from "@/lib/auth-store";
+import { trpc } from "@/lib/trpc";
+
+function TabBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: -4,
+        right: -10,
+        backgroundColor: "#EF4444",
+        borderRadius: 9,
+        minWidth: 18,
+        height: 18,
+        paddingHorizontal: 4,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>
+        {count > 99 ? "99+" : count}
+      </Text>
+    </View>
+  );
+}
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
+  const { token } = useAuthStore();
+  const isAuthenticated = !!token;
+
+  const { data: chatList } = trpc.chats.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 10000,
+  });
+  const unreadCount = chatList?.reduce((sum: number, room: any) => sum + (room.unreadCount ?? 0), 0) ?? 0;
 
   return (
     <Tabs
@@ -80,7 +114,12 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "채팅",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="bubble.left.fill" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View>
+              <IconSymbol size={26} name="bubble.left.fill" color={color} />
+              <TabBadge count={unreadCount} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
