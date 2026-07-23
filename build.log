@@ -1,0 +1,12 @@
+★ eas-cli@21.0.3 is now available.
+To upgrade, run:
+npm install -g eas-cli
+Proceeding with outdated version.
+
+(node:87894) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+The field "cli.appVersionSource" is not set, but it will be required in the future. Learn more: https://docs.expo.dev/build-reference/app-versions/
+EAS project not configured.
+[?25l[2K[1G[36m?[39m [1mExisting EAS project found for @mm328i/closing-market (id = f1ec9191-65d3-4c0d-af6c-5cee3adab8e3). Configure this project?[22m [90m›[39m [90m(Y/n)[39m[2K[1G[2K[1G[32m✔[39m [1mExisting EAS project found for @mm328i/closing-market (id = f1ec9191-65d3-4c0d-af6c-5cee3adab8e3). Configure this project?[22m [90m…[39m no
+[?25hEAS project ID configuration canceled for @mm328i/closing-market. Run 'eas init' to configure.
+    Error: build command failed.

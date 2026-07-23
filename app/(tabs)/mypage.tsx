@@ -128,9 +128,9 @@ export default function MyPageScreen() {
             <LucideIcon name="x-circle" size={11} color={colors.error} strokeWidth={2} />
             <Text style={{ fontSize: 11, fontWeight: "700", color: colors.error }}>업체회원 반려</Text>
           </View>
-          {(user as any)?.companyRejectionReason && (
+          {user?.companyRejectionReason && (
             <Text style={{ fontSize: 12, color: colors.error, marginTop: 6 }}>
-              반려 사유: {(user as any).companyRejectionReason}
+              반려 사유: {user.companyRejectionReason}
             </Text>
           )}
         </View>
@@ -479,6 +479,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 10,
   },
+    actionButtonsContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    gap: 10,
+  },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -487,6 +492,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 8,
   },
+  actionButtonIcon: {
+    fontSize: 18,
+  },
+
   actionButtonIcon: {
     fontSize: 18,
   },

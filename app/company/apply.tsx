@@ -210,7 +210,7 @@ export default function CompanyApplyScreen() {
         representativeName: representativeName.trim(),
         companyPhone: companyPhone.trim(),
         companyAddress: companyAddress.trim(),
-        businessNumber: businessNumber.trim(),
+        businessNumber: businessNumber.trim() || undefined,
         companyDesc: companyDesc.trim() || undefined,
         companyLogoUrl: companyLogoUrl ?? undefined,
         companyBusinessCertUrl: companyBusinessCertUrl ?? undefined,
@@ -576,7 +576,7 @@ export default function CompanyApplyScreen() {
                   <Image source={{ uri: companyBusinessCertUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                 ) : (
                   <>
-                    <LucideIcon name="file" size={22} color={colors.muted} strokeWidth={1.5} />
+                    <LucideIcon name="file-text" size={22} color={colors.muted} strokeWidth={1.5} />
                     <Text style={{ fontSize: 12, color: colors.muted, marginTop: 6 }}>사업자등록증 사진을 첨부해주세요</Text>
                   </>
                 )}

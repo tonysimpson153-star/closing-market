@@ -1285,7 +1285,7 @@ export async function updateCompanyProfile(userId: number, data: {
 
 export async function updateUserCompanyInfo(userId: number, data: {
   companyStatus: "pending" | "approved" | "rejected" | "suspended";
-  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cctv" | "cleaning" | "tax" | "labor" | "kitchen" | "consulting";
+  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cleaning" | "tax" | "labor";
   companyName: string;
   companyPhone: string;
   companyAddress: string;

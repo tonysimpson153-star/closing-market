@@ -7,12 +7,12 @@ type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
 // 오래된 항목 주기적으로 정리 (메모리 누수 방지)
-(setInterval(() => {
+setInterval(() => {
   const now = Date.now();
   for (const [key, bucket] of buckets.entries()) {
     if (bucket.resetAt < now) buckets.delete(key);
   }
-}, 5 * 60 * 1000) as any).unref?.();
+}, 5 * 60 * 1000).unref?.();
 
 /**
  * key 기준으로 windowMs 시간 동안 maxAttempts 횟수를 넘었는지 확인합니다.

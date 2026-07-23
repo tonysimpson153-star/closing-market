@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share, useWindowDimensions} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -27,7 +27,7 @@ const TRADE_TYPE_LABELS: Record<string, string> = {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  const { width: screenWidth } = useWindowDimensions();
+    const { width: screenWidth } = useWindowDimensions();
 
   const router = useRouter();
   const { token, user } = useAuthStore();
@@ -103,6 +103,7 @@ export default function ProductDetailScreen() {
     getOrCreateChatMutation.mutate({ sellerId: product.userId, productId: product.id });
   };
 
+
   const handleShare = async () => {
     if (!product) return;
     try {
@@ -114,18 +115,27 @@ export default function ProductDetailScreen() {
     }
   };
 
-  // 로딩 상태
   if (isLoading) {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </ScreenContainer>
-    );
-  }
+              </View>
 
-  // 상품 없음
+      {/* 사진 확대보기 */}
+      {fullscreenImage && (
+        <Pressable
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
+          onPress={() => setFullscreenImage(null)}
+        >
+          <Image source={{ uri: fullscreenImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
+        </Pressable>
+      )}
+    </ScreenContainer>
+  );
+}
+
+
   if (!product) {
     return (
       <ScreenContainer>
@@ -142,9 +152,10 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const images = product.images && product.images.length > 0
+    const images = product.images && product.images.length > 0
     ? product.images.map((img: any) => typeof img === "string" ? img : img.imageUrl)
     : [];
+
 
   return (
     <ScreenContainer edges={["top", "left", "right"]}>
@@ -188,7 +199,7 @@ export default function ProductDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 이미지 영역 */}
         <View style={[styles.imageArea, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, padding: 0 }]}>
-          {product.images && product.images.length > 0 ? (
+                    {product.images && product.images.length > 0 ? (
             <>
               <ScrollView
                 horizontal
@@ -231,16 +242,6 @@ export default function ProductDetailScreen() {
           )}
         </View>
 
-        {/* 사진 확대보기 모달 */}
-        {fullscreenImage && (
-          <Pressable
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
-            onPress={() => setFullscreenImage(null)}
-          >
-            <Image source={{ uri: fullscreenImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
-          </Pressable>
-        )}
-
         <View style={{ padding: 18 }}>
           <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "700", marginBottom: 8 }}>
             {CATEGORY_LABELS[product.category] ?? product.category} · {product.location ?? "지역 미정"}
@@ -273,7 +274,7 @@ export default function ProductDetailScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/seller/profile" as any,
-                  params: { userId: String(product.userId), userName: product.sellerName ?? "판매자" },
+                  params: { userId: String(product.sellerId), userName: product.sellerName ?? "판매자" },
                 })
               }
             >
@@ -290,7 +291,7 @@ export default function ProductDetailScreen() {
                 <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
                   {product.sellerName ?? "판매자"}
                 </Text>
-                {product.isSellerVerified && (
+                {product.sellerIsVerified && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
                     <LucideIcon name="check-circle" size={11} color={colors.primary} strokeWidth={2} />
                     <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "600" }}>인증판매자</Text>
@@ -326,7 +327,8 @@ export default function ProductDetailScreen() {
           backgroundColor: colors.background,
         }}
       >
-        {product.userId !== user?.id && (
+                {product.userId !== user?.id && (
+
           <>
             <Pressable
               style={({ pressed }) => [

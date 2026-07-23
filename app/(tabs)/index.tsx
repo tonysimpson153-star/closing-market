@@ -300,7 +300,7 @@ export default function HomeScreen() {
                     <Image source={{ uri: biz.logoUrl }} style={{ width: 56, height: 56 }} resizeMode="cover" />
                   ) : (
                     <LucideIcon
-                      name={(BUSINESS_TYPE_ICONS[biz.type ?? ""] ?? "building") as any}
+                      name={(BUSINESS_TYPE_ICONS[biz.type] ?? "building") as any}
                       size={22}
                       color={colors.primary}
                     />

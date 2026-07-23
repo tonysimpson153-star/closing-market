@@ -709,7 +709,7 @@ export const appRouter = router({
     }),
     submit: protectedProcedure
       .input(z.object({
-        companyType: z.enum(["demolition", "interior", "waste", "signage", "pos", "cctv", "cleaning", "tax", "labor", "kitchen", "consulting"]),
+        companyType: z.enum(["demolition", "interior", "waste", "signage", "pos", "cctv", "kitchen", "cleaning", "tax", "labor", "consulting"]),
         companyName: z.string().min(1).max(255),
         representativeName: z.string().min(1).max(100),
         companyPhone: z.string().min(9).max(20),

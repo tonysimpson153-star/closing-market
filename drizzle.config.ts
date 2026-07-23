@@ -22,7 +22,7 @@ export default defineConfig({
     user: decodeURIComponent(parsed.username),
     password: decodeURIComponent(parsed.password),
     database: parsed.pathname.replace(/^\//, ""),
-    ...(useSsl && { ssl: "prefer" }),
+    ...(useSsl ? { ssl: { minVersion: "TLSv1.2" } } : {}),
   },
 });
 
