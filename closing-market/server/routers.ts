@@ -56,7 +56,7 @@ export const appRouter = router({
           throw err;
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return {
+                return {
   token,
   user: {
     id: user.id,
@@ -70,9 +70,11 @@ export const appRouter = router({
     profileImageUrl: user.profileImageUrl
   }
 };
+      }),
 
     // 이메일 로그인
     login: publicProcedure
+
       .input(z.object({
         email: z.string().email(),
         password: z.string(),
