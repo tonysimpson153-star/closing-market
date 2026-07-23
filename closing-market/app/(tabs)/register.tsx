@@ -12,6 +12,8 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -62,6 +64,7 @@ export default function RegisterScreen() {
   const [selectedTradeType, setSelectedTradeType] = useState("direct");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
   const MAX_IMAGES = 10;
   const uploadImageMutation = trpc.upload.productImage.useMutation();
@@ -108,6 +111,32 @@ export default function RegisterScreen() {
       setImages((prev) => [...prev, ...uploadedUrls].slice(0, MAX_IMAGES));
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+  const handleUseCurrentLocation = async () => {
+    setIsFetchingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("권한 필요", "위치 접근 권한이 필요합니다.");
+        return;
+      }
+      const position = await Location.getCurrentPositionAsync({});
+      const results = await Location.reverseGeocodeAsync({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+      if (results.length > 0) {
+        const r = results[0];
+        const address = [r.region, r.city, r.district].filter(Boolean).join(" ");
+        setLocation(address || "위치를 찾을 수 없습니다");
+      } else {
+        Alert.alert("오류", "주소를 찾을 수 없습니다.");
+      }
+    } catch {
+      Alert.alert("오류", "위치를 가져오는 중 문제가 발생했습니다.");
+    } finally {
+      setIsFetchingLocation(false);
     }
   };
 
@@ -564,21 +593,45 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+                <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>거래 지역</Text>
-          <TextInput
-            value={location}
-            onChangeText={setLocation}
-            placeholder="예) 서울 강남구, 경기 성남시"
-            placeholderTextColor={colors.muted}
-            returnKeyType="next"
-            style={{
-              backgroundColor: colors.surface, borderRadius: 10,
-              padding: 14, fontSize: 15, color: colors.foreground,
-              borderWidth: 1, borderColor: colors.border,
-            }}
-          />
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <TextInput
+              value={location}
+              onChangeText={setLocation}
+              placeholder="예) 서울 강남구, 경기 성남시"
+              placeholderTextColor={colors.muted}
+              returnKeyType="next"
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface, borderRadius: 10,
+                padding: 14, fontSize: 15, color: colors.foreground,
+                borderWidth: 1, borderColor: colors.border,
+              }}
+            />
+            <Pressable
+              onPress={handleUseCurrentLocation}
+              disabled={isFetchingLocation}
+              style={({ pressed }) => [{
+                width: 48,
+                borderRadius: 10,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                justifyContent: "center",
+                alignItems: "center",
+                opacity: pressed || isFetchingLocation ? 0.7 : 1,
+              }]}
+            >
+              {isFetchingLocation ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <LucideIcon name="map-pin" size={18} color={colors.primary} strokeWidth={1.8} />
+              )}
+            </Pressable>
+          </View>
         </View>
+
 
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>상세 설명</Text>
