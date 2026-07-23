@@ -17,13 +17,13 @@ export const appRouter = router({
   auth: router({
     // 이메일 회원가입
         register: publicProcedure
-      .input(z.object({
-        email: z.string().email(),
-        password: z.string().min(6),
-        name: z.string().min(1).max(50),
-        phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
-
-      }))
+  .input(z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string().min(1).max(50),
+    nickname: z.string().min(1).max(50),
+    phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
+  }))
       .mutation(async ({ ctx, input }) => {
         const { checkRateLimit } = await import("./_core/rateLimit");
         const ip = ctx.req.ip ?? "unknown";
@@ -41,13 +41,14 @@ export const appRouter = router({
         let user;
         try {
           user = await db.createUserByEmail({
-            openId,
-            email: normalizedEmail,
-            password: hashedPassword,
-            name: input.name,
-            phone: input.phone,
-            loginMethod: "email",
-          });
+  openId,
+  email: normalizedEmail,
+  password: hashedPassword,
+  name: input.name,
+  nickname: input.nickname,
+  phone: input.phone,
+  loginMethod: "email",
+});
         } catch (err: any) {
           if (err?.code === "ER_DUP_ENTRY" || /Duplicate entry/i.test(err?.message ?? "")) {
             throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
@@ -55,8 +56,20 @@ export const appRouter = router({
           throw err;
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
-      }),
+        return {
+  token,
+  user: {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    nickname: user.nickname,
+    role: user.role,
+    isVerified: user.isVerified,
+    sellerStatus: user.sellerStatus,
+    companyStatus: user.companyStatus,
+    profileImageUrl: user.profileImageUrl
+  }
+};
 
     // 이메일 로그인
     login: publicProcedure

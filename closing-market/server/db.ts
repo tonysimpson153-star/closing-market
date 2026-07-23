@@ -27,8 +27,6 @@ async function getDb() {
   if (_db) return _db;
   if (!ENV.databaseUrl) return null;
   try {
-    // TiDB Cloud 등 매니지드 MySQL은 TLS 접속이 필수입니다.
-    // DB_SSL=true 환경변수를 설정하면 TLS를 활성화합니다.
     const pool = ENV.dbSsl
       ? mysql.createPool({
           uri: ENV.databaseUrl,
@@ -104,13 +102,12 @@ export async function getProductDetail(id: number) {
       .where(eq(productImages.productId, id))
       .orderBy(productImages.sortOrder),
     db
-      .select({ id: users.id, name: users.name, isVerified: users.isVerified })
+      .select({ id: users.id, name: users.nickname, isVerified: users.isVerified })
       .from(users)
       .where(eq(users.id, rows[0].userId))
       .limit(1),
   ]);
 
-  // 조회수 증가
   await db.update(products).set({ viewCount: (rows[0].viewCount ?? 0) + 1 }).where(eq(products.id, id));
 
   return {
@@ -197,7 +194,6 @@ export async function getBusinessDetail(id: number) {
 }
 
 // ─── 업체회원 (실제 가입한 업체) ────────────────────────────────
-// businesses 테이블과 달리, 회원가입 후 관리자 승인을 받은 실제 "업체회원" 계정을 조회합니다.
 
 const COMPANY_SELECT_FIELDS = {
   id: users.id,
@@ -250,7 +246,6 @@ export async function addCompanyImages(userId: number, imageUrls: string[]) {
   if (!db) throw new Error("Database not available");
   if (imageUrls.length === 0) return;
 
-  // 기존 소개 사진은 교체 (재신청/수정 시 중복 누적 방지)
   await db.delete(companyImages).where(eq(companyImages.userId, userId));
   await db.insert(companyImages).values(
     imageUrls.map((imageUrl, index) => ({ userId, imageUrl, sortOrder: index }))
@@ -373,13 +368,11 @@ export async function addRecentView(userId: number, productId: number) {
   const db = await getDb();
   if (!db) return;
 
-  // 이미 본 상품이면 기존 기록 삭제 후 다시 추가 (최신순 유지)
   await db
     .delete(recentViews)
     .where(and(eq(recentViews.userId, userId), eq(recentViews.productId, productId)));
   await db.insert(recentViews).values({ userId, productId });
 
-  // 사용자당 최근 50개만 유지
   const rows = await db
     .select({ id: recentViews.id })
     .from(recentViews)
@@ -426,7 +419,6 @@ export async function getRecentViews(userId: number) {
     })
   );
 
-  // 삭제된 상품은 제외
   return result.filter((r) => r.product !== null);
 }
 
@@ -454,7 +446,7 @@ export async function getMyPurchases(userId: number) {
               category: productsTable.category,
             }).from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
           : Promise.resolve([]),
-        db.select({ id: usersTable.id, name: usersTable.name })
+        db.select({ id: usersTable.id, name: usersTable.nickname })
           .from(usersTable).where(eq(usersTable.id, room.sellerId)).limit(1),
       ]);
 
@@ -478,7 +470,6 @@ export async function submitSellerApplication(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 기존 심사중 신청이 있으면 중복 방지
   const existing = await db
     .select()
     .from(sellerApplications)
@@ -568,7 +559,6 @@ export async function reviewSellerApplication(
     })
     .where(eq(sellerApplications.id, applicationId));
 
-  // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
   if (action === "approved") {
     const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, app[0].userId)).limit(1);
     const shouldChangeRole = targetUser[0]?.role !== "admin";
@@ -611,8 +601,6 @@ export async function getChatList(userId: number) {
     .from(chatRooms)
     .where(and(
       or(eq(chatRooms.buyerId, userId), eq(chatRooms.sellerId, userId)),
-      // 업체 문의 채팅(상품 없이 나에게 들어온 문의)은 "업체 문의함"에서 따로 보여주므로
-      // 일반 채팅 목록에서는 제외해 중복 노출을 방지합니다.
       sql`NOT (${chatRooms.sellerId} = ${userId} AND ${chatRooms.productId} IS NULL)`
     ))
     .orderBy(desc(chatRooms.lastMessageAt))
@@ -623,7 +611,7 @@ export async function getChatList(userId: number) {
       const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
 
       const [otherUser, unreadRows, product] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -664,7 +652,7 @@ export async function getCompanyInquiryChats(userId: number) {
   const result = await Promise.all(
     rooms.map(async (room) => {
       const [buyer, unreadRows] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, room.buyerId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -690,7 +678,6 @@ export async function getOrCreateChatRoom(buyerId: number, sellerId: number, pro
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 기존 채팅방 확인
   const conditions = [
     eq(chatRooms.buyerId, buyerId),
     eq(chatRooms.sellerId, sellerId),
@@ -700,7 +687,6 @@ export async function getOrCreateChatRoom(buyerId: number, sellerId: number, pro
   const existing = await db.select().from(chatRooms).where(and(...conditions)).limit(1);
   if (existing[0]) return existing[0];
 
-  // 새 채팅방 생성
   const result = await db.insert(chatRooms).values({
     buyerId,
     sellerId,
@@ -719,12 +705,11 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
   const room = rooms[0];
   if (!room) return null;
 
-  // 접근 권한 확인
   if (room.buyerId !== userId && room.sellerId !== userId) return null;
 
   const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
   const [otherUser, product] = await Promise.all([
-    db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
+    db.select({ id: usersTable.id, name: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
       .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
     room.productId
       ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl, price: productsTable.price, status: productsTable.status })
@@ -744,7 +729,6 @@ export async function getChatMessages(roomId: number, userId: number, limit = 50
   const db = await getDb();
   if (!db) return [];
 
-  // 접근 권한 확인
   const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room || (room.buyerId !== userId && room.sellerId !== userId)) return [];
@@ -766,7 +750,6 @@ export async function sendChatMessage(roomId: number, senderId: number, content?
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 접근 권한 확인
   const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
@@ -781,7 +764,6 @@ export async function sendChatMessage(roomId: number, senderId: number, content?
     isRead: false,
   });
 
-  // 채팅방 마지막 메시지 업데이트
   await db.update(chatRooms).set({
     lastMessage: content ?? (imageUrl ? "[사진]" : ""),
     lastMessageAt: new Date(),
@@ -805,7 +787,6 @@ export async function markMessagesRead(roomId: number, userId: number) {
   const db = await getDb();
   if (!db) return;
 
-  // 내가 받은 메시지(상대방이 보낸 것)를 읽음 처리
   const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room) return;
@@ -852,7 +833,6 @@ export async function createReview(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 중복 후기 방지: 동일 채팅방에 이미 후기가 있으면 에러
   if (data.chatRoomId) {
     const existing = await db
       .select()
@@ -886,7 +866,7 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
       content: reviews.content,
       createdAt: reviews.createdAt,
       productId: reviews.productId,
-      reviewerName: users.name,
+      reviewerName: users.nickname,
       reviewerProfileUrl: users.profileImageUrl,
     })
     .from(reviews)
@@ -938,7 +918,7 @@ export async function getMyReviews(userId: number) {
       rating: reviews.rating,
       content: reviews.content,
       createdAt: reviews.createdAt,
-      targetName: users.name,
+      targetName: users.nickname,
       targetProfileUrl: users.profileImageUrl,
     })
     .from(reviews)
@@ -1034,7 +1014,6 @@ export async function getAdminReports(input?: { limit?: number; offset?: number;
 
   const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
 
-  // 신고 대상(targetType)에 따라 실제 이름/제목을 조회해서 붙여줍니다.
   const result = await Promise.all(
     rows.map(async (row) => {
       let targetName: string | null = null;
@@ -1059,7 +1038,6 @@ export async function getAdminReports(input?: { limit?: number; offset?: number;
 
   return result;
 }
-
 
 export async function updateReportStatus(reportId: number, status: "resolved" | "dismissed") {
   const db = await getDb();
@@ -1174,7 +1152,6 @@ export async function getInquiryById(id: number, userId?: number) {
   const rows = await db.select().from(inquiries).where(eq(inquiries.id, id)).limit(1);
   const inquiry = rows[0];
   if (!inquiry) return null;
-  // userId가 주어지면(일반 사용자 조회) 본인 문의인지 확인
   if (userId !== undefined && inquiry.userId !== userId) return null;
   return inquiry;
 }
@@ -1222,6 +1199,7 @@ export async function createUserByEmail(data: {
   email: string | null;
   password: string | null;
   name: string;
+  nickname?: string | null;
   phone?: string | null;
   loginMethod: string;
   kakaoId?: string | null;
@@ -1234,6 +1212,7 @@ export async function createUserByEmail(data: {
     email: data.email ?? undefined,
     password: data.password ?? undefined,
     name: data.name,
+    nickname: data.nickname ?? undefined,
     phone: data.phone ?? undefined,
     loginMethod: data.loginMethod,
     kakaoId: data.kakaoId ?? undefined,
@@ -1246,7 +1225,6 @@ export async function createUserByEmail(data: {
   if (!newUser) throw new Error("Failed to create user");
   return newUser;
 }
-
 
 export async function updateUserSellerInfo(userId: number, data: {
   sellerStatus: "pending" | "approved" | "rejected" | "suspended";
@@ -1350,7 +1328,6 @@ export async function getCompanyApplications(input?: { status?: "pending" | "app
     .limit(100);
 }
 
-
 export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1378,6 +1355,7 @@ export async function reviewCompanyApplication(userId: number, action: "approved
   }
   return { success: true };
 }
+
 export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1394,9 +1372,8 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
 // ─── 로그인 브루트포스 방어 ─────────────────────────────────────
 
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
+const LOCKOUT_DURATION_MS = 10 * 60 * 1000;
 
-/** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
 export async function getAccountLockStatus(userId: number): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
@@ -1408,7 +1385,6 @@ export async function getAccountLockStatus(userId: number): Promise<number | nul
   return Math.ceil(remainingMs / 60000);
 }
 
-/** 로그인 실패 기록. 5회 누적 시 10분간 잠금 처리 */
 export async function recordFailedLogin(userId: number) {
   const db = await getDb();
   if (!db) return;
@@ -1425,7 +1401,6 @@ export async function recordFailedLogin(userId: number) {
   }
 }
 
-/** 로그인 성공 시 실패 카운트 초기화 */
 export async function resetFailedLogin(userId: number) {
   const db = await getDb();
   if (!db) return;
@@ -1437,7 +1412,6 @@ export async function resetFailedLogin(userId: number) {
 export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // 기존에 발급했던 미사용 토큰은 무효화 (재요청 시 이전 링크는 못 쓰게)
   await db.update(passwordResetTokens).set({ used: true }).where(and(eq(passwordResetTokens.userId, userId), eq(passwordResetTokens.used, false)));
   await db.insert(passwordResetTokens).values({ userId, token, expiresAt });
   return { success: true };
@@ -1468,13 +1442,12 @@ export async function deleteAccount(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 채팅/후기 등 다른 회원과 연결된 기록은 그대로 남기고,
-  // 개인 식별 정보만 지우고 재로그인이 불가능하도록 처리 (소프트 삭제)
   await db
     .update(users)
     .set({
       openId: `deleted_${userId}_${Date.now()}`,
       name: "탈퇴한 회원",
+      nickname: null,
       email: null,
       phone: null,
       password: null,
@@ -1492,7 +1465,6 @@ export async function deleteAccount(userId: number) {
     })
     .where(eq(users.id, userId));
 
-  // 탈퇴한 회원이 올린 판매중인 상품은 더 이상 목록에 노출되지 않도록 판매완료 처리
   await db
     .update(products)
     .set({ status: "sold" })
@@ -1500,7 +1472,6 @@ export async function deleteAccount(userId: number) {
 
   return { success: true };
 }
-
 
 // ─── 관리자 - 회원 정지/해제 ─────────────────────────────────────
 
