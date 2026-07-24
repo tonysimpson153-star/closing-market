@@ -14,8 +14,6 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit push --force",
-
- 
     "android": "expo start --android",
     "ios": "expo start --ios",
     "qr": "node scripts/generate_qr.mjs",
@@ -23,8 +21,8 @@
     "build:web": "expo export -p web"
   },
   "dependencies": {
-    "@expo/vector-icons": "^15.0.3",
     "@aws-sdk/client-s3": "^3.700.0",
+    "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.8.12",
     "@react-navigation/elements": "^2.9.2",
@@ -42,6 +40,7 @@
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.44.7",
     "expo": "~54.0.29",
+    "expo-asset": "~12.0.13",
     "expo-audio": "~1.1.0",
     "expo-build-properties": "^1.0.10",
     "expo-constants": "~18.0.12",
@@ -51,6 +50,7 @@
     "expo-image-picker": "^17.0.11",
     "expo-keep-awake": "~15.0.8",
     "expo-linking": "~8.0.10",
+    "expo-location": "~19.0.8",
     "expo-notifications": "~0.32.15",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
@@ -67,11 +67,10 @@
     "lucide-react-native": "^0.462.0",
     "mysql2": "^3.16.0",
     "nativewind": "^4.2.1",
-        "react-native-css-interop": "^0.2.0",
-
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-css-interop": "^0.2.0",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.6",
     "react-native-safe-area-context": "~5.6.2",
