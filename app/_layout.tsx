@@ -1,8 +1,5 @@
 import "@/global.css";
-import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-
 
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
+import * as NavigationBar from "expo-navigation-bar";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
   SafeAreaFrameContext,
@@ -43,6 +41,14 @@ export default function RootLayout() {
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
     initManusRuntime();
+  }, []);
+
+  // Android Edge-to-Edge: 시스템 내비게이션 바 투명화
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      NavigationBar.setBackgroundColorAsync("transparent");
+      NavigationBar.setPositionAsync("absolute");
+    }
   }, []);
 
   // 로컬 알림 설정 및 푸시 토큰 등록

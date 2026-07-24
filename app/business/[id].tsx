@@ -5,6 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
   demolition: "철거업체",
@@ -34,6 +35,7 @@ export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   const { data: business, isLoading } = trpc.businesses.detail.useQuery({ id: Number(id) });
 
@@ -164,7 +166,9 @@ export default function BusinessDetailScreen() {
       <View
         style={{
           flexDirection: "row",
-          padding: 16,
+          paddingTop: 16,
+          paddingHorizontal: 16,
+          paddingBottom: 16 + insets.bottom,
           gap: 12,
           borderTopWidth: 1,
           borderTopColor: colors.border,

@@ -20,6 +20,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function formatTime(date: Date | string) {
   const d = new Date(date);
@@ -43,6 +44,7 @@ export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = parseInt(id ?? "0", 10);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, token } = useAuthStore();
   const isAuthenticated = !!token;
@@ -397,7 +399,7 @@ export default function ChatRoomScreen() {
         />
 
         {/* 입력창 */}
-        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: 12 + insets.bottom }]}>
           {/* 이미지 버튼 */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}

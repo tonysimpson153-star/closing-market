@@ -16,6 +16,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // 판매 유형 정의
 const SELLER_TYPES = [
@@ -49,6 +50,7 @@ type SellerType = "closing_soon" | "closed" | "relocating" | "inventory" | "tran
 
 export default function SellerApplyScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -490,7 +492,7 @@ export default function SellerApplyScreen() {
 
       {/* 다음 버튼 */}
       <Pressable
-        style={({ pressed }) => [s.nextBtn, { opacity: pressed ? 0.85 : 1 }]}
+        style={({ pressed }) => [s.nextBtn, { opacity: pressed ? 0.85 : 1, marginBottom: 16 + insets.bottom }]}
         onPress={handleNext}
         disabled={applyMutation.isPending || uploadingCert || uploadingPhoto}
       >
