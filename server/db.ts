@@ -1222,6 +1222,7 @@ export async function createUserByEmail(data: {
   email: string | null;
   password: string | null;
   name: string;
+  nickname?: string | null;
   phone?: string | null;
   loginMethod: string;
   kakaoId?: string | null;
@@ -1234,6 +1235,7 @@ export async function createUserByEmail(data: {
     email: data.email ?? undefined,
     password: data.password ?? undefined,
     name: data.name,
+    nickname: data.nickname ?? undefined,
     phone: data.phone ?? undefined,
     loginMethod: data.loginMethod,
     kakaoId: data.kakaoId ?? undefined,

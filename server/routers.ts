@@ -21,8 +21,8 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string().min(6),
         name: z.string().min(1).max(50),
+        nickname: z.string().min(1).max(50),
         phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
-
       }))
       .mutation(async ({ ctx, input }) => {
         const { checkRateLimit } = await import("./_core/rateLimit");
@@ -45,6 +45,7 @@ export const appRouter = router({
             email: normalizedEmail,
             password: hashedPassword,
             name: input.name,
+            nickname: input.nickname,
             phone: input.phone,
             loginMethod: "email",
           });

@@ -25,6 +25,7 @@ export default function RegisterScreen() {
   const colors = useColors();
   const { setAuth } = useAuthStore();
   const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -47,8 +48,8 @@ export default function RegisterScreen() {
   });
 
   const handleRegister = () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("입력 오류", "이름, 이메일, 비밀번호는 필수 입력입니다.");
+    if (!name.trim() || !nickname.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("입력 오류", "이름, 닉네임, 이메일, 비밀번호는 필수 입력입니다.");
       return;
     }
     if (!phone.trim()) {
@@ -70,6 +71,7 @@ export default function RegisterScreen() {
     }
         registerMutation.mutate({
       name: name.trim(),
+      nickname: nickname.trim(),
       email: email.trim(),
       password,
       phone: phone.trim(),
@@ -125,6 +127,28 @@ export default function RegisterScreen() {
               placeholderTextColor={colors.muted}
               value={name}
               onChangeText={setName}
+              returnKeyType="next"
+            />
+          </View>
+
+          {/* 닉네임 */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              닉네임 <Text style={[styles.required, { color: colors.error }]}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+              placeholder="닉네임을 입력하세요"
+              placeholderTextColor={colors.muted}
+              value={nickname}
+              onChangeText={setNickname}
               returnKeyType="next"
             />
           </View>
