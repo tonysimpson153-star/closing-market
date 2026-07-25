@@ -41,6 +41,7 @@ const env = {
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
+  owner: "mm328i",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -128,7 +129,7 @@ const config: ExpoConfig = {
     // 푸시 알림(Expo Push Token) 발급에 필요합니다.
     // `eas init` 실행 후 발급되는 프로젝트 ID를 EAS_PROJECT_ID 환경변수에 넣어주세요.
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? "",
+      projectId: "f1ec9191-65d3-4c0d-af6c-5cee3adab8e3",
     },
   },
 };
