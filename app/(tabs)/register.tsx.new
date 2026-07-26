@@ -1,0 +1,78 @@
+  // GPS 위치 권한 요청 및 위치 자동 감지
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      if (Platform.OS === "web") return; // 웹에서는 위치 기능 미지원
+      if (!isAuthenticated) return; // 인증되지 않은 경우 스킵
+      
+      try {
+        setIsGettingLocation(true);
+        console.log("[GPS] 위치 권한 요청 시작");
+        
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        console.log("[GPS] 위치 권한 상태:", status);
+        
+        if (status === "granted") {
+          console.log("[GPS] 위치 권한 획득, 현재 위치 조회 중...");
+          
+          // 현재 위치 획득
+          const currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: 5000,
+            distanceInterval: 10,
+          });
+          
+          console.log("[GPS] 현재 위치:", currentLocation.coords);
+          
+          // 역지오코딩으로 주소 변환
+          const address = await Location.reverseGeocodeAsync({
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+          });
+          
+          console.log("[GPS] 역지오코딩 결과:", address);
+          
+          if (address && address.length > 0) {
+            const addr = address[0];
+            // 주소 조합: 시/도 + 시/군/구 + 읍/면/동
+            const locationText = [
+              addr.region,
+              addr.district,
+              addr.street,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+            
+            console.log("[GPS] 변환된 주소:", locationText);
+            
+            if (locationText) {
+              setLocation(locationText);
+            } else {
+              // 주소가 비어있으면 좌표로 표시
+              const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
+              console.log("[GPS] 주소 없음, 좌표로 표시:", coordText);
+              setLocation(coordText);
+            }
+          } else {
+            // 역지오코딩 실패 시 좌표로 표시
+            const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
+            console.log("[GPS] 역지오코딩 실패, 좌표로 표시:", coordText);
+            setLocation(coordText);
+          }
+        } else {
+          console.warn("[GPS] 위치 권한 거부됨. 상태:", status);
+          Alert.alert(
+            "위치 권한 필요",
+            "상품 등록 시 거래 지역을 자동으로 감지하려면 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요."
+          );
+        }
+        
+        setIsGettingLocation(false);
+      } catch (error) {
+        console.error("[GPS] 위치 가져오기 오류:", error);
+        setIsGettingLocation(false);
+      }
+    };
+    
+    requestLocationPermission();
+  }, [isAuthenticated]);

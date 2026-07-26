@@ -71,33 +71,68 @@ export default function RegisterScreen() {
   // GPS 위치 권한 요청 및 위치 자동 감지
   useEffect(() => {
     const requestLocationPermission = async () => {
-      if (Platform.OS === "web") return; // 웹에서는 위치 기능 미지원
+      if (Platform.OS === "web") return;
+      if (!isAuthenticated) return;
+      
       try {
+        setIsGettingLocation(true);
+        console.log("[GPS] 위치 권한 요청 시작");
+        
         const { status } = await Location.requestForegroundPermissionsAsync();
+        console.log("[GPS] 위치 권한 상태:", status);
+        
         if (status === "granted") {
-          // 권한이 있으면 자동으로 현재 위치 가져오기
-          setIsGettingLocation(true);
-          const currentLocation = await Location.getCurrentPositionAsync({});
+          console.log("[GPS] 위치 권한 획득, 현재 위치 조회 중...");
+          
+          const currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: 5000,
+            distanceInterval: 10,
+          });
+          
+          console.log("[GPS] 현재 위치:", currentLocation.coords);
+          
           const address = await Location.reverseGeocodeAsync({
             latitude: currentLocation.coords.latitude,
             longitude: currentLocation.coords.longitude,
           });
-          if (address.length > 0) {
+          
+          console.log("[GPS] 역지오코딩 결과:", address);
+          
+          if (address && address.length > 0) {
             const addr = address[0];
-            const locationText = `${addr.region || ""} ${addr.district || ""} ${addr.street || ""}`.trim();
+            const locationText = [addr.region, addr.district, addr.street]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+            
+            console.log("[GPS] 변환된 주소:", locationText);
+            
             if (locationText) {
               setLocation(locationText);
+            } else {
+              const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
+              setLocation(coordText);
             }
+          } else {
+            const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
+            console.log("[GPS] 역지오코딩 실패, 좌표로 표시:", coordText);
+            setLocation(coordText);
           }
-          setIsGettingLocation(false);
+        } else {
+          console.warn("[GPS] 위치 권한 거부됨. 상태:", status);
+          Alert.alert("위치 권한 필요", "상품 등록 시 거래 지역을 자동으로 감지하려면 위치 권한이 필요합니다.");
         }
+        
+        setIsGettingLocation(false);
       } catch (error) {
-        console.error("위치 가져오기 오류:", error);
+        console.error("[GPS] 위치 가져오기 오류:", error);
         setIsGettingLocation(false);
       }
     };
+    
     requestLocationPermission();
-  }, []);
+  }, [isAuthenticated]);
 
   const handlePickImages = async () => {
     if (images.length >= MAX_IMAGES) {
