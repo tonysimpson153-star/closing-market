@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -62,9 +63,41 @@ export default function RegisterScreen() {
   const [selectedTradeType, setSelectedTradeType] = useState("direct");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const MAX_IMAGES = 10;
   const uploadImageMutation = trpc.upload.productImage.useMutation();
+
+  // GPS 위치 권한 요청 및 위치 자동 감지
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      if (Platform.OS === "web") return; // 웹에서는 위치 기능 미지원
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          // 권한이 있으면 자동으로 현재 위치 가져오기
+          setIsGettingLocation(true);
+          const currentLocation = await Location.getCurrentPositionAsync({});
+          const address = await Location.reverseGeocodeAsync({
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+          });
+          if (address.length > 0) {
+            const addr = address[0];
+            const locationText = `${addr.region || ""} ${addr.district || ""} ${addr.street || ""}`.trim();
+            if (locationText) {
+              setLocation(locationText);
+            }
+          }
+          setIsGettingLocation(false);
+        }
+      } catch (error) {
+        console.error("위치 가져오기 오류:", error);
+        setIsGettingLocation(false);
+      }
+    };
+    requestLocationPermission();
+  }, []);
 
   const handlePickImages = async () => {
     if (images.length >= MAX_IMAGES) {

@@ -478,3 +478,12 @@
       (실제 기기 동작 테스트는 사용자가 직접 진행 필요)
 - [x] Express trust proxy 설정 추가 (Render 프록시 뒤에서 실제 클라이언트 IP 인식 위해 필요)
 - [x] DB 스키마 변경 있음 - pnpm db:push 필요 (failedLoginAttempts, lockedUntil 컬럼)
+
+## GPS 기반 위치 기능 (2026-07-27)
+
+- [x] GPS 기반 위치 자동 감지 기능 추가
+  - expo-location 라이브러리 사용
+  - 앱 시작 시 위치 권한 요청
+  - 현재 위치를 역지오코딩하여 주소로 변환
+  - "거래 지역" 필드에 자동 입력
+  - 웹 환경에서는 GPS 기능 비활성화
