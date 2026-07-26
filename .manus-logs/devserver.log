@@ -1209,3 +1209,4 @@
 [2026-07-25T18:28:27.284Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
 [2026-07-25T18:28:27.545Z] [1] Web Bundled 190ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js (1 module)
 [2026-07-25T18:28:28.312Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-07-26T16:44:03.198Z] [0] 4:44:03 PM [tsx] change in ./server/db.ts Restarting...
