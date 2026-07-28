@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import * as Location from "expo-location";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -62,6 +63,46 @@ export default function RegisterScreen() {
   const [selectedTradeType, setSelectedTradeType] = useState("direct");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  // GPS 위치 자동 감지
+  useEffect(() => {
+    if (Platform.OS === "web" || !isAuthenticated) return;
+    
+    const requestLocationPermission = async () => {
+      try {
+        setGpsLoading(true);
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.log("[GPS] 위치 권한 거부됨");
+          return;
+        }
+        
+        const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const { latitude, longitude } = currentLocation.coords;
+        console.log("[GPS] 현재 위치:", latitude, longitude);
+        
+        // 역지오코딩으로 주소 변환
+        const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (reverseGeocode.length > 0) {
+          const address = reverseGeocode[0];
+          const addressStr = [address.city, address.district, address.subregion]
+            .filter(Boolean)
+            .join(" ");
+          if (addressStr) {
+            setLocation(addressStr);
+            console.log("[GPS] 주소 설정:", addressStr);
+          }
+        }
+      } catch (error) {
+        console.log("[GPS] 오류:", error);
+      } finally {
+        setGpsLoading(false);
+      }
+    };
+    
+    requestLocationPermission();
+  }, [isAuthenticated]);
 
   const MAX_IMAGES = 10;
   const uploadImageMutation = trpc.upload.productImage.useMutation();
