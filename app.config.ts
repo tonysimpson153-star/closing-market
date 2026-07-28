@@ -51,9 +51,11 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      NSLocationWhenInUseUsageDescription: "앱이 상품 등록 시 거래 지역을 자동으로 감지하기 위해 위치 정보가 필요합니다.",
+      NSLocationAlwaysAndWhenInUseUsageDescription: "앱이 상품 등록 시 거래 지역을 자동으로 감지하기 위해 위치 정보가 필요합니다.",
+    },
   },
   android: {
     adaptiveIcon: {

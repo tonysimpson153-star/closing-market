@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -63,76 +62,9 @@ export default function RegisterScreen() {
   const [selectedTradeType, setSelectedTradeType] = useState("direct");
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const MAX_IMAGES = 10;
   const uploadImageMutation = trpc.upload.productImage.useMutation();
-
-  // GPS 위치 권한 요청 및 위치 자동 감지
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === "web") return;
-      if (!isAuthenticated) return;
-      
-      try {
-        setIsGettingLocation(true);
-        console.log("[GPS] 위치 권한 요청 시작");
-        
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        console.log("[GPS] 위치 권한 상태:", status);
-        
-        if (status === "granted") {
-          console.log("[GPS] 위치 권한 획득, 현재 위치 조회 중...");
-          
-          const currentLocation = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-            timeInterval: 5000,
-            distanceInterval: 10,
-          });
-          
-          console.log("[GPS] 현재 위치:", currentLocation.coords);
-          
-          const address = await Location.reverseGeocodeAsync({
-            latitude: currentLocation.coords.latitude,
-            longitude: currentLocation.coords.longitude,
-          });
-          
-          console.log("[GPS] 역지오코딩 결과:", address);
-          
-          if (address && address.length > 0) {
-            const addr = address[0];
-            const locationText = [addr.region, addr.district, addr.street]
-              .filter(Boolean)
-              .join(" ")
-              .trim();
-            
-            console.log("[GPS] 변환된 주소:", locationText);
-            
-            if (locationText) {
-              setLocation(locationText);
-            } else {
-              const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
-              setLocation(coordText);
-            }
-          } else {
-            const coordText = `${currentLocation.coords.latitude.toFixed(4)}, ${currentLocation.coords.longitude.toFixed(4)}`;
-            console.log("[GPS] 역지오코딩 실패, 좌표로 표시:", coordText);
-            setLocation(coordText);
-          }
-        } else {
-          console.warn("[GPS] 위치 권한 거부됨. 상태:", status);
-          Alert.alert("위치 권한 필요", "상품 등록 시 거래 지역을 자동으로 감지하려면 위치 권한이 필요합니다.");
-        }
-        
-        setIsGettingLocation(false);
-      } catch (error) {
-        console.error("[GPS] 위치 가져오기 오류:", error);
-        setIsGettingLocation(false);
-      }
-    };
-    
-    requestLocationPermission();
-  }, [isAuthenticated]);
 
   const handlePickImages = async () => {
     if (images.length >= MAX_IMAGES) {
