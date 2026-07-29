@@ -82,16 +82,30 @@ export default function RegisterScreen() {
         const { latitude, longitude } = currentLocation.coords;
         console.log("[GPS] 현재 위치:", latitude, longitude);
         
-        // 역지오코딩으로 주소 변환
+        // 역지오코딩으로 주소 변환 (시/도 + 구/군 + 동 단위)
         const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
         if (reverseGeocode.length > 0) {
           const address = reverseGeocode[0];
-          const addressStr = [address.city, address.district, address.subregion]
+          // 상세주소 구성: 시/도 + 구/군 + 동
+          const addressStr = [
+            address.region,      // 시/도 (예: 부산광역시)
+            address.district,    // 구/군 (예: 남구)
+            address.subregion    // 동 (예: 용호동)
+          ]
             .filter(Boolean)
             .join(" ");
           if (addressStr) {
             setLocation(addressStr);
-            console.log("[GPS] 주소 설정:", addressStr);
+            console.log("[GPS] 상세주소 설정:", addressStr);
+          } else {
+            // 상세주소 구성 실패 시 기본 주소 사용
+            const fallbackStr = [address.city, address.district, address.subregion]
+              .filter(Boolean)
+              .join(" ");
+            if (fallbackStr) {
+              setLocation(fallbackStr);
+              console.log("[GPS] 기본 주소 설정:", fallbackStr);
+            }
           }
         }
       } catch (error) {
