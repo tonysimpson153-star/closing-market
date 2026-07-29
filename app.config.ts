@@ -109,7 +109,7 @@ const config: ExpoConfig = {
         resizeMode: "contain",
         backgroundColor: "#ffffff",
         dark: {
-          backgroundColor: "#151718",
+          backgroundColor: "#ffffff",
         },
       },
     ],
