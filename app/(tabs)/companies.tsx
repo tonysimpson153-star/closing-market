@@ -110,7 +110,8 @@ export default function CompanyDirectoryScreen() {
         <FlatList
           data={companies}
           keyExtractor={(item: any) => String(item.id)}
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 32, paddingTop: 8 }}
+          scrollEnabled={true}
           renderItem={({ item }: { item: any }) => (
             <Pressable
               style={({ pressed }) => [
