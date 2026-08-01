@@ -51,7 +51,7 @@ export default function CompanyDirectoryScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8, alignItems: "flex-start" }}
-        style={{ flexGrow: 0, zIndex: 10 }}
+        style={{ flexGrow: 0, zIndex: 100 }}
       >
         <Pressable
           onPress={() => setSelectedGroup(null)}

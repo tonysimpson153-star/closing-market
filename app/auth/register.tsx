@@ -81,7 +81,13 @@ export default function RegisterScreen() {
 
   return (
     <ScreenContainer edges={["top", "left", "right"]} className="bg-background">
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={styles.container} 
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEnabled={true}
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {/* 헤더 */}
         <View style={styles.header}>
           <Pressable
@@ -285,7 +291,8 @@ export default function RegisterScreen() {
             </Text>
           </Pressable>
 
-          {/* 가입 버튼 */}
+          {/* 가입 버튼 - 키보드 위에 보이도록 여백 추가 */}
+          <View style={{ height: 20 }} />
           <Pressable
             style={({ pressed }) => [
               styles.registerBtn,
@@ -321,7 +328,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   header: {
     paddingTop: 16,
