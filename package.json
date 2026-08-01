@@ -24,6 +24,8 @@
     "@aws-sdk/client-s3": "^3.700.0",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-kakao/core": "^2.4.6",
+    "@react-native-kakao/user": "^2.4.6",
     "@react-navigation/bottom-tabs": "^7.8.12",
     "@react-navigation/elements": "^2.9.2",
     "@react-navigation/native": "^7.1.25",

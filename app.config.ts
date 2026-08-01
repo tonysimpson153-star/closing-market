@@ -133,6 +133,8 @@ const config: ExpoConfig = {
     eas: {
       projectId: "f1ec9191-65d3-4c0d-af6c-5cee3adab8e3",
     },
+    // 카카오 로그인 REST API 키
+    kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
   },
 };
 
