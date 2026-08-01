@@ -314,10 +314,10 @@ export default function ChatRoomScreen() {
       )}
 
       {/* 메시지 목록 */}
-            <KeyboardAvoidingView
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={0}
       >
 
         <FlatList
@@ -399,7 +399,7 @@ export default function ChatRoomScreen() {
         />
 
         {/* 입력창 */}
-        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: 12 + insets.bottom }]}>
+        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom }]}>
           {/* 이미지 버튼 */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
@@ -560,7 +560,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
     gap: 8,
   },
