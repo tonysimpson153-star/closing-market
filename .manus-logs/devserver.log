@@ -2570,3 +2570,53 @@
 [2026-08-02T18:06:54.940Z] [1] React Compiler enabled
 [2026-08-02T18:06:55.124Z] [1] Starting Metro Bundler
 [2026-08-02T18:06:55.172Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T18:07:06.395Z] [1] Waiting on http://localhost:8081
+[2026-08-02T18:07:06.395Z] [1] Logs for your project will appear below.
+[2026-08-02T18:07:06.982Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T18:07:06.986Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T18:07:09.895Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.4% ( 954/1171)
+[2026-08-02T18:07:09.895Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 55.5% ( 762/1023)
+[2026-08-02T18:07:12.443Z] [1] λ Bundled 5442ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (3091 modules)
+[2026-08-02T18:07:15.795Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-02T18:07:15.894Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-02T18:07:15.894Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-02T18:07:15.894Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-02T18:07:15.894Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-02T18:07:15.894Z] [1]   '--color-foreground': '#222222',
+[2026-08-02T18:07:15.894Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-02T18:07:15.894Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-02T18:07:15.894Z] [1]   '--color-success': '#3FAE68',
+[2026-08-02T18:07:15.894Z] [1]   '--color-warning': '#D9A441',
+[2026-08-02T18:07:15.894Z] [1]   '--color-error': '#E0554F'
+[2026-08-02T18:07:15.894Z] [1] }
+[2026-08-02T18:07:15.925Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-02T18:07:15.983Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-02T18:07:15.995Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (3161/3162)
+[2026-08-02T18:07:16.078Z] [1] Web Bundled 9079ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (3162 modules)
+[2026-08-02T18:07:19.546Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.1% (2858/2947)
+[2026-08-02T18:07:19.846Z] [1] Web Bundled 3299ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (3100 modules)
+[2026-08-02T18:07:20.499Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-02T18:08:38.933Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T18:08:38.947Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T18:08:38.952Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-02T18:08:39.088Z] [1] λ Bundled 136ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (1 module)
+[2026-08-02T18:08:39.768Z] [1] Web Bundled 817ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-02T18:08:40.096Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-02T18:08:40.132Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-02T18:08:40.210Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-02T18:08:40.221Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-02T18:08:40.222Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-02T18:08:40.222Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-02T18:08:40.222Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-02T18:08:40.222Z] [1]   '--color-foreground': '#222222',
+[2026-08-02T18:08:40.222Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-02T18:08:40.222Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-02T18:08:40.222Z] [1]   '--color-success': '#3FAE68',
+[2026-08-02T18:08:40.222Z] [1]   '--color-warning': '#D9A441',
+[2026-08-02T18:08:40.222Z] [1]   '--color-error': '#E0554F'
+[2026-08-02T18:08:40.222Z] [1] }
+[2026-08-02T18:08:40.369Z] [1] Web Bundled 98ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-02T18:08:41.122Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-02T18:50:36.929Z] [0] 6:50:36 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-02T18:50:38.900Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-02T18:50:39.389Z] [0] [api] server listening on port 3000
