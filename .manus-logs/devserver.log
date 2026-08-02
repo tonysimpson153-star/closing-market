@@ -2398,3 +2398,54 @@
 [2026-08-02T16:04:53.953Z] [1] Web Bundled 1770ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js (1 module)
 [2026-08-02T16:04:54.137Z] [1] Web Bundled 105ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js (1 module)
 [2026-08-02T16:04:54.894Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-02T16:47:16.597Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T16:47:16.604Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-02T16:47:16.612Z] [1] Web node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-02T16:47:16.740Z] [1] λ Bundled 127ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/node/render.js (1 module)
+[2026-08-02T16:47:17.556Z] [1] Web Bundled 943ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js (1 module)
+[2026-08-02T16:47:18.838Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-02T16:47:18.886Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-02T16:47:18.887Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-02T16:47:18.887Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-02T16:47:18.887Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-02T16:47:18.887Z] [1]   '--color-foreground': '#222222',
+[2026-08-02T16:47:18.887Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-02T16:47:18.887Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-02T16:47:18.887Z] [1]   '--color-success': '#3FAE68',
+[2026-08-02T16:47:18.887Z] [1]   '--color-warning': '#D9A441',
+[2026-08-02T16:47:18.887Z] [1]   '--color-error': '#E0554F'
+[2026-08-02T16:47:18.887Z] [1] }
+[2026-08-02T16:47:18.959Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-02T16:47:18.972Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-02T16:47:19.146Z] [1] Web Bundled 112ms node_modules/.pnpm/expo-router@6.0.19_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.12_expo_3sj2ycfapbhp6boklfcgjzvrty/node_modules/expo-router/entry.js (1 module)
+[2026-08-02T16:47:19.962Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-02T16:49:57.914Z] [1] /home/ubuntu/closing-market/node_modules/.pnpm/@expo+cli@54.0.19_expo-router@6.0.19_expo@54.0.29_graphql@16.8.1_react-native@0.81.5_@babel+c_ctsc6qxpoo43tgoxrmrhmv5qd4/node_modules/@expo/cli/build/src/utils/errors.js:130
+[2026-08-02T16:49:57.916Z] [1]     throw error;
+[2026-08-02T16:49:57.916Z] [1]     ^
+[2026-08-02T16:49:57.917Z] [1]
+[2026-08-02T16:49:57.917Z] [1] Error: ENOENT: no such file or directory, watch '/home/ubuntu/closing-market/node_modules/.pnpm/@react-native-kakao+core@2.4.6_expo@54.0.36_react-native@0.81.5_@babel+core@7.28.5_@types+rea_fmyewtooflp25wse3gwjcjkekm/node_modules/@react-native-kakao/core_tmp_42889/expo-config-plugin'
+[2026-08-02T16:49:57.917Z] [1]     at FSWatcher.<computed> (node:internal/fs/watchers:247:19)
+[2026-08-02T16:49:57.917Z] [1]     at Object.watch (node:fs:2550:36)
+[2026-08-02T16:49:57.917Z] [1]     at FallbackWatcher._watchdir (/home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.2/node_modules/metro-file-map/src/watchers/FallbackWatcher.js:119:33)
+[2026-08-02T16:49:57.917Z] [1]     at /home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.2/node_modules/metro-file-map/src/watchers/FallbackWatcher.js:219:22
+[2026-08-02T16:49:57.917Z] [1]     at Walker.<anonymous> (/home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.2/node_modules/metro-file-map/src/watchers/FallbackWatcher.js:358:5)
+[2026-08-02T16:49:57.917Z] [1]     at Walker.emit (node:events:524:28)
+[2026-08-02T16:49:57.917Z] [1]     at /home/ubuntu/closing-market/node_modules/.pnpm/walker@1.0.8/node_modules/walker/lib/walker.js:69:16
+[2026-08-02T16:49:57.917Z] [1]     at FSReqCallback.oncomplete (node:fs:188:23)
+[2026-08-02T16:49:57.917Z] [1]     at FSReqCallback.callbackTrampoline (node:internal/async_hooks:130:17) {
+[2026-08-02T16:49:57.917Z] [1]   errno: -2,
+[2026-08-02T16:49:57.917Z] [1]   syscall: 'watch',
+[2026-08-02T16:49:57.917Z] [1]   code: 'ENOENT',
+[2026-08-02T16:49:57.917Z] [1]   path: '/home/ubuntu/closing-market/node_modules/.pnpm/@react-native-kakao+core@2.4.6_expo@54.0.36_react-native@0.81.5_@babel+core@7.28.5_@types+rea_fmyewtooflp25wse3gwjcjkekm/node_modules/@react-native-kakao/core_tmp_42889/expo-config-plugin',
+[2026-08-02T16:49:57.917Z] [1]   filename: '/home/ubuntu/closing-market/node_modules/.pnpm/@react-native-kakao+core@2.4.6_expo@54.0.36_react-native@0.81.5_@babel+core@7.28.5_@types+rea_fmyewtooflp25wse3gwjcjkekm/node_modules/@react-native-kakao/core_tmp_42889/expo-config-plugin'
+[2026-08-02T16:49:57.917Z] [1] }
+[2026-08-02T16:49:57.917Z] [1]
+[2026-08-02T16:49:57.917Z] [1] Node.js v22.13.0
+[2026-08-02T16:49:58.157Z] [1]  ELIFECYCLE  Command failed with exit code 7.
+[2026-08-02T16:49:58.218Z] [1] pnpm dev:metro exited with code 7
+[2026-08-02T16:49:58.224Z] --> Sending SIGTERM to other processes..
+[2026-08-02T16:49:58.302Z] [0]  ELIFECYCLE  Command failed.
+[2026-08-02T16:49:58.395Z] [0] 4:49:58 PM [tsx] Previous process hasn't exited yet. Force killing...
+[2026-08-02T16:49:58.425Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-08-02T16:49:58.443Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-08-02T16:49:58.748Z] Dev server exited with code 1
