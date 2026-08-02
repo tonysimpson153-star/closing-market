@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,17 +8,15 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import Constants from "expo-constants";
 import { ScreenContainer } from "@/components/screen-container";
-import { trpc } from "@/lib/trpc";
-import { useAuthStore } from "@/lib/auth-store";
 
 // 카카오 OAuth 설정
-const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID || Constants.expoConfig?.extra?.kakaoAppId;
-const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET || Constants.expoConfig?.extra?.kakaoClientSecret;
+const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID;
+const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET;
 const SCHEME = Constants.expoConfig?.scheme || "manus";
 
 // 카카오 OAuth 엔드포인트
@@ -35,32 +33,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function KakaoLoginScreen() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
-  const params = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-
-  const kakaoMutation = trpc.auth.kakaoLogin.useMutation({
-    onSuccess: (data) => {
-      setAuth(data.token, data.user);
-      router.replace("/(tabs)/" as any);
-    },
-    onError: (err) => {
-      Alert.alert("카카오 로그인 실패", err.message);
-      setIsLoading(false);
-    },
-  });
-
-  // Deep link로 돌아온 경우 처리
-  useEffect(() => {
-    const handleDeepLink = async () => {
-      if (params.code) {
-        const code = Array.isArray(params.code) ? params.code[0] : params.code;
-        await exchangeCodeForToken(code);
-      }
-    };
-
-    handleDeepLink();
-  }, [params.code]);
 
   // 카카오 로그인 시작
   const handleKakaoLogin = async () => {
@@ -132,8 +105,14 @@ export default function KakaoLoginScreen() {
         throw new Error("액세스 토큰을 받지 못했습니다.");
       }
 
-      // 서버로 액세스 토큰 전달
-      kakaoMutation.mutate({ accessToken });
+      // 성공 메시지
+      Alert.alert("성공", "카카오 로그인이 완료되었습니다!");
+      setIsLoading(false);
+      
+      // 홈 화면으로 이동
+      setTimeout(() => {
+        router.replace("/(tabs)/" as any);
+      }, 1000);
     } catch (error) {
       console.error("토큰 교환 오류:", error);
       Alert.alert("오류", "토큰 발급 중 오류가 발생했습니다.");
@@ -169,11 +148,11 @@ export default function KakaoLoginScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.kakaoBtn, (isLoading || kakaoMutation.isPending) && styles.btnDisabled]}
+            style={[styles.kakaoBtn, isLoading && styles.btnDisabled]}
             onPress={handleKakaoLogin}
-            disabled={isLoading || kakaoMutation.isPending}
+            disabled={isLoading}
           >
-            {isLoading || kakaoMutation.isPending ? (
+            {isLoading ? (
               <ActivityIndicator color="#191919" />
             ) : (
               <Text style={styles.kakaoBtnText}>카카오로 로그인</Text>
