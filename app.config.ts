@@ -36,6 +36,10 @@ const env = {
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
+  // 카카오 OAuth 설정
+  kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
+  kakaoClientSecret: process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET,
+  kakaoRedirectUri: `${schemeFromBundleId}://oauth/kakao`,
 };
 
 const config: ExpoConfig = {
@@ -46,6 +50,15 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
+  deepLinking: {
+    enabled: true,
+    prefixes: [env.scheme + "://"],
+    config: {
+      screens: {
+        oauth: "oauth/:provider",
+      },
+    },
+  },
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   ios: {

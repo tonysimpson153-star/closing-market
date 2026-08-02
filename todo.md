@@ -495,11 +495,13 @@
 - [x] 알림 기능 통합 및 iOS 빌드
 
 
-## 카카오 로그인 통합 (2026-08-02)
+## 카카오 SDK 정식 연동 (2026-08-02)
 
 - [x] 카카오 로그인 패키지 설치 (@react-native-kakao/core, @react-native-kakao/user)
-- [x] 환경 변수 설정 (EXPO_PUBLIC_KAKAO_APP_ID)
-- [x] 백엔드 카카오 인증 라우터 구현 (이미 구현됨)
-- [x] 프론트엔드 카카오 로그인 UI 구현 (이미 구현됨)
-- [x] app.config.ts에 카카오 REST API 키 추가
-- [ ] iOS 빌드 실행 (다시 실행 대기 중)
+- [x] expo-auth-session, expo-web-browser 패키지 설치
+- [x] 환경 변수 설정 (EXPO_PUBLIC_KAKAO_APP_ID, EXPO_PUBLIC_KAKAO_CLIENT_SECRET)
+- [x] app.config.ts에 카카오 OAuth 설정 추가 (scheme, deepLinking, redirectUri)
+- [x] app/auth/kakao.tsx를 OAuth 브라우저 로그인으로 재구현
+- [ ] 백엔드 OAuth 콜백 라우터 구현
+- [ ] 카카옄 로그인 테스트
+- [ ] iOS 빌드 실행
