@@ -11,15 +11,15 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
+import Constants from "expo-constants";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
-import Constants from "expo-constants";
 
 // 카카오 OAuth 설정
-const KAKAO_APP_ID = Constants.expoConfig?.extra?.kakaoAppId;
-const KAKAO_CLIENT_SECRET = Constants.expoConfig?.extra?.kakaoClientSecret;
-const KAKAO_REDIRECT_URI = Constants.expoConfig?.extra?.kakaoRedirectUri;
+const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID || Constants.expoConfig?.extra?.kakaoAppId;
+const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET || Constants.expoConfig?.extra?.kakaoClientSecret;
+const SCHEME = Constants.expoConfig?.scheme || "manus";
 
 // 카카오 OAuth 엔드포인트
 const KAKAO_OAUTH_URL = "https://kauth.kakao.com/oauth/authorize";
@@ -27,7 +27,7 @@ const KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
 
 // Deep linking 설정
 const redirectUrl = AuthSession.makeRedirectUri({
-  scheme: Constants.expoConfig?.scheme,
+  scheme: SCHEME,
   path: "oauth/kakao",
 });
 
