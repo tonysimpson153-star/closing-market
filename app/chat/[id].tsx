@@ -21,6 +21,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Notifications from "expo-notifications";
 
 function formatTime(date: Date | string) {
   const d = new Date(date);
@@ -70,7 +71,14 @@ export default function ChatRoomScreen() {
   );
 
   // 읽음 처리
-  const markReadMutation = trpc.chats.markRead.useMutation();
+  const markReadMutation = trpc.chats.markRead.useMutation({
+    onSuccess: () => {
+      // 배지 초기화
+      if (Platform.OS === "ios" || Platform.OS === "android") {
+        Notifications.setBadgeCountAsync(0);
+      }
+    },
+  });
 
   // 메시지 전송
   const sendMutation = trpc.chats.send.useMutation({
@@ -99,7 +107,7 @@ export default function ChatRoomScreen() {
       markReadMutation.mutate({ roomId });
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: false }), 50);
     }
-  }, [messages?.length]);
+  }, [messages?.length, markReadMutation, roomId]);
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
