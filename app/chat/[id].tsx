@@ -317,7 +317,7 @@ export default function ChatRoomScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
 
         <FlatList
