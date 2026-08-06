@@ -26,9 +26,7 @@ const SETTINGS_ITEMS = [
   { id: "notification", label: "알림 설정", icon: "bell.fill" as const },
   { id: "support", label: "고객센터 문의", icon: "questionmark.circle.fill" as const },
   { id: "account", label: "계정 설정", icon: "gear" as const },
-  { id: "terms", label: "이용약관", icon: "doc.text" as const },
-  { id: "privacy", label: "개인정보처리방침", icon: "doc.text" as const },
-  { id: "licenses", label: "오픈소스 라이선스", icon: "doc.text" as const },
+  { id: "legal", label: "약관 및 정책", icon: "doc.text" as const },
 ];
 
 export default function MyPageScreen() {
@@ -375,16 +373,8 @@ export default function MyPageScreen() {
                   },
                 ]}
                 onPress={() => {
-                  if (item.id === "privacy") {
-                    router.push("/legal/privacy" as any);
-                    return;
-                  }
-                  if (item.id === "terms") {
-                    router.push("/legal/terms" as any);
-                    return;
-                  }
-                  if (item.id === "licenses") {
-                    router.push("/legal/licenses" as any);
+                  if (item.id === "legal") {
+                    router.push("/legal" as any);
                     return;
                   }
                   if (!isAuthenticated) {
