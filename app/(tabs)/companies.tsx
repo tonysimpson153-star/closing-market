@@ -50,8 +50,8 @@ export default function CompanyDirectoryScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8, alignItems: "flex-start" }}
-        style={{ flexGrow: 0, zIndex: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8, alignItems: "center" }}
+        style={{ flexGrow: 0 }}
       >
         <Pressable
           onPress={() => setSelectedGroup(null)}
@@ -62,7 +62,6 @@ export default function CompanyDirectoryScreen() {
             borderWidth: 1,
             borderColor: selectedGroup === null ? colors.primary : colors.border,
             backgroundColor: selectedGroup === null ? colors.primary + "12" : "transparent",
-            marginRight: 8,
           }}
         >
           <Text style={{ fontSize: 13, fontWeight: "600", color: selectedGroup === null ? colors.primary : colors.muted }}>
@@ -85,7 +84,6 @@ export default function CompanyDirectoryScreen() {
                 borderWidth: 1,
                 borderColor: active ? colors.primary : colors.border,
                 backgroundColor: active ? colors.primary + "12" : "transparent",
-                marginRight: 8,
               }}
             >
               <LucideIcon name={group.icon as any} size={13} color={active ? colors.primary : colors.muted} strokeWidth={1.8} />
