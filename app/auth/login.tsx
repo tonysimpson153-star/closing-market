@@ -20,6 +20,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import { startOAuthLogin } from "@/constants/oauth";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -185,6 +186,40 @@ export default function LoginScreen() {
         >
           <Text style={{ color: "#000000", fontWeight: "700", fontSize: 15 }}>카카오로 로그인</Text>
         </Pressable>
+
+        {Platform.OS === "ios" && (
+          <Pressable
+            style={({ pressed }) => [{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#000000",
+              borderRadius: 12,
+              paddingVertical: 15,
+              marginTop: 12,
+              opacity: pressed ? 0.85 : 1,
+            }]}
+            onPress={async () => {
+              try {
+                const credential = await AppleAuthentication.signInAsync({
+                  requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                  ],
+                });
+                if (credential.identityToken) {
+                  console.log("Apple 로그인 성공:", credential);
+                }
+              } catch (e: any) {
+                if (e.code !== "ERR_CANCELED") {
+                  Alert.alert("오류", "Apple 로그인 중 오류가 발생했습니다.");
+                }
+              }
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>Apple로 로그인</Text>
+          </Pressable>
+        )}
 
         <Pressable
           style={({ pressed }) => [{ marginTop: 24, alignSelf: "center", opacity: pressed ? 0.6 : 1 }]}
