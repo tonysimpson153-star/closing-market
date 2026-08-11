@@ -507,3 +507,4 @@
 - [x] iOS 빌드 실행
 - [x] Apple 로그인 capability 포함 프로비저닝 프로필 재생성 후 iOS preview 빌드 완료 및 다운로드 링크 확인
 - [x] iOS 빌드 실패 시 자격증명 및 capability 오류 원인 기록
+- [x] 업체찾기 전체 필터 선택 시 필터 바와 업체 카드 겹침 수정
