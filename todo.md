@@ -504,4 +504,6 @@
 - [x] app/auth/kakao.tsx를 OAuth 브라우저 로그인으로 재구현
 - [ ] 백엔드 OAuth 콜백 라우터 구현
 - [ ] 카카옄 로그인 테스트
-- [ ] iOS 빌드 실행
+- [x] iOS 빌드 실행
+- [x] Apple 로그인 capability 포함 프로비저닝 프로필 재생성 후 iOS preview 빌드 완료 및 다운로드 링크 확인
+- [x] iOS 빌드 실패 시 자격증명 및 capability 오류 원인 기록
