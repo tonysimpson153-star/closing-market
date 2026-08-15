@@ -38,7 +38,6 @@ companyRejectionReason: text("companyRejectionReason"),
   failedLoginAttempts: int("failedLoginAttempts").default(0).notNull(),
   lockedUntil: timestamp("lockedUntil"),
   kakaoId: varchar("kakaoId", { length: 64 }),
-  appleId: varchar("appleId", { length: 255 }),
   // 알림 설정
   notifChat: boolean("notifChat").default(true).notNull(),
   notifPriceDrop: boolean("notifPriceDrop").default(true).notNull(),
