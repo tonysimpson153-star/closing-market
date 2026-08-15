@@ -1194,6 +1194,13 @@ export async function getUserByKakaoId(kakaoId: string) {
   return rows[0] ?? null;
 }
 
+export async function getUserByAppleId(appleId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.appleId, appleId)).limit(1);
+  return rows[0] ?? null;
+}
+
 export async function createUserByEmail(data: {
   openId: string;
   email: string | null;
@@ -1203,6 +1210,7 @@ export async function createUserByEmail(data: {
   phone?: string | null;
   loginMethod: string;
   kakaoId?: string | null;
+  appleId?: string | null;
   profileImageUrl?: string | null;
 }) {
   const db = await getDb();
@@ -1216,6 +1224,7 @@ export async function createUserByEmail(data: {
     phone: data.phone ?? undefined,
     loginMethod: data.loginMethod,
     kakaoId: data.kakaoId ?? undefined,
+    appleId: data.appleId ?? undefined,
     profileImageUrl: data.profileImageUrl ?? undefined,
     role: "user",
     isVerified: false,
