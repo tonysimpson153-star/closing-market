@@ -218,6 +218,44 @@ export const appRouter = router({
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
+    // Apple 로그인: 네이티브 Apple credential의 identityToken에서 사용자 식별자를 추출합니다.
+    appleLogin: publicProcedure
+      .input(z.object({ identityToken: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        let appleData: { sub?: string; email?: string };
+        try {
+          const parts = input.identityToken.split(".");
+          if (parts.length !== 3) throw new Error("Invalid token format");
+          const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          appleData = JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+          if (!appleData.sub) throw new Error("Apple user identifier is missing");
+        } catch (error) {
+          console.error("Apple token decode error:", error);
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Apple 인증 토큰을 확인할 수 없습니다." });
+        }
+
+        const appleId = appleData.sub;
+        let user = await db.getUserByAppleId(appleId);
+        if (!user) {
+          user = await db.createUserByEmail({
+            openId: `apple_${appleId}`,
+            email: appleData.email ?? null,
+            password: null,
+            name: "Apple 사용자",
+            phone: null,
+            loginMethod: "apple",
+            appleId,
+            profileImageUrl: null,
+          });
+        }
+        if (user.suspendedAt) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "이용이 정지된 계정입니다. 고객센터로 문의해주세요." });
+        }
+
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+      }),
+
     // 푸시 토큰 저장
     savePushToken: protectedProcedure
       .input(z.object({
