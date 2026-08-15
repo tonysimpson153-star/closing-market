@@ -244,7 +244,6 @@ export const appRouter = router({
             name: "Apple 사용자",
             phone: null,
             loginMethod: "apple",
-            appleId,
             profileImageUrl: null,
           });
         }
