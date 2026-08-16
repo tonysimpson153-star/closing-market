@@ -45,7 +45,7 @@ async function getDb() {
 
 /** Render 운영 환경에서 한 번만 실행되는 출시 초기화입니다. */
 export async function cleanupRenderLaunchDataOnce() {
-  if (!process.env.RENDER) return { skipped: true, deletedUsers: 0 };
+  if (process.env.NODE_ENV !== "production") return { skipped: true, deletedUsers: 0 };
   const db = await getDb();
   if (!db) return { skipped: true, deletedUsers: 0 };
 
