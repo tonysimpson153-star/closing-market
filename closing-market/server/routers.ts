@@ -413,6 +413,16 @@ export const appRouter = router({
         return db.updateProductStatus(input.id, input.status, ctx.user.id);
       }),
 
+    delete: protectedProcedure
+      .input(z.object({ id: z.number().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.deleteProduct(input.id, ctx.user.id);
+        if (!result.success) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "삭제할 상품을 찾을 수 없습니다." });
+        }
+        return result;
+      }),
+
     myProducts: protectedProcedure.query(({ ctx }) => {
       return db.getMyProducts(ctx.user.id);
     }),
