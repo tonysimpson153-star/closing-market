@@ -355,6 +355,10 @@ export const appRouter = router({
         return db.getProducts(input);
       }),
 
+    bySeller: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(({ input }) => db.getSellerProducts(input.userId)),
+
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(({ input }) => {
