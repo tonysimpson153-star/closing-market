@@ -153,7 +153,7 @@ export async function getProductDetail(id: number) {
       .where(eq(productImages.productId, id))
       .orderBy(productImages.sortOrder),
     db
-      .select({ id: users.id, name: users.nickname, isVerified: users.isVerified })
+      .select({ id: users.id, name: users.name, nickname: users.nickname, isVerified: users.isVerified })
       .from(users)
       .where(eq(users.id, rows[0].userId))
       .limit(1),
@@ -161,11 +161,16 @@ export async function getProductDetail(id: number) {
 
   await db.update(products).set({ viewCount: (rows[0].viewCount ?? 0) + 1 }).where(eq(products.id, id));
 
+  const sellerUser = seller[0];
+  const sellerDisplayName = sellerUser?.nickname || sellerUser?.name || null;
+
   return {
     ...rows[0],
     images,
-    sellerName: seller[0]?.name ?? null,
-    isSellerVerified: seller[0]?.isVerified ?? false,
+    sellerId: sellerUser?.id ?? rows[0].userId,
+    sellerNickname: sellerUser?.nickname ?? null,
+    sellerName: sellerDisplayName,
+    isSellerVerified: sellerUser?.isVerified ?? false,
   };
 }
 
@@ -204,6 +209,23 @@ export async function updateProductStatus(
     .update(products)
     .set({ status })
     .where(and(eq(products.id, id), eq(products.userId, userId)));
+  return { success: true };
+}
+
+/** 등록자 본인만 상품과 연결 이미지를 삭제합니다. */
+export async function deleteProduct(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const owned = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.id, id), eq(products.userId, userId)))
+    .limit(1);
+  if (!owned[0]) return { success: false };
+
+  await db.delete(productImages).where(eq(productImages.productId, id));
+  await db.delete(products).where(and(eq(products.id, id), eq(products.userId, userId)));
   return { success: true };
 }
 
