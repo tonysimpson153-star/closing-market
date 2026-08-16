@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -7,6 +7,9 @@ import {
   products,
   productImages,
   companyImages,
+  chatMessages,
+  chatRooms,
+  recentViews,
   businesses,
   favorites,
   notifications,
@@ -38,6 +41,45 @@ async function getDb() {
   } catch {
     return null;
   }
+}
+
+/** Render 운영 환경에서 한 번만 실행되는 출시 초기화입니다. */
+export async function cleanupRenderLaunchDataOnce() {
+  if (!process.env.RENDER) return { skipped: true, deletedUsers: 0 };
+  const db = await getDb();
+  if (!db) return { skipped: true, deletedUsers: 0 };
+
+  const marker = "[launch-cleanup-20260816]";
+  const admin = (await db.select({ id: users.id, suspendedReason: users.suspendedReason }).from(users).where(eq(users.role, "admin")).limit(1))[0];
+  if (!admin || admin.suspendedReason === marker) return { skipped: true, deletedUsers: 0 };
+
+  const userIds = (await db.select({ id: users.id }).from(users).where(ne(users.role, "admin"))).map((row) => row.id);
+  if (userIds.length === 0) {
+    await db.update(users).set({ suspendedReason: marker, updatedAt: new Date() }).where(eq(users.id, admin.id));
+    return { skipped: false, deletedUsers: 0 };
+  }
+
+  const productIds = (await db.select({ id: products.id }).from(products).where(inArray(products.userId, userIds))).map((row) => row.id);
+  const roomIds = (await db.select({ id: chatRooms.id }).from(chatRooms).where(or(inArray(chatRooms.buyerId, userIds), inArray(chatRooms.sellerId, userIds)))).map((row) => row.id);
+
+  await db.transaction(async (tx) => {
+    if (roomIds.length) await tx.delete(chatMessages).where(inArray(chatMessages.roomId, roomIds));
+    if (productIds.length) {
+      await tx.delete(productImages).where(inArray(productImages.productId, productIds));
+      await tx.delete(reviews).where(inArray(reviews.productId, productIds));
+      await tx.delete(favorites).where(inArray(favorites.productId, productIds));
+      await tx.delete(recentViews).where(inArray(recentViews.productId, productIds));
+    }
+    await tx.delete(reviews).where(or(inArray(reviews.userId, userIds), inArray(reviews.targetUserId, userIds)));
+    await tx.delete(favorites).where(inArray(favorites.userId, userIds));
+    await tx.delete(recentViews).where(inArray(recentViews.userId, userIds));
+    await tx.delete(notifications).where(inArray(notifications.userId, userIds));
+    if (roomIds.length) await tx.delete(chatRooms).where(inArray(chatRooms.id, roomIds));
+    if (productIds.length) await tx.delete(products).where(inArray(products.id, productIds));
+    await tx.delete(users).where(inArray(users.id, userIds));
+    await tx.update(users).set({ suspendedReason: marker, updatedAt: new Date() }).where(eq(users.id, admin.id));
+  });
+  return { skipped: false, deletedUsers: userIds.length };
 }
 
 // ─── Users ───────────────────────────────────────────────────
@@ -86,6 +128,15 @@ export async function getProducts(input?: {
     return query.where(and(...conditions));
   }
   return query;
+}
+
+/** 판매자 프로필에 공개할 판매중·예약중 상품 목록입니다. */
+export async function getSellerProducts(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(products)
+    .where(and(eq(products.userId, userId), or(eq(products.status, "selling"), eq(products.status, "reserved"))))
+    .orderBy(desc(products.createdAt));
 }
 
 export async function getProductDetail(id: number) {
@@ -359,8 +410,8 @@ export async function markNotificationRead(id: number, userId: number) {
 
 // ─── Chats ───────────────────────────────────────────────────
 
-import { chatRooms, chatMessages, users as usersTable, products as productsTable, recentViews } from "../drizzle/schema";
-import { or, lt, isNull } from "drizzle-orm";
+import { users as usersTable, products as productsTable } from "../drizzle/schema";
+import { lt, isNull } from "drizzle-orm";
 
 // ─── Recent Views (최근 본 상품) ────────────────────────────────
 
