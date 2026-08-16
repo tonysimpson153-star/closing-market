@@ -7,11 +7,12 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { cleanupRenderLaunchDataOnce } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const server = net.createServer();
-    server.listen(port, () => {
+  server.listen(port, () => {
       server.close(() => resolve(true));
     });
     server.on("error", () => resolve(false));
@@ -99,7 +100,14 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  try {
+    const cleanup = await cleanupRenderLaunchDataOnce();
+    if (!cleanup.skipped) console.log("[launch] non-admin data cleanup completed");
+  } catch (error) {
+    console.error("[launch] cleanup failed", error);
+  }
+
+    server.listen(port, () => {
     console.log(`[api] server listening on port ${port}`);
   });
 }
