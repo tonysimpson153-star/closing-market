@@ -33,6 +33,10 @@ export const ENV = {
   r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
   r2BucketName: process.env.R2_BUCKET_NAME ?? "",
   r2PublicUrl: process.env.R2_PUBLIC_URL ?? "",
+  // 사업자 인증 서류 전용 private R2 버킷 및 최소 권한 S3 키
+  r2PrivateBucketName: process.env.R2_PRIVATE_BUCKET_NAME ?? "",
+  r2PrivateAccessKeyId: process.env.R2_PRIVATE_ACCESS_KEY_ID ?? "",
+  r2PrivateSecretAccessKey: process.env.R2_PRIVATE_SECRET_ACCESS_KEY ?? "",
   // Resend (비밀번호 재설정 이메일 발송)
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   resendFromEmail: process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev",
