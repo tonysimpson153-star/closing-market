@@ -113,7 +113,15 @@ export async function getProducts(input?: {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [];
+  // 공개 목록에는 제목·설명·거래 지역·대표 사진이 모두 등록된 완성 매물만 표시합니다.
+  // 불완전한 과거 레코드는 보존하되 외부 사용자와 심사자에게 노출하지 않습니다.
+  const conditions = [
+    sql`${products.title} IS NOT NULL AND TRIM(${products.title}) <> ''`,
+    sql`${products.description} IS NOT NULL AND TRIM(${products.description}) <> ''`,
+    sql`${products.location} IS NOT NULL AND TRIM(${products.location}) <> ''`,
+    sql`${products.mainImageUrl} IS NOT NULL AND TRIM(${products.mainImageUrl}) <> ''`,
+    sql`${products.price} > 0`,
+  ];
   if (input?.category) conditions.push(eq(products.category, input.category));
   if (input?.status) conditions.push(eq(products.status, input.status));
 
@@ -143,7 +151,18 @@ export async function getProductDetail(id: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  const rows = await db
+    .select()
+    .from(products)
+    .where(and(
+      eq(products.id, id),
+      sql`${products.title} IS NOT NULL AND TRIM(${products.title}) <> ''`,
+      sql`${products.description} IS NOT NULL AND TRIM(${products.description}) <> ''`,
+      sql`${products.location} IS NOT NULL AND TRIM(${products.location}) <> ''`,
+      sql`${products.mainImageUrl} IS NOT NULL AND TRIM(${products.mainImageUrl}) <> ''`,
+      sql`${products.price} > 0`,
+    ))
+    .limit(1);
   if (!rows[0]) return null;
 
   const [images, seller] = await Promise.all([
@@ -283,7 +302,15 @@ export async function getApprovedCompanies(input?: { type?: string }) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [eq(users.role, "company"), eq(users.companyStatus, "approved")];
+  const conditions = [
+    eq(users.role, "company"),
+    eq(users.companyStatus, "approved"),
+    sql`${users.deletedAt} IS NULL`,
+    sql`${users.companyName} IS NOT NULL AND TRIM(${users.companyName}) <> ''`,
+    sql`${users.companyDesc} IS NOT NULL AND TRIM(${users.companyDesc}) <> ''`,
+    sql`${users.companyPhone} IS NOT NULL AND TRIM(${users.companyPhone}) <> ''`,
+    sql`${users.companyAddress} IS NOT NULL AND TRIM(${users.companyAddress}) <> ''`,
+  ];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
 
   return db
@@ -300,7 +327,16 @@ export async function getApprovedCompanyById(id: number) {
   const rows = await db
     .select(COMPANY_SELECT_FIELDS)
     .from(users)
-    .where(and(eq(users.id, id), eq(users.role, "company"), eq(users.companyStatus, "approved")))
+    .where(and(
+      eq(users.id, id),
+      eq(users.role, "company"),
+      eq(users.companyStatus, "approved"),
+      sql`${users.deletedAt} IS NULL`,
+      sql`${users.companyName} IS NOT NULL AND TRIM(${users.companyName}) <> ''`,
+      sql`${users.companyDesc} IS NOT NULL AND TRIM(${users.companyDesc}) <> ''`,
+      sql`${users.companyPhone} IS NOT NULL AND TRIM(${users.companyPhone}) <> ''`,
+      sql`${users.companyAddress} IS NOT NULL AND TRIM(${users.companyAddress}) <> ''`,
+    ))
     .limit(1);
   const company = rows[0];
   if (!company) return null;
