@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, notInArray } from "drizzle-orm";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -367,9 +367,10 @@ export async function getProducts(input?: {
   status?: "selling" | "reserved" | "sold";
   limit?: number;
   offset?: number;
-}) {
+}, viewerId?: number) {
   const db = await getDb();
   if (!db) return [];
+  const blockedCounterpartIds = viewerId ? await getBlockedCounterpartIds(viewerId) : [];
 
   // 공개 목록에는 제목·설명·거래 지역·대표 사진이 모두 등록된 완성 매물만 표시합니다.
   // 저장 중인 초안이나 불완전한 과거 레코드는 보존하되, 외부 사용자와 심사자에게 노출하지 않습니다.
@@ -382,6 +383,7 @@ export async function getProducts(input?: {
   ];
   if (input?.category) conditions.push(eq(products.category, input.category));
   if (input?.status) conditions.push(eq(products.status, input.status));
+  if (blockedCounterpartIds.length > 0) conditions.push(notInArray(products.userId, blockedCounterpartIds));
 
   const query = db
     .select()
@@ -396,7 +398,7 @@ export async function getProducts(input?: {
   return query;
 }
 
-export async function getProductDetail(id: number) {
+export async function getProductDetail(id: number, viewerId?: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -413,6 +415,7 @@ export async function getProductDetail(id: number) {
     ))
     .limit(1);
   if (!rows[0]) return null;
+  if (viewerId && await isUserBlockedBetween(viewerId, rows[0].userId)) return null;
 
   const [images, seller] = await Promise.all([
     db
@@ -510,9 +513,10 @@ export async function getMyProducts(userId: number) {
 }
 
 /** 판매자 프로필에 공개할 판매중·예약중 상품 목록입니다. */
-export async function getSellerProducts(userId: number) {
+export async function getSellerProducts(userId: number, viewerId?: number) {
   const db = await getDb();
   if (!db) return [];
+  if (viewerId && await isUserBlockedBetween(viewerId, userId)) return [];
 
   return db
     .select()
@@ -564,9 +568,10 @@ const COMPANY_SELECT_FIELDS = {
   createdAt: users.createdAt,
 };
 
-export async function getApprovedCompanies(input?: { type?: string }) {
+export async function getApprovedCompanies(input?: { type?: string }, viewerId?: number) {
   const db = await getDb();
   if (!db) return [];
+  const blockedCounterpartIds = viewerId ? await getBlockedCounterpartIds(viewerId) : [];
 
   const conditions = [
     eq(users.role, "company"),
@@ -578,6 +583,7 @@ export async function getApprovedCompanies(input?: { type?: string }) {
     sql`${users.companyAddress} IS NOT NULL AND TRIM(${users.companyAddress}) <> ''`,
   ];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
+  if (blockedCounterpartIds.length > 0) conditions.push(notInArray(users.id, blockedCounterpartIds));
 
   return db
     .select({
@@ -586,7 +592,12 @@ export async function getApprovedCompanies(input?: { type?: string }) {
       averageRating: sql<number | null>`ROUND(AVG(${reviews.rating}), 1)`,
     })
     .from(users)
-    .leftJoin(reviews, eq(reviews.targetUserId, users.id))
+    .leftJoin(
+      reviews,
+      blockedCounterpartIds.length > 0
+        ? and(eq(reviews.targetUserId, users.id), notInArray(reviews.userId, blockedCounterpartIds))
+        : eq(reviews.targetUserId, users.id),
+    )
     .where(and(...conditions))
     .groupBy(
       users.id,
@@ -601,7 +612,7 @@ export async function getApprovedCompanies(input?: { type?: string }) {
     .orderBy(desc(users.createdAt));
 }
 
-export async function getApprovedCompanyById(id: number) {
+export async function getApprovedCompanyById(id: number, viewerId?: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -621,6 +632,7 @@ export async function getApprovedCompanyById(id: number) {
     .limit(1);
   const company = rows[0];
   if (!company) return null;
+  if (viewerId && await isUserBlockedBetween(viewerId, company.id)) return null;
 
   const images = await db
     .select()
@@ -648,6 +660,7 @@ export async function addCompanyImages(userId: number, imageUrls: string[]) {
 export async function getFavorites(userId: number) {
   const db = await getDb();
   if (!db) return [];
+  const blockedCounterpartIds = new Set(await getBlockedCounterpartIds(userId));
 
   const rows = await db
     .select()
@@ -666,6 +679,7 @@ export async function getFavorites(userId: number) {
               status: products.status,
               category: products.category,
               mainImageUrl: products.mainImageUrl,
+              userId: products.userId,
             }).from(products).where(eq(products.id, fav.productId)).limit(1)
           : Promise.resolve([]),
         fav.businessId
@@ -677,15 +691,16 @@ export async function getFavorites(userId: number) {
           : Promise.resolve([]),
       ]);
 
+      const selectedProduct = (product as any[])[0] ?? null;
       return {
         ...fav,
-        product: (product as any[])[0] ?? null,
+        product: selectedProduct && !blockedCounterpartIds.has(selectedProduct.userId) ? selectedProduct : null,
         business: (business as any[])[0] ?? null,
       };
     })
   );
 
-  return result;
+  return result.filter((favorite) => favorite.product !== null || favorite.business !== null);
 }
 
 export async function isFavorited(userId: number, productId?: number, businessId?: number) {
@@ -796,6 +811,7 @@ export async function addRecentView(userId: number, productId: number) {
 export async function getRecentViews(userId: number) {
   const db = await getDb();
   if (!db) return [];
+  const blockedCounterpartIds = new Set(await getBlockedCounterpartIds(userId));
 
   const rows = await db
     .select()
@@ -814,6 +830,7 @@ export async function getRecentViews(userId: number) {
           status: productsTable.status,
           category: productsTable.category,
           mainImageUrl: productsTable.mainImageUrl,
+          userId: productsTable.userId,
         })
         .from(productsTable)
         .where(eq(productsTable.id, view.productId))
@@ -821,7 +838,7 @@ export async function getRecentViews(userId: number) {
 
       return {
         ...view,
-        product: product[0] ?? null,
+        product: product[0] && !blockedCounterpartIds.has(product[0].userId) ? product[0] : null,
       };
     })
   );
@@ -1261,6 +1278,9 @@ export async function getReviewEligibility(
     return { allowed: false, reason: "후기를 작성할 권한이 없습니다." };
   }
   const counterpartyId = room.buyerId === userId ? room.sellerId : room.buyerId;
+  if (await isUserBlockedBetween(userId, counterpartyId)) {
+    return { allowed: false, reason: "차단한 사용자와는 후기를 작성할 수 없습니다." };
+  }
   if (counterpartyId !== targetUserId) {
     return { allowed: false, reason: "거래 상대방에게만 후기를 작성할 수 있습니다." };
   }
@@ -1323,9 +1343,13 @@ export async function createReview(data: {
   return newReview[0];
 }
 
-export async function getReviewsByTargetUser(targetUserId: number, limit = 20, offset = 0) {
+export async function getReviewsByTargetUser(targetUserId: number, limit = 20, offset = 0, viewerId?: number) {
   const db = await getDb();
   if (!db) return [];
+  if (viewerId && await isUserBlockedBetween(viewerId, targetUserId)) return [];
+  const blockedCounterpartIds = viewerId ? await getBlockedCounterpartIds(viewerId) : [];
+  const conditions = [eq(reviews.targetUserId, targetUserId)];
+  if (blockedCounterpartIds.length > 0) conditions.push(notInArray(reviews.userId, blockedCounterpartIds));
 
   const rows = await db
     .select({
@@ -1339,7 +1363,7 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
     })
     .from(reviews)
     .leftJoin(users, eq(reviews.userId, users.id))
-    .where(eq(reviews.targetUserId, targetUserId))
+    .where(and(...conditions))
     .orderBy(desc(reviews.createdAt))
     .limit(limit)
     .offset(offset);
@@ -1347,14 +1371,18 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
   return rows;
 }
 
-export async function getSellerRatingSummary(targetUserId: number) {
+export async function getSellerRatingSummary(targetUserId: number, viewerId?: number) {
   const db = await getDb();
   if (!db) return { averageRating: 0, totalCount: 0 };
+  if (viewerId && await isUserBlockedBetween(viewerId, targetUserId)) return { averageRating: 0, totalCount: 0 };
+  const blockedCounterpartIds = viewerId ? await getBlockedCounterpartIds(viewerId) : [];
+  const conditions = [eq(reviews.targetUserId, targetUserId)];
+  if (blockedCounterpartIds.length > 0) conditions.push(notInArray(reviews.userId, blockedCounterpartIds));
 
   const rows = await db
     .select({ rating: reviews.rating })
     .from(reviews)
-    .where(eq(reviews.targetUserId, targetUserId));
+    .where(and(...conditions));
 
   if (rows.length === 0) return { averageRating: 0, totalCount: 0 };
 
