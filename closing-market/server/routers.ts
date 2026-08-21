@@ -367,20 +367,20 @@ export const appRouter = router({
           offset: z.number().min(0).default(0),
         }).optional()
       )
-      .query(({ input }) => {
-        return db.getProducts(input);
+      .query(({ ctx, input }) => {
+        return db.getProducts(input, ctx.user?.id);
       }),
 
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ input }) => {
-        return db.getProductDetail(input.id);
+      .query(({ ctx, input }) => {
+        return db.getProductDetail(input.id, ctx.user?.id);
       }),
 
     bySeller: publicProcedure
       .input(z.object({ userId: z.number().positive() }))
-      .query(({ input }) => {
-        return db.getSellerProducts(input.userId);
+      .query(({ ctx, input }) => {
+        return db.getSellerProducts(input.userId, ctx.user?.id);
       }),
 
     create: protectedProcedure
@@ -468,14 +468,14 @@ export const appRouter = router({
   companies: router({
     list: publicProcedure
       .input(z.object({ type: z.string().optional() }).optional())
-      .query(({ input }) => {
-        return db.getApprovedCompanies(input);
+      .query(({ ctx, input }) => {
+        return db.getApprovedCompanies(input, ctx.user?.id);
       }),
 
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ input }) => {
-        return db.getApprovedCompanyById(input.id);
+      .query(({ ctx, input }) => {
+        return db.getApprovedCompanyById(input.id, ctx.user?.id);
       }),
   }),
 
@@ -1169,14 +1169,14 @@ export const appRouter = router({
           offset: z.number().min(0).default(0),
         })
       )
-      .query(({ input }) => {
-        return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset);
+      .query(({ ctx, input }) => {
+        return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset, ctx.user?.id);
       }),
 
     ratingSummary: publicProcedure
       .input(z.object({ targetUserId: z.number() }))
-      .query(({ input }) => {
-        return db.getSellerRatingSummary(input.targetUserId);
+      .query(({ ctx, input }) => {
+        return db.getSellerRatingSummary(input.targetUserId, ctx.user?.id);
       }),
 
     checkExists: protectedProcedure
