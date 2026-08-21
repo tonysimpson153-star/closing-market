@@ -1601,6 +1601,17 @@ export async function blockUserAndReport(blockerId: number, blockedId: number, r
   return { success: true, reportId: report.reportId };
 }
 
+/** 현재 로그인한 사용자가 만든 차단 관계만 해제합니다. */
+export async function unblockUser(blockerId: number, blockedId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureUserBlocksTable(db);
+  await db
+    .delete(userBlocks)
+    .where(and(eq(userBlocks.blockerId, blockerId), eq(userBlocks.blockedId, blockedId)));
+  return { success: true };
+}
+
 export async function getAdminUsers(input?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
