@@ -929,6 +929,15 @@ export const appRouter = router({
         }
         return db.blockUserAndReport(ctx.user.id, input.userId, input.reason);
       }),
+
+    unblockUser: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.userId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "본인 차단은 해제할 수 없습니다." });
+        }
+        return db.unblockUser(ctx.user.id, input.userId);
+      }),
   }),
 
   // ─── 1:1 고객센터 문의 ───────────────────────────────────────────
