@@ -912,6 +912,25 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── 사용자 안전: 차단 ────────────────────────────────────────
+  safety: router({
+    blockUser: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        reason: z.string().trim().max(500).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.userId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "본인을 차단할 수 없습니다." });
+        }
+        const target = await db.getUserById(input.userId);
+        if (!target || target.deletedAt) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "차단할 사용자를 찾을 수 없습니다." });
+        }
+        return db.blockUserAndReport(ctx.user.id, input.userId, input.reason);
+      }),
+  }),
+
   // ─── 1:1 고객센터 문의 ───────────────────────────────────────────
   inquiries: router({
     create: protectedProcedure
