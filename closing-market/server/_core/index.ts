@@ -5,15 +5,15 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
+import { registerLegalRoutes } from "./legal";
 import { registerSupportRoutes } from "./support";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { cleanupRenderLaunchDataOnce } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const server = net.createServer();
-  server.listen(port, () => {
+    server.listen(port, () => {
       server.close(() => resolve(true));
     });
     server.on("error", () => resolve(false));
@@ -43,16 +43,12 @@ async function startServer() {
     "http://localhost:3000",
     "http://localhost:8081",
   ].filter(Boolean);
-  const isRenderPreview = (origin: string) => /\.onrender\.com$/.test(new URL(origin).hostname);
-    const isManusPreview = (origin: string) => /\.manus\.computer$/.test(new URL(origin).hostname);
-
-
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin) {
       let allow = false;
       try {
-        allow = allow = allowedOrigins.includes(origin) || isRenderPreview(origin) || isManusPreview(origin);
+        allow = allowedOrigins.includes(origin);
 
       } catch {
         allow = false;
@@ -76,11 +72,13 @@ async function startServer() {
     next();
   });
 
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // 업로드 이미지는 서버 검증 기준 5MB 이하여야 하며 Base64 오버헤드를 고려해 12MB만 허용합니다.
+  app.use(express.json({ limit: "12mb" }));
+  app.use(express.urlencoded({ limit: "12mb", extended: true }));
 
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerLegalRoutes(app);
   registerSupportRoutes(app);
 
   app.get("/api/health", (_req, res) => {
@@ -102,14 +100,7 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  try {
-    const cleanup = await cleanupRenderLaunchDataOnce();
-    if (!cleanup.skipped) console.log("[launch] non-admin data cleanup completed");
-  } catch (error) {
-    console.error("[launch] cleanup failed", error);
-  }
-
-    server.listen(port, () => {
+  server.listen(port, () => {
     console.log(`[api] server listening on port ${port}`);
   });
 }
