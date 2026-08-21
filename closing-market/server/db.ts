@@ -23,6 +23,7 @@ import {
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _userBlocksReady: Promise<void> | null = null;
 
 async function getDb() {
   if (_db) return _db;
@@ -41,6 +42,32 @@ async function getDb() {
   } catch {
     return null;
   }
+}
+
+/**
+ * Render 운영 서비스가 기존 TiDB에 연결된 경우에도 사용자 차단 관계 테이블을
+ * 비파괴적으로 보장합니다. 기존 사용자·상품·채팅 테이블은 변경하지 않습니다.
+ */
+async function ensureUserBlocksTable(db: NonNullable<typeof _db>) {
+  if (!_userBlocksReady) {
+    _userBlocksReady = db
+      .execute(sql`
+        CREATE TABLE IF NOT EXISTS user_blocks (
+          id INT AUTO_INCREMENT NOT NULL,
+          blockerId INT NOT NULL,
+          blockedId INT NOT NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY user_blocks_blocker_blocked_unique (blockerId, blockedId)
+        )
+      `)
+      .then(() => undefined)
+      .catch((error) => {
+        _userBlocksReady = null;
+        throw error;
+      });
+  }
+  await _userBlocksReady;
 }
 
 /**
@@ -1527,6 +1554,7 @@ export async function createReport(data: {
 export async function getBlockedCounterpartIds(userId: number): Promise<number[]> {
   const db = await getDb();
   if (!db) return [];
+  await ensureUserBlocksTable(db);
   const rows = await db
     .select({ blockerId: userBlocks.blockerId, blockedId: userBlocks.blockedId })
     .from(userBlocks)
@@ -1537,6 +1565,7 @@ export async function getBlockedCounterpartIds(userId: number): Promise<number[]
 export async function isUserBlockedBetween(firstUserId: number, secondUserId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
+  await ensureUserBlocksTable(db);
   const rows = await db
     .select({ id: userBlocks.id })
     .from(userBlocks)
@@ -1554,6 +1583,7 @@ export async function blockUserAndReport(blockerId: number, blockedId: number, r
   if (blockerId === blockedId) throw new Error("본인을 차단할 수 없습니다.");
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  await ensureUserBlocksTable(db);
   const existing = await db
     .select({ id: userBlocks.id })
     .from(userBlocks)
