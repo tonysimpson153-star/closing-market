@@ -259,6 +259,7 @@ export type Notification = typeof notifications.$inferSelect;
 export const estimateRequests = mysqlTable("estimate_requests", {
   id: int("id").autoincrement().primaryKey(),
   requesterId: int("requesterId").notNull(),
+  requesterBusinessType: varchar("requesterBusinessType", { length: 100 }),
   serviceTypes: text("serviceTypes").notNull(),
   areaPyeong: int("areaPyeong").notNull(),
   region: varchar("region", { length: 255 }).notNull(),
