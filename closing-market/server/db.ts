@@ -79,11 +79,12 @@ async function ensureUserBlocksTable(db: NonNullable<typeof _db>) {
  */
 async function ensureEstimateTables(db: NonNullable<typeof _db>) {
   if (!_estimateTablesReady) {
-    _estimateTablesReady = Promise.all([
-      db.execute(sql`
+    _estimateTablesReady = (async () => {
+      await db.execute(sql`
         CREATE TABLE IF NOT EXISTS estimate_requests (
           id INT AUTO_INCREMENT NOT NULL,
           requesterId INT NOT NULL,
+          requesterBusinessType VARCHAR(100) NULL,
           serviceTypes TEXT NOT NULL,
           areaPyeong INT NOT NULL,
           region VARCHAR(255) NOT NULL,
@@ -96,8 +97,8 @@ async function ensureEstimateTables(db: NonNullable<typeof _db>) {
           KEY estimate_requests_requester_created_idx (requesterId, createdAt),
           KEY estimate_requests_status_created_idx (status, createdAt)
         )
-      `),
-      db.execute(sql`
+      `);
+      await db.execute(sql`
         CREATE TABLE IF NOT EXISTS estimate_quotes (
           id INT AUTO_INCREMENT NOT NULL,
           requestId INT NOT NULL,
@@ -111,8 +112,13 @@ async function ensureEstimateTables(db: NonNullable<typeof _db>) {
           UNIQUE KEY estimate_quotes_request_company_unique (requestId, companyId),
           KEY estimate_quotes_company_created_idx (companyId, createdAt)
         )
-      `),
-    ])
+      `);
+      // 기존 운영 요청은 유지하고 신청자 업종 컬럼만 안전하게 보강합니다.
+      await db.execute(sql`
+        ALTER TABLE estimate_requests
+        ADD COLUMN IF NOT EXISTS requesterBusinessType VARCHAR(100) NULL AFTER requesterId
+      `);
+    })()
       .then(() => undefined)
       .catch((error) => {
         _estimateTablesReady = null;
@@ -715,6 +721,7 @@ function parseEstimateServiceTypes(raw: string): EstimateServiceType[] {
 
 export async function createEstimateRequest(input: {
   requesterId: number;
+  requesterBusinessType: string;
   serviceTypes: string[];
   areaPyeong: number;
   region: string;
@@ -729,6 +736,7 @@ export async function createEstimateRequest(input: {
 
   const insert = await db.insert(estimateRequests).values({
     requesterId: input.requesterId,
+    requesterBusinessType: input.requesterBusinessType.trim(),
     serviceTypes: JSON.stringify(serviceTypes),
     areaPyeong: input.areaPyeong,
     region: input.region.trim(),
@@ -756,7 +764,7 @@ export async function createEstimateRequest(input: {
       userId: company.id,
       type: "business_reply" as const,
       title: "새 통합 견적 요청이 도착했어요",
-      body: `${input.region.trim()} · ${input.areaPyeong}평 견적 요청을 확인해 보세요.`,
+      body: `${input.requesterBusinessType.trim()} · ${input.region.trim()} · ${input.areaPyeong}평 요청을 확인해 보세요.`,
       referenceId: requestId,
       isRead: false,
     })));
@@ -807,6 +815,7 @@ export async function getCompanyEstimateInbox(companyId: number) {
     .select({
       id: estimateRequests.id,
       requesterId: estimateRequests.requesterId,
+      requesterBusinessType: estimateRequests.requesterBusinessType,
       serviceTypes: estimateRequests.serviceTypes,
       areaPyeong: estimateRequests.areaPyeong,
       region: estimateRequests.region,
@@ -847,6 +856,7 @@ export async function getEstimateRequestDetail(requestId: number, viewerId: numb
     .select({
       id: estimateRequests.id,
       requesterId: estimateRequests.requesterId,
+      requesterBusinessType: estimateRequests.requesterBusinessType,
       serviceTypes: estimateRequests.serviceTypes,
       areaPyeong: estimateRequests.areaPyeong,
       region: estimateRequests.region,
