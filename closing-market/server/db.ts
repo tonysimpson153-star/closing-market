@@ -17,6 +17,8 @@ import {
   passwordResetTokens,
   reports,
   userBlocks,
+  estimateRequests,
+  estimateQuotes,
   InsertProduct,
   InsertUser,
   InsertSellerApplication,
@@ -24,6 +26,7 @@ import {
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _userBlocksReady: Promise<void> | null = null;
+let _estimateTablesReady: Promise<void> | null = null;
 
 async function getDb() {
   if (_db) return _db;
@@ -68,6 +71,55 @@ async function ensureUserBlocksTable(db: NonNullable<typeof _db>) {
       });
   }
   await _userBlocksReady;
+}
+
+/**
+ * 통합 견적 기능은 기존 운영 데이터에 영향을 주지 않도록 전용 테이블만 추가합니다.
+ * Render의 기존 TiDB에도 앱 실행 시 안전하게 생성됩니다.
+ */
+async function ensureEstimateTables(db: NonNullable<typeof _db>) {
+  if (!_estimateTablesReady) {
+    _estimateTablesReady = Promise.all([
+      db.execute(sql`
+        CREATE TABLE IF NOT EXISTS estimate_requests (
+          id INT AUTO_INCREMENT NOT NULL,
+          requesterId INT NOT NULL,
+          serviceTypes TEXT NOT NULL,
+          areaPyeong INT NOT NULL,
+          region VARCHAR(255) NOT NULL,
+          details TEXT NULL,
+          status ENUM('open', 'selected', 'closed', 'cancelled') NOT NULL DEFAULT 'open',
+          selectedQuoteId INT NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          KEY estimate_requests_requester_created_idx (requesterId, createdAt),
+          KEY estimate_requests_status_created_idx (status, createdAt)
+        )
+      `),
+      db.execute(sql`
+        CREATE TABLE IF NOT EXISTS estimate_quotes (
+          id INT AUTO_INCREMENT NOT NULL,
+          requestId INT NOT NULL,
+          companyId INT NOT NULL,
+          amount INT NOT NULL,
+          message TEXT NOT NULL,
+          status ENUM('submitted', 'selected', 'not_selected', 'withdrawn') NOT NULL DEFAULT 'submitted',
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY estimate_quotes_request_company_unique (requestId, companyId),
+          KEY estimate_quotes_company_created_idx (companyId, createdAt)
+        )
+      `),
+    ])
+      .then(() => undefined)
+      .catch((error) => {
+        _estimateTablesReady = null;
+        throw error;
+      });
+  }
+  await _estimateTablesReady;
 }
 
 /**
@@ -641,6 +693,293 @@ export async function getApprovedCompanyById(id: number, viewerId?: number) {
     .orderBy(companyImages.sortOrder);
 
   return { ...company, images };
+}
+
+const ESTIMATE_SERVICE_TYPES = ["demolition", "interior", "signage", "pos", "cctv", "cleaning", "tax", "labor", "consulting"] as const;
+type EstimateServiceType = (typeof ESTIMATE_SERVICE_TYPES)[number];
+
+function normalizeEstimateServiceTypes(types: string[]): EstimateServiceType[] {
+  return Array.from(new Set(types.filter((type): type is EstimateServiceType =>
+    (ESTIMATE_SERVICE_TYPES as readonly string[]).includes(type),
+  )));
+}
+
+function parseEstimateServiceTypes(raw: string): EstimateServiceType[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? normalizeEstimateServiceTypes(parsed.filter((value): value is string => typeof value === "string")) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createEstimateRequest(input: {
+  requesterId: number;
+  serviceTypes: string[];
+  areaPyeong: number;
+  region: string;
+  details?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureEstimateTables(db);
+
+  const serviceTypes = normalizeEstimateServiceTypes(input.serviceTypes);
+  if (serviceTypes.length === 0) throw new Error("At least one service type is required");
+
+  const insert = await db.insert(estimateRequests).values({
+    requesterId: input.requesterId,
+    serviceTypes: JSON.stringify(serviceTypes),
+    areaPyeong: input.areaPyeong,
+    region: input.region.trim(),
+    details: input.details?.trim() || null,
+    status: "open",
+  });
+  const requestId = Number((insert as any)[0]?.insertId ?? 0);
+  if (!requestId) throw new Error("Failed to create estimate request");
+
+  const blockedIds = await getBlockedCounterpartIds(input.requesterId);
+  const companies = await db
+    .select({ id: users.id, companyType: users.companyType, expoPushToken: users.expoPushToken })
+    .from(users)
+    .where(and(
+      eq(users.role, "company"),
+      eq(users.companyStatus, "approved"),
+      sql`${users.deletedAt} IS NULL`,
+    ));
+  const recipients = companies.filter((company) =>
+    !blockedIds.includes(company.id) && company.companyType !== null && serviceTypes.includes(company.companyType as EstimateServiceType),
+  );
+
+  if (recipients.length > 0) {
+    await db.insert(notifications).values(recipients.map((company) => ({
+      userId: company.id,
+      type: "business_reply" as const,
+      title: "새 통합 견적 요청이 도착했어요",
+      body: `${input.region.trim()} · ${input.areaPyeong}평 견적 요청을 확인해 보세요.`,
+      referenceId: requestId,
+      isRead: false,
+    })));
+  }
+
+  return { id: requestId, recipients };
+}
+
+export async function getMyEstimateRequests(requesterId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  await ensureEstimateTables(db);
+
+  const requests = await db
+    .select()
+    .from(estimateRequests)
+    .where(eq(estimateRequests.requesterId, requesterId))
+    .orderBy(desc(estimateRequests.createdAt));
+
+  return Promise.all(requests.map(async (request) => {
+    const quotes = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(estimateQuotes)
+      .where(and(eq(estimateQuotes.requestId, request.id), sql`${estimateQuotes.status} <> 'withdrawn'`));
+    return {
+      ...request,
+      serviceTypes: parseEstimateServiceTypes(request.serviceTypes),
+      quoteCount: Number(quotes[0]?.count ?? 0),
+    };
+  }));
+}
+
+export async function getCompanyEstimateInbox(companyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  await ensureEstimateTables(db);
+
+  const companyRows = await db
+    .select({ id: users.id, companyType: users.companyType })
+    .from(users)
+    .where(and(eq(users.id, companyId), eq(users.role, "company"), eq(users.companyStatus, "approved"), sql`${users.deletedAt} IS NULL`))
+    .limit(1);
+  const company = companyRows[0];
+  if (!company?.companyType) throw new Error("Approved company required");
+
+  const blockedIds = await getBlockedCounterpartIds(companyId);
+  const requests = await db
+    .select({
+      id: estimateRequests.id,
+      requesterId: estimateRequests.requesterId,
+      serviceTypes: estimateRequests.serviceTypes,
+      areaPyeong: estimateRequests.areaPyeong,
+      region: estimateRequests.region,
+      details: estimateRequests.details,
+      status: estimateRequests.status,
+      selectedQuoteId: estimateRequests.selectedQuoteId,
+      createdAt: estimateRequests.createdAt,
+      requesterName: users.nickname,
+      requesterFallbackName: users.name,
+    })
+    .from(estimateRequests)
+    .innerJoin(users, eq(users.id, estimateRequests.requesterId))
+    .orderBy(desc(estimateRequests.createdAt));
+
+  const ownQuotes = await db
+    .select()
+    .from(estimateQuotes)
+    .where(eq(estimateQuotes.companyId, companyId));
+  const quoteByRequest = new Map(ownQuotes.map((quote) => [quote.requestId, quote]));
+
+  return requests
+    .filter((request) => !blockedIds.includes(request.requesterId))
+    .filter((request) => parseEstimateServiceTypes(request.serviceTypes).includes(company.companyType as EstimateServiceType))
+    .map((request) => ({
+      ...request,
+      serviceTypes: parseEstimateServiceTypes(request.serviceTypes),
+      requesterName: request.requesterName || request.requesterFallbackName || "신청자",
+      myQuote: quoteByRequest.get(request.id) ?? null,
+    }));
+}
+
+export async function getEstimateRequestDetail(requestId: number, viewerId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureEstimateTables(db);
+
+  const requestRows = await db
+    .select({
+      id: estimateRequests.id,
+      requesterId: estimateRequests.requesterId,
+      serviceTypes: estimateRequests.serviceTypes,
+      areaPyeong: estimateRequests.areaPyeong,
+      region: estimateRequests.region,
+      details: estimateRequests.details,
+      status: estimateRequests.status,
+      selectedQuoteId: estimateRequests.selectedQuoteId,
+      createdAt: estimateRequests.createdAt,
+      requesterName: users.nickname,
+      requesterFallbackName: users.name,
+    })
+    .from(estimateRequests)
+    .innerJoin(users, eq(users.id, estimateRequests.requesterId))
+    .where(eq(estimateRequests.id, requestId))
+    .limit(1);
+  const request = requestRows[0];
+  if (!request) return null;
+  const serviceTypes = parseEstimateServiceTypes(request.serviceTypes);
+
+  if (request.requesterId === viewerId) {
+    const quotes = await db
+      .select({
+        id: estimateQuotes.id,
+        companyId: estimateQuotes.companyId,
+        amount: estimateQuotes.amount,
+        message: estimateQuotes.message,
+        status: estimateQuotes.status,
+        createdAt: estimateQuotes.createdAt,
+        companyName: users.companyName,
+        companyType: users.companyType,
+        companyPhone: users.companyPhone,
+        companyLogoUrl: users.companyLogoUrl,
+      })
+      .from(estimateQuotes)
+      .innerJoin(users, eq(users.id, estimateQuotes.companyId))
+      .where(and(eq(estimateQuotes.requestId, requestId), sql`${estimateQuotes.status} <> 'withdrawn'`))
+      .orderBy(estimateQuotes.amount);
+    const blockedIds = await getBlockedCounterpartIds(viewerId);
+    return {
+      ...request,
+      serviceTypes,
+      requesterName: request.requesterName || request.requesterFallbackName || "신청자",
+      viewerMode: "requester" as const,
+      quotes: quotes.filter((quote) => !blockedIds.includes(quote.companyId)),
+    };
+  }
+
+  const companyRows = await db
+    .select({ companyType: users.companyType })
+    .from(users)
+    .where(and(eq(users.id, viewerId), eq(users.role, "company"), eq(users.companyStatus, "approved"), sql`${users.deletedAt} IS NULL`))
+    .limit(1);
+  const company = companyRows[0];
+  if (!company?.companyType || !serviceTypes.includes(company.companyType as EstimateServiceType)) return null;
+  if (await isUserBlockedBetween(viewerId, request.requesterId)) return null;
+
+  const myQuoteRows = await db
+    .select()
+    .from(estimateQuotes)
+    .where(and(eq(estimateQuotes.requestId, requestId), eq(estimateQuotes.companyId, viewerId)))
+    .limit(1);
+  return {
+    ...request,
+    serviceTypes,
+    requesterName: request.requesterName || request.requesterFallbackName || "신청자",
+    viewerMode: "company" as const,
+    myQuote: myQuoteRows[0] ?? null,
+  };
+}
+
+export async function submitEstimateQuote(input: { requestId: number; companyId: number; amount: number; message: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureEstimateTables(db);
+
+  const detail = await getEstimateRequestDetail(input.requestId, input.companyId);
+  if (!detail || detail.viewerMode !== "company") throw new Error("Estimate request is not available");
+  if (detail.status !== "open") throw new Error("Estimate request is closed");
+
+  const existing = detail.myQuote;
+  if (existing?.status === "selected") throw new Error("Selected quote cannot be changed");
+  if (existing) {
+    await db.update(estimateQuotes).set({ amount: input.amount, message: input.message.trim(), status: "submitted" }).where(eq(estimateQuotes.id, existing.id));
+  } else {
+    await db.insert(estimateQuotes).values({
+      requestId: input.requestId,
+      companyId: input.companyId,
+      amount: input.amount,
+      message: input.message.trim(),
+      status: "submitted",
+    });
+  }
+
+  await db.insert(notifications).values({
+    userId: detail.requesterId,
+    type: "business_reply",
+    title: "새 견적이 도착했어요",
+    body: `${detail.region} · ${detail.areaPyeong}평 요청에 업체 견적이 등록되었습니다.`,
+    referenceId: input.requestId,
+    isRead: false,
+  });
+  return { requesterId: detail.requesterId };
+}
+
+export async function selectEstimateQuote(input: { requestId: number; requesterId: number; quoteId: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureEstimateTables(db);
+
+  const requestRows = await db.select().from(estimateRequests).where(and(eq(estimateRequests.id, input.requestId), eq(estimateRequests.requesterId, input.requesterId))).limit(1);
+  const request = requestRows[0];
+  if (!request) throw new Error("Estimate request not found");
+  if (request.status !== "open") throw new Error("Estimate request is no longer open");
+
+  const quoteRows = await db.select().from(estimateQuotes).where(and(eq(estimateQuotes.id, input.quoteId), eq(estimateQuotes.requestId, input.requestId), eq(estimateQuotes.status, "submitted"))).limit(1);
+  const selectedQuote = quoteRows[0];
+  if (!selectedQuote) throw new Error("Quote not found");
+  if (await isUserBlockedBetween(input.requesterId, selectedQuote.companyId)) throw new Error("Blocked company cannot be selected");
+
+  await db.update(estimateQuotes).set({ status: "not_selected" }).where(and(eq(estimateQuotes.requestId, input.requestId), eq(estimateQuotes.status, "submitted")));
+  await db.update(estimateQuotes).set({ status: "selected" }).where(eq(estimateQuotes.id, input.quoteId));
+  await db.update(estimateRequests).set({ status: "selected", selectedQuoteId: input.quoteId }).where(eq(estimateRequests.id, input.requestId));
+
+  const allQuotes = await db.select({ companyId: estimateQuotes.companyId }).from(estimateQuotes).where(eq(estimateQuotes.requestId, input.requestId));
+  const selectedCompanyId = selectedQuote.companyId;
+  await db.insert(notifications).values(allQuotes.map((quote) => ({
+    userId: quote.companyId,
+    type: "business_reply" as const,
+    title: quote.companyId === selectedCompanyId ? "견적이 선택되었어요" : "견적 요청이 마감되었어요",
+    body: quote.companyId === selectedCompanyId ? "신청자가 귀사의 견적을 선택했습니다. 신청자와 상담을 이어가세요." : "신청자가 다른 업체의 견적을 선택했습니다.",
+    referenceId: input.requestId,
+    isRead: false,
+  })));
+  return { selectedCompanyId, notifiedCompanyIds: allQuotes.map((quote) => quote.companyId) };
 }
 
 export async function addCompanyImages(userId: number, imageUrls: string[]) {
