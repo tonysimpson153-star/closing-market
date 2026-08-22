@@ -253,47 +253,6 @@ export const notifications = mysqlTable("notifications", {
 export type Notification = typeof notifications.$inferSelect;
 
 /**
- * 통합 견적 요청. 신청자가 선택한 서비스 유형·평수·지역을 남기고
- * 해당 유형의 승인 업체가 견적을 제안할 수 있습니다.
- */
-export const estimateRequests = mysqlTable("estimate_requests", {
-  id: int("id").autoincrement().primaryKey(),
-  requesterId: int("requesterId").notNull(),
-  requesterBusinessType: varchar("requesterBusinessType", { length: 100 }),
-  serviceTypes: text("serviceTypes").notNull(),
-  areaPyeong: int("areaPyeong").notNull(),
-  region: varchar("region", { length: 255 }).notNull(),
-  details: text("details"),
-  status: mysqlEnum("status", ["open", "selected", "closed", "cancelled"]).default("open").notNull(),
-  selectedQuoteId: int("selectedQuoteId"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type EstimateRequest = typeof estimateRequests.$inferSelect;
-
-/**
- * 업체가 통합 견적 요청에 제출한 금액과 설명입니다.
- * 같은 업체는 같은 요청에 하나의 최신 견적만 유지합니다.
- */
-export const estimateQuotes = mysqlTable(
-  "estimate_quotes",
-  {
-    id: int("id").autoincrement().primaryKey(),
-    requestId: int("requestId").notNull(),
-    companyId: int("companyId").notNull(),
-    amount: int("amount").notNull(),
-    message: text("message").notNull(),
-    status: mysqlEnum("status", ["submitted", "selected", "not_selected", "withdrawn"]).default("submitted").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  },
-  (table) => [uniqueIndex("estimate_quotes_request_company_unique").on(table.requestId, table.companyId)],
-);
-
-export type EstimateQuote = typeof estimateQuotes.$inferSelect;
-
-/**
  * Reports (신고) table
  */
 export const reports = mysqlTable("reports", {
