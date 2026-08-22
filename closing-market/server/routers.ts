@@ -4,7 +4,7 @@ import { router, protectedProcedure, publicProcedure, adminProcedure } from "./_
 import * as db from "./db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { sendBulkPushNotification, sendChatPushNotification } from "./_core/push-notifications";
+import { sendChatPushNotification } from "./_core/push-notifications";
 import { ENV } from "./_core/env";
 import { verifyAppleIdentityToken } from "./apple-auth";
 
@@ -476,81 +476,6 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .query(({ ctx, input }) => {
         return db.getApprovedCompanyById(input.id, ctx.user?.id);
-    }),
-  }),
-
-  // ─── 통합 견적 요청 ─────────────────────────────────────────────
-  estimates: router({
-    create: protectedProcedure
-      .input(z.object({
-        requesterBusinessType: z.string().trim().min(1).max(100),
-        serviceTypes: z.array(z.enum(["demolition", "interior", "signage", "pos", "cctv", "cleaning", "tax", "labor", "consulting"])) .min(1),
-        areaPyeong: z.number().int().min(1).max(100000),
-        region: z.string().trim().min(2).max(255),
-        details: z.string().trim().max(2000).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const created = await db.createEstimateRequest({
-          requesterId: ctx.user.id,
-          ...input,
-        });
-        const pushTokens = created.recipients
-          .map((recipient) => recipient.expoPushToken)
-          .filter((token): token is string => Boolean(token));
-        await sendBulkPushNotification(
-          pushTokens,
-          "새 통합 견적 요청",
-          `${input.requesterBusinessType} · ${input.region} · ${input.areaPyeong}평 요청이 도착했습니다.`,
-          { type: "estimate_request", requestId: String(created.id) },
-        );
-        return { id: created.id, recipientCount: created.recipients.length };
-      }),
-
-    myRequests: protectedProcedure.query(({ ctx }) => db.getMyEstimateRequests(ctx.user.id)),
-
-    companyInbox: protectedProcedure.query(({ ctx }) => db.getCompanyEstimateInbox(ctx.user.id)),
-
-    detail: protectedProcedure
-      .input(z.object({ id: z.number().int().positive() }))
-      .query(({ ctx, input }) => db.getEstimateRequestDetail(input.id, ctx.user.id)),
-
-    submitQuote: protectedProcedure
-      .input(z.object({
-        requestId: z.number().int().positive(),
-        amount: z.number().int().min(1).max(1_000_000_000),
-        message: z.string().trim().min(2).max(2000),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await db.submitEstimateQuote({ companyId: ctx.user.id, ...input });
-        const requester = await db.getUserById(result.requesterId);
-        if (requester?.expoPushToken) {
-          await sendBulkPushNotification(
-            [requester.expoPushToken],
-            "새 견적이 도착했어요",
-            "통합 견적 요청에 업체 견적이 등록되었습니다.",
-            { type: "estimate_quote", requestId: String(input.requestId) },
-          );
-        }
-        return { success: true };
-      }),
-
-    selectQuote: protectedProcedure
-      .input(z.object({
-        requestId: z.number().int().positive(),
-        quoteId: z.number().int().positive(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await db.selectEstimateQuote({ requesterId: ctx.user.id, ...input });
-        const selectedCompany = await db.getUserById(result.selectedCompanyId);
-        if (selectedCompany?.expoPushToken) {
-          await sendBulkPushNotification(
-            [selectedCompany.expoPushToken],
-            "견적이 선택되었어요",
-            "신청자가 귀사의 견적을 선택했습니다. 상담을 이어가세요.",
-            { type: "estimate_selected", requestId: String(input.requestId) },
-          );
-        }
-        return { success: true };
       }),
   }),
 
