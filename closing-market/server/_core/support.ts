@@ -167,6 +167,14 @@ export const privacyPageHtml = documentHtml(
 );
 
 export function registerSupportRoutes(app: Express) {
+  app.get("/", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok", service: "closing-market" });
+  });
+
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
+
   app.get("/support", (_req: Request, res: Response) => {
     res.type("html").send(supportPageHtml);
   });
