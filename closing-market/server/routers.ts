@@ -483,6 +483,7 @@ export const appRouter = router({
   estimates: router({
     create: protectedProcedure
       .input(z.object({
+        requesterBusinessType: z.string().trim().min(1).max(100),
         serviceTypes: z.array(z.enum(["demolition", "interior", "signage", "pos", "cctv", "cleaning", "tax", "labor", "consulting"])) .min(1),
         areaPyeong: z.number().int().min(1).max(100000),
         region: z.string().trim().min(2).max(255),
@@ -499,7 +500,7 @@ export const appRouter = router({
         await sendBulkPushNotification(
           pushTokens,
           "새 통합 견적 요청",
-          `${input.region} · ${input.areaPyeong}평 요청이 도착했습니다.`,
+          `${input.requesterBusinessType} · ${input.region} · ${input.areaPyeong}평 요청이 도착했습니다.`,
           { type: "estimate_request", requestId: String(created.id) },
         );
         return { id: created.id, recipientCount: created.recipients.length };
