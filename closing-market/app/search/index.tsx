@@ -29,12 +29,25 @@ export default function SearchScreen() {
   const colors = useColors();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: products, isLoading } = trpc.products.list.useQuery({
     category: selectedCategory as any,
     status: "selling",
     limit: 30,
+    search: searchQuery.trim() || undefined,
   });
+
+  // 검색어로 필터링된 상품 (클라이언트 사이드 필터링)
+  const filteredProducts = products?.filter((product) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      product.title?.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      product.location?.toLowerCase().includes(query)
+    );
+  }) ?? [];
 
   return (
     <ScreenContainer>
@@ -63,7 +76,10 @@ export default function SearchScreen() {
           <TextInput
             placeholder="상품명, 업종, 지역 검색"
             placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
             style={{ flex: 1, marginLeft: 8, fontSize: 15, color: colors.foreground }}
+            returnKeyType="search"
           />
         </View>
       </View>
@@ -128,7 +144,7 @@ export default function SearchScreen() {
           <View style={{ padding: 48, alignItems: "center" }}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
-        ) : !products || products.length === 0 ? (
+        ) : !filteredProducts || filteredProducts.length === 0 ? (
           <View style={{ padding: 48, alignItems: "center" }}>
             <LucideIcon name="search" size={36} color={colors.muted} strokeWidth={1.5} />
             <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 16, marginBottom: 4 }}>
@@ -141,9 +157,9 @@ export default function SearchScreen() {
         ) : (
           <>
             <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 12 }}>
-              총 {products.length}개의 상품
+              총 {filteredProducts.length}개의 상품
             </Text>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <Pressable
                 key={product.id}
                 style={({ pressed }) => [

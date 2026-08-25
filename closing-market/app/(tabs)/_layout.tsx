@@ -1,50 +1,33 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, Platform, Text } from "react-native";
+import { useEffect, useState } from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
-
-function TabBadge({ count }: { count: number }) {
-  if (count <= 0) return null;
-  return (
-    <View
-      style={{
-        position: "absolute",
-        top: -4,
-        right: -10,
-        backgroundColor: "#EF4444",
-        borderRadius: 9,
-        minWidth: 18,
-        height: 18,
-        paddingHorizontal: 4,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>
-        {count > 99 ? "99+" : count}
-      </Text>
-    </View>
-  );
-}
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const bottomPadding = Platform.OS === "web" ? 14 : Math.max(insets.bottom, 14);
+  const tabBarHeight = 60 + bottomPadding;
   const { token } = useAuthStore();
-  const isAuthenticated = !!token;
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const { data: chatList } = trpc.chats.list.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchInterval: 10000,
+  const { data: chats } = trpc.chats.list.useQuery(undefined, {
+    enabled: !!token,
+    refetchInterval: 3000,
   });
-  const unreadCount = chatList?.reduce((sum: number, room: any) => sum + (room.unreadCount ?? 0), 0) ?? 0;
+
+  useEffect(() => {
+    if (chats) {
+      const totalUnread = chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+      setUnreadCount(totalUnread);
+    }
+  }, [chats]);
 
   return (
     <Tabs
@@ -54,12 +37,20 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          paddingTop: 8,
+          paddingTop: 6,
           paddingBottom: bottomPadding,
           height: tabBarHeight,
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 0.5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          marginTop: 2,
+          paddingBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: -2,
         },
       }}
     >
@@ -67,14 +58,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "홈",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="companies"
         options={{
           title: "업체찾기",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="storefront.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="storefront.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -115,9 +106,28 @@ export default function TabLayout() {
         options={{
           title: "채팅",
           tabBarIcon: ({ color }) => (
-            <View>
-              <IconSymbol size={26} name="bubble.left.fill" color={color} />
-              <TabBadge count={unreadCount} />
+            <View style={{ position: "relative" }}>
+              <IconSymbol size={22} name="bubble.left.fill" color={color} />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -8,
+                    backgroundColor: colors.primary,
+                    borderRadius: 10,
+                    minWidth: 18,
+                    height: 18,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingHorizontal: 4,
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#000" }}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              )}
             </View>
           ),
         }}
@@ -126,7 +136,7 @@ export default function TabLayout() {
         name="mypage"
         options={{
           title: "마이페이지",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="person.fill" color={color} />,
         }}
       />
     </Tabs>

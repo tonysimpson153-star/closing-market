@@ -6,17 +6,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendChatPushNotification } from "./_core/push-notifications";
 import { ENV } from "./_core/env";
-import { verifyAppleIdentityToken } from "./apple-auth";
 
 const JWT_SECRET = ENV.jwtSecret;
-const MAX_IMAGE_BASE64_LENGTH = 7 * 1024 * 1024;
-
-async function enforceUploadRateLimit(userId: number, kind: string) {
-  const { checkRateLimit } = await import("./_core/rateLimit");
-  if (!checkRateLimit(`upload:${kind}:${userId}`, 30, 60 * 60 * 1000)) {
-    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "이미지 업로드 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-  }
-}
 
 export const appRouter = router({
   // Public routes
@@ -116,12 +107,7 @@ export const appRouter = router({
     // 비밀번호 찾기 - 재설정 링크 이메일 발송
     forgotPassword: publicProcedure
       .input(z.object({ email: z.string().email() }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkRateLimit } = await import("./_core/rateLimit");
-        const ip = ctx.req.ip ?? "unknown";
-        if (!checkRateLimit(`password-reset:${ip}`, 5, 15 * 60 * 1000)) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "비밀번호 재설정 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-        }
+      .mutation(async ({ input }) => {
         const email = input.email.trim().toLowerCase();
         const user = await db.getUserByEmail(email);
 
@@ -179,12 +165,7 @@ export const appRouter = router({
     // 카카오 로그인
     kakaoLogin: publicProcedure
       .input(z.object({ accessToken: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkRateLimit } = await import("./_core/rateLimit");
-        const ip = ctx.req.ip ?? "unknown";
-        if (!checkRateLimit(`kakao-login:${ip}`, 20, 10 * 60 * 1000)) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "로그인 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-        }
+      .mutation(async ({ input }) => {
         const kakaoRes = await fetch("https://kapi.kakao.com/v2/user/me", {
           headers: { Authorization: `Bearer ${input.accessToken}` },
         });
@@ -226,45 +207,48 @@ export const appRouter = router({
     // Apple 로그인
     appleLogin: publicProcedure
       .input(z.object({ identityToken: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkRateLimit } = await import("./_core/rateLimit");
-        const ip = ctx.req.ip ?? "unknown";
-        if (!checkRateLimit(`apple-login:${ip}`, 20, 10 * 60 * 1000)) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "로그인 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-        }
+      .mutation(async ({ input }) => {
+        // Apple 토큰 검증 (실제 구현에서는 Apple 서버에 검증)
+        // 여기서는 identityToken을 파싱하여 사용자 정보 추출
+        let appleData: any;
         try {
-          const appleIdentity = await verifyAppleIdentityToken(input.identityToken);
-          const appleId = appleIdentity.subject;
-          const email = appleIdentity.email;
-
-          let user = await db.getUserByAppleId(appleId);
-          if (!user) {
-            const openId = `apple_${appleId}`;
-            user = await db.createUserByEmail({
-              openId,
-              email,
-              password: null,
-              name: "Apple 사용자",
-              phone: null,
-              loginMethod: "apple",
-              profileImageUrl: null,
-            });
-          }
-          if (user.suspendedAt) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: user.suspendedReason
-                ? `이용이 정지된 계정입니다. 사유: ${user.suspendedReason}`
-                : "이용이 정지된 계정입니다. 고객센터로 문의해주세요.",
-            });
-          }
-          const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-          return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
-        } catch (e: any) {
-          if (e instanceof TRPCError) throw e;
-          console.warn("Apple identity token verification failed", { message: e?.message });
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Apple 인증 토큰이 유효하지 않습니다." });
+          // JWT 디코딩 (검증 없이 기본 파싱만 수행)
+          const parts = input.identityToken.split('.');
+          if (parts.length !== 3) throw new Error('Invalid token format');
+          const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+          appleData = decoded;
+        } catch (e) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Apple 인증에 실패했습니다." });
         }
+
+        const appleId = appleData.sub; // Apple 사용자 고유 ID
+        const email = appleData.email;
+        const name = "Apple 사용자";
+
+        let user = await db.getUserByAppleId(appleId);
+        if (!user) {
+          const openId = `apple_${appleId}`;
+          user = await db.createUserByEmail({
+            openId,
+            email: email || null,
+            password: null,
+            name,
+            phone: null,
+            loginMethod: "apple",
+            appleId,
+            profileImageUrl: null,
+          });
+        }
+        if (user.suspendedAt) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: user.suspendedReason
+              ? `이용이 정지된 계정입니다. 사유: ${user.suspendedReason}`
+              : "이용이 정지된 계정입니다. 고객센터로 문의해주세요.",
+          });
+        }
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
       }),
 
     // 푸시 토큰 저장
@@ -283,17 +267,13 @@ export const appRouter = router({
     updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(50).optional(),
-        nickname: z.string().min(1).max(50).optional(),
         phone: z.string().optional(),
         profileImageUrl: z.string().url().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (input.nickname !== undefined && !input.nickname.trim()) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "닉네임을 입력해주세요." });
-        }
         const updated = await db.updateUserProfile(ctx.user.id, input);
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-        return { id: updated.id, name: updated.name, nickname: updated.nickname, phone: updated.phone, email: updated.email, profileImageUrl: updated.profileImageUrl };
+        return { id: updated.id, name: updated.name, phone: updated.phone, email: updated.email, profileImageUrl: updated.profileImageUrl };
       }),
     changePassword: protectedProcedure
       .input(z.object({
@@ -367,20 +347,14 @@ export const appRouter = router({
           offset: z.number().min(0).default(0),
         }).optional()
       )
-      .query(({ ctx, input }) => {
-        return db.getProducts(input, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getProducts(input);
       }),
 
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ ctx, input }) => {
-        return db.getProductDetail(input.id, ctx.user?.id);
-      }),
-
-    bySeller: publicProcedure
-      .input(z.object({ userId: z.number().positive() }))
-      .query(({ ctx, input }) => {
-        return db.getSellerProducts(input.userId, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getProductDetail(input.id);
       }),
 
     create: protectedProcedure
@@ -431,16 +405,6 @@ export const appRouter = router({
         return db.updateProductStatus(input.id, input.status, ctx.user.id);
       }),
 
-    delete: protectedProcedure
-      .input(z.object({ id: z.number().positive() }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await db.deleteProduct(input.id, ctx.user.id);
-        if (!result.success) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "삭제할 상품을 찾을 수 없습니다." });
-        }
-        return result;
-      }),
-
     myProducts: protectedProcedure.query(({ ctx }) => {
       return db.getMyProducts(ctx.user.id);
     }),
@@ -468,14 +432,14 @@ export const appRouter = router({
   companies: router({
     list: publicProcedure
       .input(z.object({ type: z.string().optional() }).optional())
-      .query(({ ctx, input }) => {
-        return db.getApprovedCompanies(input, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getApprovedCompanies(input);
       }),
 
     detail: publicProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ ctx, input }) => {
-        return db.getApprovedCompanyById(input.id, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getApprovedCompanyById(input.id);
       }),
   }),
 
@@ -535,12 +499,11 @@ export const appRouter = router({
   upload: router({
     chatImage: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
       }))
-      .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "chat");
+      .mutation(async ({ input }) => {
         const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
@@ -552,12 +515,11 @@ export const appRouter = router({
 
     productImage: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "product");
         const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
@@ -573,19 +535,18 @@ export const appRouter = router({
 
     sellerDocument: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
         docType: z.enum(["cert", "photo"]),
       }))
       .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "seller-document");
-        const { storagePutPrivateDocument } = await import("./storage");
+        const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
         validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
-        const result = await storagePutPrivateDocument(
+        const result = await storagePut(
           `seller/${input.docType}/${ctx.user.id}_${Date.now()}.${ext}`,
           buffer,
           input.mimeType
@@ -595,12 +556,11 @@ export const appRouter = router({
 
     companyLogo: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "company-logo");
         const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
@@ -616,18 +576,17 @@ export const appRouter = router({
 
     companyBusinessCert: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "company-certificate");
-        const { storagePutPrivateDocument } = await import("./storage");
+        const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
         validateImageUpload(input.mimeType, buffer);
         const ext = input.mimeType.split("/")[1] ?? "jpg";
-        const result = await storagePutPrivateDocument(
+        const result = await storagePut(
           `company/cert/${ctx.user.id}_${Date.now()}.${ext}`,
           buffer,
           input.mimeType
@@ -637,12 +596,11 @@ export const appRouter = router({
 
     profilePhoto: protectedProcedure
       .input(z.object({
-        base64: z.string().min(4).max(MAX_IMAGE_BASE64_LENGTH),
+        base64: z.string(),
         mimeType: z.string().default("image/jpeg"),
         fileName: z.string().default("photo.jpg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        await enforceUploadRateLimit(ctx.user.id, "profile-photo");
         const { storagePut } = await import("./storage");
         const { validateImageUpload } = await import("./_core/imageValidation");
         const buffer = Buffer.from(input.base64, "base64");
@@ -671,14 +629,7 @@ export const appRouter = router({
         sellerId: z.number(),
         productId: z.number().optional(),
       }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkRateLimit } = await import("./_core/rateLimit");
-        if (!checkRateLimit(`chat-create:${ctx.user.id}`, 30, 60 * 60 * 1000)) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "채팅 시작 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-        }
-        if (ctx.user.id === input.sellerId) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "본인에게 채팅을 시작할 수 없습니다." });
-        }
+      .mutation(({ ctx, input }) => {
         return db.getOrCreateChatRoom(ctx.user.id, input.sellerId, input.productId);
       }),
 
@@ -705,10 +656,6 @@ export const appRouter = router({
         imageUrl: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { checkRateLimit } = await import("./_core/rateLimit");
-        if (!checkRateLimit(`chat-send:${ctx.user.id}`, 120, 60 * 60 * 1000)) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "메시지 전송이 너무 많습니다. 잠시 후 다시 시도해주세요." });
-        }
         if (!input.content && !input.imageUrl) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "내용 또는 이미지가 필요합니다." });
         }
@@ -720,30 +667,17 @@ export const appRouter = router({
             const recipientId = participants.buyerId === ctx.user.id ? participants.sellerId : participants.buyerId;
             const recipient = await db.getUserById(recipientId);
             const sender = await db.getUserById(ctx.user.id);
-            const senderName = sender?.nickname || sender?.name || "새 메시지";
-            const previewText = input.content ?? "사진을 보냈습니다.";
-
-            // 1) 인앱 알림(notifications) 테이블에 기록하여 알림 리스트에 표시
-            await db.createNotification({
-              userId: recipientId,
-              type: "chat",
-              title: `💬 ${senderName}`,
-              body: previewText,
-              referenceId: input.roomId,
-            });
-
-            // 2) 푸시 토큰이 있는 경우 푸시 발송
             if (recipient?.expoPushToken) {
               await sendChatPushNotification(
                 recipient.expoPushToken,
-                senderName,
-                previewText,
+                sender?.name ?? "새 메시지",
+                input.content ?? "사진을 보냈습니다.",
                 input.roomId
               );
             }
           }
         } catch (err) {
-          console.error("채팅 알림 생성 및 푸시 전송 중 오류:", err);
+          console.error("채팅 푸시 알림 전송 중 오류:", err);
         }
 
         return message;
@@ -850,20 +784,6 @@ export const appRouter = router({
         if (input.images && input.images.length > 0) {
           await db.addCompanyImages(ctx.user.id, input.images);
         }
-
-        // 업체 문의함 및 관리자 알림 생성 (업체회원이 문의 또는 신청을 보냈을 때 알림 수신)
-        try {
-          await db.createNotification({
-            userId: ctx.user.id,
-            type: "business_reply",
-            title: "🏢 업체 등록 신청 완료",
-            body: `[${input.companyName}] 업체 등록 신청이 접수되었습니다. 관리자 승인을 기다려주세요.`,
-            referenceId: ctx.user.id,
-          });
-        } catch (nErr) {
-          console.error("업체 등록 알림 생성 오류:", nErr);
-        }
-
         return { success: true };
       }),
 
@@ -912,34 +832,6 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── 사용자 안전: 차단 ────────────────────────────────────────
-  safety: router({
-    blockUser: protectedProcedure
-      .input(z.object({
-        userId: z.number(),
-        reason: z.string().trim().max(500).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.id === input.userId) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "본인을 차단할 수 없습니다." });
-        }
-        const target = await db.getUserById(input.userId);
-        if (!target || target.deletedAt) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "차단할 사용자를 찾을 수 없습니다." });
-        }
-        return db.blockUserAndReport(ctx.user.id, input.userId, input.reason);
-      }),
-
-    unblockUser: protectedProcedure
-      .input(z.object({ userId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.id === input.userId) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "본인 차단은 해제할 수 없습니다." });
-        }
-        return db.unblockUser(ctx.user.id, input.userId);
-      }),
-  }),
-
   // ─── 1:1 고객센터 문의 ───────────────────────────────────────────
   inquiries: router({
     create: protectedProcedure
@@ -965,16 +857,6 @@ export const appRouter = router({
 
   // ─── 관리자 전용 ─────────────────────────────────────────────
   admin: router({
-    getPrivateDocumentUrl: adminProcedure
-      .input(z.object({ documentUrl: z.string().min(1) }))
-      .query(async ({ input }) => {
-        const { privateDocumentKey, storageGetSignedUrl } = await import("./storage");
-        const key = privateDocumentKey(input.documentUrl);
-        if (!key) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "비공개 사업자 서류 경로가 아닙니다." });
-        }
-        return { url: await storageGetSignedUrl(key), expiresInSeconds: 300 };
-      }),
     sellerApplications: adminProcedure
       .input(
         z.object({
@@ -1144,13 +1026,6 @@ export const appRouter = router({
         if (ctx.user.id === input.targetUserId) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "자신에게 후기를 남길 수 없습니다." });
         }
-        if (!input.chatRoomId) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "거래 채팅방을 통해서만 후기를 작성할 수 있습니다." });
-        }
-        const eligibility = await db.getReviewEligibility(input.chatRoomId, ctx.user.id, input.targetUserId, input.productId);
-        if (!eligibility.allowed) {
-          throw new TRPCError({ code: "FORBIDDEN", message: eligibility.reason });
-        }
         return db.createReview({
           userId: ctx.user.id,
           targetUserId: input.targetUserId,
@@ -1169,14 +1044,14 @@ export const appRouter = router({
           offset: z.number().min(0).default(0),
         })
       )
-      .query(({ ctx, input }) => {
-        return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getReviewsByTargetUser(input.targetUserId, input.limit, input.offset);
       }),
 
     ratingSummary: publicProcedure
       .input(z.object({ targetUserId: z.number() }))
-      .query(({ ctx, input }) => {
-        return db.getSellerRatingSummary(input.targetUserId, ctx.user?.id);
+      .query(({ input }) => {
+        return db.getSellerRatingSummary(input.targetUserId);
       }),
 
     checkExists: protectedProcedure

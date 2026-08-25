@@ -7,6 +7,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CATEGORY_LABELS: Record<string, string> = {
   cafe: "카페",
@@ -27,7 +28,8 @@ const TRADE_TYPE_LABELS: Record<string, string> = {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-    const { width: screenWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
 
   const router = useRouter();
   const { token, user } = useAuthStore();
@@ -320,7 +322,9 @@ export default function ProductDetailScreen() {
       <View
         style={{
           flexDirection: "row",
-          padding: 16,
+          paddingTop: 16,
+          paddingHorizontal: 16,
+          paddingBottom: 16 + insets.bottom,
           gap: 10,
           borderTopWidth: 1,
           borderTopColor: colors.border,

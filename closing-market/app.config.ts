@@ -36,29 +36,47 @@ const env = {
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
+  // 카카오 OAuth 설정
+  kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
+  kakaoClientSecret: process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET,
+  kakaoRedirectUri: `${schemeFromBundleId}://oauth/kakao`,
 };
 
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
+  owner: "mm328i",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
+  deepLinking: {
+    enabled: true,
+    prefixes: [env.scheme + "://"],
+    config: {
+      screens: {
+        oauth: "oauth/:provider",
+      },
+    },
+  },
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+    entitlements: {
+      "com.apple.developer.applesignin": ["Default"],
+    },
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      NSLocationWhenInUseUsageDescription: "앱이 상품 등록 시 거래 지역을 자동으로 감지하기 위해 위치 정보가 필요합니다.",
+      NSLocationAlwaysAndWhenInUseUsageDescription: "앱이 상품 등록 시 거래 지역을 자동으로 감지하기 위해 위치 정보가 필요합니다.",
+    },
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: "#E6F4FE",
+      backgroundColor: "#ffffff",
       foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     edgeToEdgeEnabled: true,
@@ -86,6 +104,9 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-font",
+    "expo-web-browser",
+    "expo-apple-authentication",
     [
       "expo-audio",
       {
@@ -103,7 +124,7 @@ const config: ExpoConfig = {
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 320,
+        imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#ffffff",
         dark: {
@@ -129,8 +150,10 @@ const config: ExpoConfig = {
     // 푸시 알림(Expo Push Token) 발급에 필요합니다.
     // `eas init` 실행 후 발급되는 프로젝트 ID를 EAS_PROJECT_ID 환경변수에 넣어주세요.
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? "",
+      projectId: "f1ec9191-65d3-4c0d-af6c-5cee3adab8e3",
     },
+    // 카카오 로그인 REST API 키
+    kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
   },
 };
 

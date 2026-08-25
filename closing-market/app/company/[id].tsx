@@ -7,6 +7,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const COMPANY_TYPE_LABELS: Record<string, string> = {
   demolition: "철거업체",
@@ -45,6 +46,7 @@ export default function CompanyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { token } = useAuthStore();
   const isAuthenticated = !!token;
   const companyId = Number(id);
@@ -315,7 +317,9 @@ export default function CompanyDetailScreen() {
       <View
         style={{
           flexDirection: "row",
-          padding: 16,
+          paddingTop: 16,
+          paddingHorizontal: 16,
+          paddingBottom: 16 + insets.bottom,
           gap: 12,
           borderTopWidth: 1,
           borderTopColor: colors.border,

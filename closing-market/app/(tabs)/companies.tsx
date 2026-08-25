@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ScrollView, Text, View, Pressable, FlatList, ActivityIndicator, Image } from "react-native";
+import {
+  ScrollView,
+  Text,
+  View,
+  Pressable,
+  FlatList,
+  ActivityIndicator,
+  Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -10,7 +18,12 @@ import { trpc } from "@/lib/trpc";
 // 사용자에게 보여주는 큐레이션된 업체 카테고리 (기존 데이터 유형은 그대로 유지하고,
 // 화면에서만 세무사·노무사를 "전문 상담"으로 함께 묶어서 보여줍니다.
 // "폐기물처리업체"는 메뉴에는 노출하지 않지만 데이터/신청 기능은 그대로 유지됩니다.)
-const CATEGORY_GROUPS: Array<{ id: string; label: string; icon: string; types: string[] }> = [
+const CATEGORY_GROUPS: Array<{
+  id: string;
+  label: string;
+  icon: string;
+  types: string[];
+}> = [
   { id: "interior", label: "인테리어", icon: "palette", types: ["interior"] },
   { id: "demolition", label: "철거", icon: "hammer", types: ["demolition"] },
   { id: "pos", label: "POS·키오스크", icon: "monitor", types: ["pos"] },
@@ -19,7 +32,12 @@ const CATEGORY_GROUPS: Array<{ id: string; label: string; icon: string; types: s
   { id: "kitchen", label: "주방기기", icon: "utensils", types: ["kitchen"] },
   { id: "cleaning", label: "청소·방역", icon: "waves", types: ["cleaning"] },
   { id: "consult", label: "전문 상담", icon: "file", types: ["tax", "labor"] },
-  { id: "consulting", label: "창업 컨설팅", icon: "trending-up", types: ["consulting"] },
+  {
+    id: "consulting",
+    label: "창업 컨설팅",
+    icon: "trending-up",
+    types: ["consulting"],
+  },
 ];
 
 export default function CompanyDirectoryScreen() {
@@ -34,83 +52,164 @@ export default function CompanyDirectoryScreen() {
   const type1 = activeGroup?.types[0];
   const type2 = activeGroup?.types[1];
   const query1 = trpc.companies.list.useQuery({ type: type1 });
-  const query2 = trpc.companies.list.useQuery({ type: type2 }, { enabled: !!type2 });
+  const query2 = trpc.companies.list.useQuery(
+    { type: type2 },
+    { enabled: !!type2 },
+  );
 
   const isLoading = query1.isLoading || (!!type2 && query2.isLoading);
-  const companies = [...(query1.data ?? []), ...(type2 ? query2.data ?? [] : [])];
+  const companies = [
+    ...(query1.data ?? []),
+    ...(type2 ? (query2.data ?? []) : []),
+  ];
 
-  return (
-    <ScreenContainer edges={["top", "left", "right"]}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}>
-        <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground, flex: 1, letterSpacing: 0.3 }}>
+  const directoryHeader = (
+    <View>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 17,
+            fontWeight: "700",
+            color: colors.foreground,
+            flex: 1,
+            letterSpacing: 0.3,
+          }}
+        >
           업체 찾기
         </Text>
       </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8, alignItems: "flex-start" }}
-        style={{ flexGrow: 0 }}
+      <View
+        style={{
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border + "40",
+          paddingBottom: 4,
+        }}
       >
-        <Pressable
-          onPress={() => setSelectedGroup(null)}
-          style={{
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            borderRadius: 4,
-            borderWidth: 1,
-            borderColor: selectedGroup === null ? colors.primary : colors.border,
-            backgroundColor: selectedGroup === null ? colors.primary + "12" : "transparent",
-            marginRight: 8,
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            gap: 8,
+            alignItems: "center",
           }}
+          style={{ flexGrow: 0 }}
         >
-          <Text style={{ fontSize: 13, fontWeight: "600", color: selectedGroup === null ? colors.primary : colors.muted }}>
-            전체
-          </Text>
-        </Pressable>
-        {CATEGORY_GROUPS.map((group) => {
-          const active = selectedGroup === group.id;
-          return (
-            <Pressable
-              key={group.id}
-              onPress={() => setSelectedGroup(group.id)}
+          <Pressable
+            onPress={() => setSelectedGroup(null)}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 4,
+              borderWidth: 1,
+              borderColor:
+                selectedGroup === null ? colors.primary : colors.border,
+              backgroundColor:
+                selectedGroup === null ? colors.primary + "12" : "transparent",
+            }}
+          >
+            <Text
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 4,
-                borderWidth: 1,
-                borderColor: active ? colors.primary : colors.border,
-                backgroundColor: active ? colors.primary + "12" : "transparent",
-                marginRight: 8,
+                fontSize: 13,
+                fontWeight: "600",
+                color: selectedGroup === null ? colors.primary : colors.muted,
               }}
             >
-              <LucideIcon name={group.icon as any} size={13} color={active ? colors.primary : colors.muted} strokeWidth={1.8} />
-              <Text style={{ fontSize: 13, fontWeight: "600", color: active ? colors.primary : colors.muted }}>
-                {group.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+              전체
+            </Text>
+          </Pressable>
+          {CATEGORY_GROUPS.map((group) => {
+            const active = selectedGroup === group.id;
+            return (
+              <Pressable
+                key={group.id}
+                onPress={() => setSelectedGroup(group.id)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active
+                    ? colors.primary + "12"
+                    : "transparent",
+                }}
+              >
+                <LucideIcon
+                  name={group.icon as any}
+                  size={13}
+                  color={active ? colors.primary : colors.muted}
+                  strokeWidth={1.8}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: active ? colors.primary : colors.muted,
+                  }}
+                >
+                  {group.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
+  return (
+    <ScreenContainer edges={["top", "left", "right"]}>
+      {(isLoading || companies.length === 0) && directoryHeader}
 
       {isLoading ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : companies.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-          <LucideIcon name="building" size={32} color={colors.muted} strokeWidth={1.5} />
-          <Text style={{ fontSize: 15, color: colors.muted, marginTop: 14 }}>등록된 업체가 없습니다.</Text>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 32,
+          }}
+        >
+          <LucideIcon
+            name="building"
+            size={32}
+            color={colors.muted}
+            strokeWidth={1.5}
+          />
+          <Text style={{ fontSize: 15, color: colors.muted, marginTop: 14 }}>
+            등록된 업체가 없습니다.
+          </Text>
         </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={companies}
           keyExtractor={(item: any) => String(item.id)}
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          ListHeaderComponent={directoryHeader}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 32,
+            paddingTop: 8,
+          }}
+          scrollEnabled={true}
           renderItem={({ item }: { item: any }) => (
             <Pressable
               style={({ pressed }) => [
@@ -126,13 +225,34 @@ export default function CompanyDirectoryScreen() {
               ]}
               onPress={() => router.push(`/company/${item.id}` as any)}
             >
-              <View style={{ width: "100%", height: 160, backgroundColor: colors.background }}>
+              <View
+                style={{
+                  width: "100%",
+                  height: 160,
+                  backgroundColor: colors.background,
+                }}
+              >
                 {item.logoUrl ? (
-                  <Image source={{ uri: item.logoUrl }} style={{ width: "100%", height: 160 }} resizeMode="cover" />
+                  <Image
+                    source={{ uri: item.logoUrl }}
+                    style={{ width: "100%", height: 160 }}
+                    resizeMode="cover"
+                  />
                 ) : (
-                  <View style={{ width: "100%", height: 160, justifyContent: "center", alignItems: "center" }}>
+                  <View
+                    style={{
+                      width: "100%",
+                      height: 160,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
                     <LucideIcon
-                      name={(CATEGORY_GROUPS.find((g) => g.types.includes(item.type))?.icon ?? "building") as any}
+                      name={
+                        (CATEGORY_GROUPS.find((g) =>
+                          g.types.includes(item.type),
+                        )?.icon ?? "building") as any
+                      }
                       size={32}
                       color={colors.muted}
                       strokeWidth={1.5}
@@ -153,15 +273,36 @@ export default function CompanyDirectoryScreen() {
                     marginBottom: 8,
                   }}
                 >
-                  <Text style={{ fontSize: 10, color: colors.primary, fontWeight: "700" }}>
-                    {CATEGORY_GROUPS.find((g) => g.types.includes(item.type))?.label ?? "업체"}
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: colors.primary,
+                      fontWeight: "700",
+                    }}
+                  >
+                    {CATEGORY_GROUPS.find((g) => g.types.includes(item.type))
+                      ?.label ?? "업체"}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 4 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: colors.foreground,
+                    marginBottom: 4,
+                  }}
+                >
                   {item.name ?? "업체명 미등록"}
                 </Text>
                 {item.description ? (
-                  <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 19 }} numberOfLines={2}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: colors.muted,
+                      lineHeight: 19,
+                    }}
+                    numberOfLines={2}
+                  >
                     {item.description}
                   </Text>
                 ) : null}

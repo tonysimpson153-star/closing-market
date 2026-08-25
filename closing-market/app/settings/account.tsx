@@ -24,6 +24,7 @@ export default function AccountSettingsScreen() {
   const { user, setAuth, token, clearAuth } = useAuthStore();
 
   const [name, setName] = useState(user?.name ?? "");
+  const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(user?.profileImageUrl ?? null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -111,6 +112,7 @@ export default function AccountSettingsScreen() {
     }
     updateProfileMutation.mutate({
       name: name.trim(),
+      nickname: nickname.trim() || undefined,
       phone: phone.trim() || undefined,
     });
   };
@@ -203,6 +205,16 @@ export default function AccountSettingsScreen() {
             placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
+            returnKeyType="next"
+          />
+
+          <Text style={[styles.label, { color: colors.foreground }]}>닉네임</Text>
+          <TextInput
+            style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
+            placeholder="닉네임을 입력하세요 (선택사항)"
+            placeholderTextColor={colors.muted}
+            value={nickname}
+            onChangeText={setNickname}
             returnKeyType="next"
           />
 

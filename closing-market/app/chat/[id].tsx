@@ -20,6 +20,8 @@ import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Notifications from "expo-notifications";
 
 function formatTime(date: Date | string) {
   const d = new Date(date);
@@ -43,12 +45,11 @@ export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = parseInt(id ?? "0", 10);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, token } = useAuthStore();
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -70,7 +71,14 @@ export default function ChatRoomScreen() {
   );
 
   // 읽음 처리
-  const markReadMutation = trpc.chats.markRead.useMutation();
+  const markReadMutation = trpc.chats.markRead.useMutation({
+    onSuccess: () => {
+      // 배지 초기화
+      if (Platform.OS === "ios" || Platform.OS === "android") {
+        Notifications.setBadgeCountAsync(0);
+      }
+    },
+  });
 
   // 메시지 전송
   const sendMutation = trpc.chats.send.useMutation({
@@ -99,7 +107,7 @@ export default function ChatRoomScreen() {
       markReadMutation.mutate({ roomId });
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: false }), 50);
     }
-  }, [messages?.length]);
+  }, [messages?.length, markReadMutation, roomId]);
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
@@ -314,10 +322,10 @@ export default function ChatRoomScreen() {
       )}
 
       {/* 메시지 목록 */}
-            <KeyboardAvoidingView
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
 
         <FlatList
@@ -367,16 +375,13 @@ export default function ChatRoomScreen() {
 
                   <View style={[styles.msgContent, isMine ? styles.msgContentMine : styles.msgContentOther, { backgroundColor: isMine ? colors.primary : colors.surface, borderColor: isMine ? colors.primary : colors.border, borderWidth: 1 }]}>
                     {/* 이미지 메시지 */}
-                                        {item.imageUrl ? (
-                      <Pressable onPress={() => setPreviewImage(item.imageUrl)}>
-                        <Image
-                          source={{ uri: item.imageUrl }}
-                          style={styles.msgImage}
-                          resizeMode="cover"
-                        />
-                      </Pressable>
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.msgImage}
+                        resizeMode="cover"
+                      />
                     ) : (
-
                       <Text style={[
                         styles.msgText,
                         { color: isMine ? "#000000" : colors.foreground, fontWeight: "500" }
@@ -402,7 +407,7 @@ export default function ChatRoomScreen() {
         />
 
         {/* 입력창 */}
-        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom }]}>
           {/* 이미지 버튼 */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
@@ -449,20 +454,10 @@ export default function ChatRoomScreen() {
             )}
           </Pressable>
         </View>
-            </KeyboardAvoidingView>
-
-      {previewImage && (
-        <Pressable
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
-          onPress={() => setPreviewImage(null)}
-        >
-          <Image source={{ uri: previewImage }} style={{ width: "100%", height: "70%" }} resizeMode="contain" />
-        </Pressable>
-      )}
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
-
 
 const styles = StyleSheet.create({
   header: {
@@ -573,7 +568,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
     gap: 8,
   },

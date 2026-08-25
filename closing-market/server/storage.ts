@@ -1,48 +1,39 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// Cloudflare R2 (S3 호환 오브젝트 스토리지) 기반 파일 업로드 헬퍼
+//
+// 필요한 환경변수:
+//   R2_ACCOUNT_ID       - Cloudflare 계정 ID
+//   R2_ACCESS_KEY_ID    - R2 API 토큰의 Access Key ID
+//   R2_SECRET_ACCESS_KEY- R2 API 토큰의 Secret Access Key
+//   R2_BUCKET_NAME      - 생성한 버킷 이름
+//   R2_PUBLIC_URL       - 버킷 공개 접근 URL (r2.dev 주소 또는 연결한 커스텀 도메인)
+//                         예: https://pub-xxxxxxxx.r2.dev  또는  https://cdn.example.com
+//
+// R2는 S3와 API가 호환되므로 표준 @aws-sdk/client-s3로 그대로 사용할 수 있습니다.
+
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import { ENV } from "./_core/env";
 
 let _client: S3Client | null = null;
-let _privateClient: S3Client | null = null;
 
-function getR2Client(): S3Client | null {
+function getR2Client(): S3Client {
   if (_client) return _client;
 
   if (!ENV.r2AccountId || !ENV.r2AccessKeyId || !ENV.r2SecretAccessKey) {
-    return null;
+    throw new Error(
+      "Storage config missing: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY 환경변수를 설정하세요."
+    );
   }
 
-  try {
-    _client = new S3Client({
-      region: "auto",
-      endpoint: `https://${ENV.r2AccountId}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: ENV.r2AccessKeyId,
-        secretAccessKey: ENV.r2SecretAccessKey,
-      },
-    });
-  } catch (err) {
-    console.error("[Storage] Failed to init S3 client:", err);
-    return null;
-  }
-  return _client;
-}
-
-function getPrivateR2Client(): S3Client | null {
-  if (_privateClient) return _privateClient;
-  if (!ENV.r2AccountId || !ENV.r2PrivateAccessKeyId || !ENV.r2PrivateSecretAccessKey) {
-    return null;
-  }
-  _privateClient = new S3Client({
+  _client = new S3Client({
     region: "auto",
     endpoint: `https://${ENV.r2AccountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: ENV.r2PrivateAccessKeyId,
-      secretAccessKey: ENV.r2PrivateSecretAccessKey,
+      accessKeyId: ENV.r2AccessKeyId,
+      secretAccessKey: ENV.r2SecretAccessKey,
     },
   });
-  return _privateClient;
+  return _client;
 }
 
 function normalizeKey(relKey: string): string {
@@ -57,107 +48,52 @@ function appendHashSuffix(relKey: string): string {
 }
 
 /**
- * 파일을 업로드하고, 가벼운 URL 문자열을 반환합니다.
- * 대용량 Data URI 대신 경량화된 URL을 반환하여 tRPC 응답 변환(superjson) 오류를 원천 차단합니다.
+ * 파일을 R2 버킷에 업로드하고, 공개적으로 접근 가능한 URL을 반환합니다.
  */
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream",
 ): Promise<{ key: string; url: string }> {
-  try {
-    const key = appendHashSuffix(normalizeKey(relKey));
-    const body =
-      typeof data === "string" ? Buffer.from(data, "utf-8") : Buffer.from(data);
-
-    // 1. R2 설정이 있는 경우 R2로 업로드 시도
-    if (ENV.r2BucketName && ENV.r2PublicUrl) {
-      const client = getR2Client();
-      if (client) {
-        try {
-          await client.send(
-            new PutObjectCommand({
-              Bucket: ENV.r2BucketName,
-              Key: key,
-              Body: body,
-              ContentType: contentType,
-            })
-          );
-          const publicUrl = ENV.r2PublicUrl.replace(/\/+$/, "");
-          return { key, url: `${publicUrl}/${key}` };
-        } catch (err) {
-          console.error("[Storage] R2 upload failed, falling back to forge/local:", err);
-        }
-      }
-    }
-
-    // 2. 내장 Forge API를 통한 업로드 시도 (가능한 경우)
-    if (ENV.forgeApiUrl && ENV.forgeApiKey) {
-      try {
-        const forgeUrl = new URL(
-          "v1/storage/upload",
-          ENV.forgeApiUrl.replace(/\/+$/, "") + "/",
-        );
-        const formData = new FormData();
-        const blob = new Blob([body], { type: contentType });
-        formData.append("file", blob, key);
-        formData.append("path", key);
-
-        const forgeResp = await fetch(forgeUrl, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${ENV.forgeApiKey}` },
-          body: formData,
-        });
-
-        if (forgeResp.ok) {
-          const resJson = (await forgeResp.json()) as { url?: string };
-          if (resJson.url) {
-            return { key, url: resJson.url };
-          }
-        }
-      } catch (forgeErr) {
-        console.error("[Storage] Forge upload fallback failed:", forgeErr);
-      }
-    }
-
-    // 3. 최종 안전 폴백: 가벼운 프록시 URL 반환 (tRPC 응답 크기 초과 방지)
-    return { key, url: `/manus-storage/${key}` };
-  } catch (err) {
-    console.error("[Storage] storagePut unexpected error:", err);
-    return { key: "fallback.jpg", url: `/manus-storage/fallback.jpg` };
+  if (!ENV.r2BucketName || !ENV.r2PublicUrl) {
+    throw new Error(
+      "Storage config missing: R2_BUCKET_NAME, R2_PUBLIC_URL 환경변수를 설정하세요."
+    );
   }
+
+  const client = getR2Client();
+  const key = appendHashSuffix(normalizeKey(relKey));
+
+  const body =
+    typeof data === "string" ? Buffer.from(data, "utf-8") : Buffer.from(data);
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: ENV.r2BucketName,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+
+  const publicUrl = ENV.r2PublicUrl.replace(/\/+$/, "");
+  return { key, url: `${publicUrl}/${key}` };
 }
 
+/**
+ * 참고: R2 공개 버킷을 사용하므로 URL 자체가 이미 접근 가능한 주소입니다.
+ * storageGet/storageGetSignedUrl은 이전 버전과의 호환을 위해 남겨두되,
+ * 현재 코드베이스에서는 storagePut이 반환하는 url만 사용합니다.
+ */
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
   const publicUrl = (ENV.r2PublicUrl ?? "").replace(/\/+$/, "");
-  return { key, url: publicUrl ? `${publicUrl}/${key}` : `/manus-storage/${key}` };
+  return { key, url: `${publicUrl}/${key}` };
 }
 
 export async function storageGetSignedUrl(relKey: string): Promise<string> {
+  // 공개 버킷을 사용하므로 서명 URL 없이 공개 URL을 그대로 반환합니다.
   const key = normalizeKey(relKey);
-  const client = getPrivateR2Client();
-  if (!client || !ENV.r2PrivateBucketName) {
-    throw new Error("Private document storage is not configured");
-  }
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: ENV.r2PrivateBucketName, Key: key }), { expiresIn: 300 });
-}
-
-export async function storagePutPrivateDocument(
-  relKey: string,
-  data: Buffer | Uint8Array | string,
-  contentType = "application/octet-stream",
-): Promise<{ key: string; url: string }> {
-  const client = getPrivateR2Client();
-  if (!client || !ENV.r2PrivateBucketName) {
-    throw new Error("Private document storage is not configured");
-  }
-  const key = appendHashSuffix(normalizeKey(`private/business-documents/${relKey}`));
-  const body = typeof data === "string" ? Buffer.from(data, "utf-8") : Buffer.from(data);
-  await client.send(new PutObjectCommand({ Bucket: ENV.r2PrivateBucketName, Key: key, Body: body, ContentType: contentType }));
-  return { key, url: `private://${key}` };
-}
-
-export function privateDocumentKey(documentUrl: string): string | null {
-  return documentUrl.startsWith("private://") ? normalizeKey(documentUrl.slice("private://".length)) : null;
+  const publicUrl = (ENV.r2PublicUrl ?? "").replace(/\/+$/, "");
+  return `${publicUrl}/${key}`;
 }

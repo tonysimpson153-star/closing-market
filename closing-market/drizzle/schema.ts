@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, uniqueIndex } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -38,6 +38,7 @@ companyRejectionReason: text("companyRejectionReason"),
   failedLoginAttempts: int("failedLoginAttempts").default(0).notNull(),
   lockedUntil: timestamp("lockedUntil"),
   kakaoId: varchar("kakaoId", { length: 64 }),
+  appleId: varchar("appleId", { length: 64 }),
   // 알림 설정
   notifChat: boolean("notifChat").default(true).notNull(),
   notifPriceDrop: boolean("notifPriceDrop").default(true).notNull(),
@@ -266,25 +267,6 @@ export const reports = mysqlTable("reports", {
 });
 
 export type Report = typeof reports.$inferSelect;
-
-/**
- * User blocks (사용자 차단) table
- * 차단한 사용자의 채팅과 사용자 콘텐츠를 즉시 비노출하고 재접촉을 막습니다.
- */
-export const userBlocks = mysqlTable(
-  "user_blocks",
-  {
-    id: int("id").autoincrement().primaryKey(),
-    blockerId: int("blockerId").notNull(),
-    blockedId: int("blockedId").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  (table) => [
-    uniqueIndex("user_blocks_blocker_blocked_unique").on(table.blockerId, table.blockedId),
-  ],
-);
-
-export type UserBlock = typeof userBlocks.$inferSelect;
 
 /**
  * Seller applications (판매자 인증 신청) table

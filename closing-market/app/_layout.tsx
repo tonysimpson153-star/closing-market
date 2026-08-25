@@ -1,8 +1,5 @@
 import "@/global.css";
-import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-
 
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
+import * as NavigationBar from "expo-navigation-bar";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
   SafeAreaFrameContext,
@@ -24,7 +22,7 @@ import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { useAuthStore } from "@/lib/auth-store";
 import * as Notifications from "expo-notifications";
-import { setupLocalNotifications, getDeviceToken } from "@/lib/chat-notifications";
+import { setupLocalNotifications, getDeviceToken, sendChatNotification } from "@/lib/chat-notifications";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -43,6 +41,14 @@ export default function RootLayout() {
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
     initManusRuntime();
+  }, []);
+
+  // Android Edge-to-Edge: 시스템 내비게이션 바 투명화
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      NavigationBar.setBackgroundColorAsync("transparent");
+      NavigationBar.setPositionAsync("absolute");
+    }
   }, []);
 
   // 로컬 알림 설정 및 푸시 토큰 등록
@@ -70,6 +76,22 @@ export default function RootLayout() {
     };
 
     setupNotifications();
+  }, []);
+
+  // 포그라운드 알림 핸들러
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data;
+      if (data.type === "chat_message" && data.senderName && data.messagePreview) {
+        sendChatNotification(
+          data.senderName as string,
+          data.messagePreview as string,
+          parseInt(data.roomId as string, 10) || 0
+        );
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   // 앱 시작 시 저장된 JWT 토큰 복원
