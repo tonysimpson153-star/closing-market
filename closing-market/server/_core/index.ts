@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerLegalRoutes } from "./legal";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { ensureUsersSchemaCompatibility } from "./schemaCompat";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -29,6 +30,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  await ensureUsersSchemaCompatibility();
   const app = express();
   // Render 등 리버스 프록시 뒤에서 실제 클라이언트 IP를 올바르게 인식하도록 설정
   // (X-Forwarded-For 헤더 신뢰) - Rate Limit이 제대로 동작하려면 필요합니다.
