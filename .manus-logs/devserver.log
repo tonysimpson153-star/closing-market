@@ -3777,3 +3777,101 @@
 [2026-08-25T15:10:25.861Z] [1] Web Bundled 9583ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (3122 modules)
 [2026-08-25T15:10:28.597Z] [1] Web Bundled 2634ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (3178 modules)
 [2026-08-25T15:10:29.315Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-25T17:36:04.262Z] Starting dev server with command: pnpm run dev
+[2026-08-25T17:36:05.419Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-08-25T17:36:05.419Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-08-25T17:36:06.140Z] [1]
+[2026-08-25T17:36:06.140Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-08-25T17:36:06.140Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-08-25T17:36:06.140Z] [1]
+[2026-08-25T17:36:06.144Z] [0]
+[2026-08-25T17:36:06.145Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-08-25T17:36:06.145Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T17:36:06.145Z] [0]
+[2026-08-25T17:36:07.293Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-08-25T17:36:07.759Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T17:36:07.827Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.182Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.182Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.183Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.541Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.542Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.542Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:08.543Z] [1] React Compiler enabled
+[2026-08-25T17:36:08.689Z] [1] Starting Metro Bundler
+[2026-08-25T17:36:08.726Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:18.433Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-08-25T17:36:18.439Z] [0] [api] server listening on port 3000
+[2026-08-25T17:36:22.528Z] [1] The following packages should be updated for best compatibility with the installed expo version:
+[2026-08-25T17:36:22.528Z] [1]   expo@54.0.36 - expected version: ~54.0.37
+[2026-08-25T17:36:22.528Z] [1]   expo-constants@18.0.13 - expected version: ~18.0.14
+[2026-08-25T17:36:22.528Z] [1] Your project may not work correctly until you install the expected versions of the packages.
+[2026-08-25T17:36:22.538Z] [1] Waiting on http://localhost:8081
+[2026-08-25T17:36:22.538Z] [1] Logs for your project will appear below.
+[2026-08-25T17:36:23.326Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:23.330Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:36:26.040Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 30.9% (10/18)
+[2026-08-25T17:36:26.040Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 12.9% (122/340)
+[2026-08-25T17:36:29.543Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 30.9% (114/319)
+[2026-08-25T17:36:29.543Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.3% (536/785)
+[2026-08-25T17:36:33.044Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 33.7% (266/458)
+[2026-08-25T17:36:33.044Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.3% (558/795)
+[2026-08-25T17:36:36.557Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.4% (496/767)
+[2026-08-25T17:36:36.557Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.3% ( 877/2642)
+[2026-08-25T17:36:40.058Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.4% (627/963)
+[2026-08-25T17:36:40.058Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.8% (2598/2772)
+[2026-08-25T17:36:43.559Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (1266/2729)
+[2026-08-25T17:36:43.559Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.1% (2758/2843)
+[2026-08-25T17:36:47.062Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.1% (2759/2859)
+[2026-08-25T17:36:47.062Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.9% (2901/2962)
+[2026-08-25T17:36:48.821Z] [1] λ Bundled 25478ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (3078 modules)
+[2026-08-25T17:36:51.858Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-25T17:36:51.930Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-25T17:36:51.930Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-25T17:36:51.930Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-25T17:36:51.930Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-25T17:36:51.930Z] [1]   '--color-foreground': '#222222',
+[2026-08-25T17:36:51.930Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-25T17:36:51.931Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-25T17:36:51.931Z] [1]   '--color-success': '#3FAE68',
+[2026-08-25T17:36:51.931Z] [1]   '--color-warning': '#D9A441',
+[2026-08-25T17:36:51.931Z] [1]   '--color-error': '#E0554F'
+[2026-08-25T17:36:51.931Z] [1] }
+[2026-08-25T17:36:51.955Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-25T17:36:52.006Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-25T17:36:52.017Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (3176/3176)
+[2026-08-25T17:36:52.110Z] [1] npm notice
+[2026-08-25T17:36:52.110Z] [1] npm notice New major version of npm available! 10.9.2 -> 12.0.2
+[2026-08-25T17:36:52.110Z] [1] npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+[2026-08-25T17:36:52.110Z] [1] npm notice To update run: npm install -g npm@12.0.2
+[2026-08-25T17:36:52.110Z] [1] npm notice
+[2026-08-25T17:36:52.161Z] [1] pnpm dev:metro exited with code 0
+[2026-08-25T17:36:52.162Z] --> Sending SIGTERM to other processes..
+[2026-08-25T17:36:52.235Z] [0]  ELIFECYCLE  Command failed.
+[2026-08-25T17:36:52.266Z] [0] 5:36:52 PM [tsx] Previous process hasn't exited yet. Force killing...
+[2026-08-25T17:36:52.298Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-08-25T17:36:52.305Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-08-25T17:36:52.336Z] Dev server exited with code 1
+[2026-08-25T17:40:37.286Z] Starting dev server with command: pnpm run dev
+[2026-08-25T17:40:38.466Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-08-25T17:40:38.466Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-08-25T17:40:39.160Z] [0]
+[2026-08-25T17:40:39.160Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-08-25T17:40:39.160Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T17:40:39.160Z] [0]
+[2026-08-25T17:40:39.160Z] [1]
+[2026-08-25T17:40:39.160Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-08-25T17:40:39.160Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-08-25T17:40:39.160Z] [1]
+[2026-08-25T17:40:39.920Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-08-25T17:40:40.394Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T17:40:40.408Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:40.759Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:40.759Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:40.760Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:41.078Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:41.078Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:41.078Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T17:40:41.079Z] [1] React Compiler enabled
+[2026-08-25T17:40:41.233Z] [1] Starting Metro Bundler
+[2026-08-25T17:40:41.266Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
