@@ -508,3 +508,18 @@
 - [x] Apple 로그인 capability 포함 프로비저닝 프로필 재생성 후 iOS preview 빌드 완료 및 다운로드 링크 확인
 - [x] iOS 빌드 실패 시 자격증명 및 capability 오류 원인 기록
 - [x] 업체찾기 전체 필터 선택 시 필터 바와 업체 카드 겹침 수정
+- [x] GitHub 원격 저장소의 최신 커밋과 현재 로컬 상태 비교
+- [x] 설치나 빌드 없이 GitHub 최신 기준으로 작업 폴더 동기화 여부 확인
+- [x] GitHub 최신 코드에서 로그인 동의하기 체크박스 및 관련 변경 이력 확인
+- [x] 사용자가 제공한 로그인 화면 기준으로 이용약관·운영정책 동의 UI 최신 코드 확인 및 반영
+- [ ] 마지막 완료 빌드의 플랫폼·빌드 ID·기준 커밋 확인 후 현재 작업 폴더를 해당 기준으로 동기화
+- [x] 실제 GitHub 원격의 3일 전 최신 커밋·브랜치를 확인하고 내부 체크포인트와 구분해 동기화
+- [x] 제공된 GitHub 저장소(tonysimpson153-star/closing-market)의 main/closing-market 최신 커밋과 현재 코드 비교
+- [x] 코드 변경 없이 제공된 GitHub 저장소의 가장 최근 날짜 커밋만 조회
+- [x] 2026년 8월 22일 당일 커밋을 시간순으로 확인해 실제 마지막 수정 내용 파악
+- [x] GitHub 최신 app/auth/login.tsx 원본과 사용자가 제공한 로그인 화면 캡처 대조
+- [x] 이전 GitHub 커밋까지 포함해 app/auth/login.tsx의 로그인 동의 체크박스 이력 검색
+- [x] 당시 EAS 빌드가 로컬 작업본으로 생성됐는지 빌드 기록과 GitHub 커밋 대조
+- [x] GitHub Push 없이 당시 EAS 빌드·로컬·Git 이력에서 로그인 동의 화면 복구 가능성 확인
+- [x] iOS App Store build 1.0.0 (6) 기준으로 GitHub main/closing-market 최신화 후 커밋·Push
+- [x] GitHub 연결 메뉴가 보이지 않는 경우 웹 기반 대체 Push 경로 확인

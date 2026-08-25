@@ -3278,3 +3278,37 @@
 [2026-08-11T18:01:33.457Z] [1] Web Bundled 1080ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
 [2026-08-11T18:01:33.683Z] [1] Web Bundled 125ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
 [2026-08-11T18:01:34.400Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-25T12:25:42.501Z] Starting dev server with command: pnpm run dev
+[2026-08-25T12:25:44.388Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-08-25T12:25:44.388Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-08-25T12:25:45.218Z] [1]
+[2026-08-25T12:25:45.218Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-08-25T12:25:45.218Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-08-25T12:25:45.218Z] [1]
+[2026-08-25T12:25:45.229Z] [0]
+[2026-08-25T12:25:45.229Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-08-25T12:25:45.229Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T12:25:45.229Z] [0]
+[2026-08-25T12:25:46.650Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-08-25T12:25:47.217Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T12:25:47.454Z] [0] [api] server listening on port 3000
+[2026-08-25T12:25:47.562Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.261Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.261Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.264Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.689Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.689Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.690Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:48.691Z] [1] React Compiler enabled
+[2026-08-25T12:25:48.945Z] [1] Starting Metro Bundler
+[2026-08-25T12:25:48.983Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:25:49.121Z] [1] Error while reading cache, falling back to a full crawl:
+[2026-08-25T12:25:49.121Z] [1]  Error: Unable to deserialize cloned data.
+[2026-08-25T12:25:49.121Z] [1]     at deserialize (node:v8:405:14)
+[2026-08-25T12:25:49.121Z] [1]     at DiskCacheManager.read (/home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.3/node_modules/metro-file-map/src/cache/DiskCacheManager.js:60:33)
+[2026-08-25T12:25:49.121Z] [1]     at FileMap.read (/home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.3/node_modules/metro-file-map/src/index.js:284:14)
+[2026-08-25T12:25:49.121Z] [1]     at /home/ubuntu/closing-market/node_modules/.pnpm/metro-file-map@0.83.3/node_modules/metro-file-map/src/index.js:202:25
+[2026-08-25T12:25:49.121Z] [1]     at DependencyGraph.ready (/home/ubuntu/closing-market/node_modules/.pnpm/metro@0.83.3/node_modules/metro/src/node-haste/DependencyGraph.js:88:5)
+[2026-08-25T12:25:49.121Z] [1]     at Bundler.ready (/home/ubuntu/closing-market/node_modules/.pnpm/metro@0.83.3/node_modules/metro/src/Bundler.js:62:5)
+[2026-08-25T12:25:49.121Z] [1]     at IncrementalBundler.ready (/home/ubuntu/closing-market/node_modules/.pnpm/metro@0.83.3/node_modules/metro/src/IncrementalBundler.js:302:5)
+[2026-08-25T12:25:49.121Z] [1]     at Server.ready (/home/ubuntu/closing-market/node_modules/.pnpm/metro@0.83.3/node_modules/metro/src/Server.js:1305:5)
