@@ -79,6 +79,13 @@ export default function OAuthCallback() {
                 email: userData.email,
                 loginMethod: userData.loginMethod,
                 lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+                role: userData.role ?? "user",
+                userType: userData.userType ?? "buyer",
+                isVerified: userData.isVerified ?? false,
+                sellerStatus: userData.sellerStatus ?? null,
+                companyStatus: userData.companyStatus ?? null,
+                profileImageUrl: userData.profileImageUrl ?? null,
+                phone: userData.phone ?? null,
               });
             } catch (e) {
               console.error("[OAuth] Failed to parse user data:", e);
@@ -168,6 +175,13 @@ export default function OAuthCallback() {
         email: result.user.email,
         loginMethod: result.user.loginMethod,
         lastSignedIn: new Date(result.user.lastSignedIn || Date.now()),
+        role: result.user.role ?? "user",
+        userType: result.user.userType ?? "buyer",
+        isVerified: result.user.isVerified ?? false,
+        sellerStatus: result.user.sellerStatus ?? null,
+        companyStatus: result.user.companyStatus ?? null,
+        profileImageUrl: result.user.profileImageUrl ?? null,
+        phone: result.user.phone ?? null,
       });
     }
 

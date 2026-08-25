@@ -1208,7 +1208,8 @@ export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return null;
 
-  // 구버전 운영 DB에서도 로그인에 필요한 핵심 컬럼만 조회합니다.
+  // 구버전 운영 DB에서도 로그인에 필요한 컬럼만 조회하되, 권한과 계정 상태도 포함합니다.
+  // 누락 컬럼은 서버 시작 시 schemaCompat가 비파괴적으로 보정합니다.
   const rows = await db
     .select({
       id: users.id,
@@ -1216,12 +1217,21 @@ export async function getUserByEmail(email: string) {
       name: users.name,
       email: users.email,
       password: users.password,
+      role: users.role,
+      isVerified: users.isVerified,
+      sellerStatus: users.sellerStatus,
+      companyStatus: users.companyStatus,
+      profileImageUrl: users.profileImageUrl,
+      phone: users.phone,
+      deletedAt: users.deletedAt,
+      suspendedAt: users.suspendedAt,
+      suspendedReason: users.suspendedReason,
     })
     .from(users)
     .where(eq(users.email, email))
     .limit(1);
 
-  return (rows[0] ?? null) as User | null;
+  return (rows[0] ?? null) as unknown as User | null;
 }
 
 export async function getUserByKakaoId(kakaoId: string) {
