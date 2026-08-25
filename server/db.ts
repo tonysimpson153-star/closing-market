@@ -23,7 +23,7 @@ import {
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-async function getDb() {
+export async function getDb() {
   if (_db) return _db;
   if (!ENV.databaseUrl) return null;
   try {
