@@ -3505,3 +3505,63 @@
 [2026-08-25T12:41:58.114Z] [1] React Compiler enabled
 [2026-08-25T12:41:58.358Z] [1] Starting Metro Bundler
 [2026-08-25T12:41:58.403Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:42:09.449Z] [1] The following packages should be updated for best compatibility with the installed expo version:
+[2026-08-25T12:42:09.449Z] [1]   expo@54.0.36 - expected version: ~54.0.37
+[2026-08-25T12:42:09.449Z] [1]   expo-constants@18.0.13 - expected version: ~18.0.14
+[2026-08-25T12:42:09.449Z] [1] Your project may not work correctly until you install the expected versions of the packages.
+[2026-08-25T12:42:09.462Z] [1] Waiting on http://localhost:8081
+[2026-08-25T12:42:09.462Z] [1] Logs for your project will appear below.
+[2026-08-25T12:42:10.130Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:42:10.134Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:42:12.982Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓░░░░░░░░░░░░░░░  9.4% ( 93/303)
+[2026-08-25T12:42:12.982Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 56.1% ( 794/1061)
+[2026-08-25T12:42:16.540Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 86.2% (2112/2948)
+[2026-08-25T12:42:16.540Z] [1] λ node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.3% (3020/3070)
+[2026-08-25T12:42:17.096Z] [1] λ Bundled 6944ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (3103 modules)
+[2026-08-25T12:42:20.152Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-25T12:42:20.245Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-25T12:42:20.245Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-25T12:42:20.245Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-25T12:42:20.245Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-25T12:42:20.245Z] [1]   '--color-foreground': '#222222',
+[2026-08-25T12:42:20.245Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-25T12:42:20.245Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-25T12:42:20.245Z] [1]   '--color-success': '#3FAE68',
+[2026-08-25T12:42:20.245Z] [1]   '--color-warning': '#D9A441',
+[2026-08-25T12:42:20.245Z] [1]   '--color-error': '#E0554F'
+[2026-08-25T12:42:20.245Z] [1] }
+[2026-08-25T12:42:20.276Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-25T12:42:20.333Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-25T12:42:20.345Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.3% (3160/3171)
+[2026-08-25T12:42:20.504Z] [1] Web Bundled 10354ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (3176 modules)
+[2026-08-25T12:42:21.457Z] [1] pnpm dev:metro exited with code 0
+[2026-08-25T12:42:21.458Z] --> Sending SIGTERM to other processes..
+[2026-08-25T12:42:21.534Z] [0]  ELIFECYCLE  Command failed.
+[2026-08-25T12:42:21.617Z] [0] 12:42:21 PM [tsx] Previous process hasn't exited yet. Force killing...
+[2026-08-25T12:42:21.628Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-08-25T12:42:21.635Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-08-25T12:42:21.676Z] Dev server exited with code 1
+[2026-08-25T12:52:03.583Z] Starting dev server with command: pnpm run dev
+[2026-08-25T12:52:04.740Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-08-25T12:52:04.740Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-08-25T12:52:05.510Z] [0]
+[2026-08-25T12:52:05.510Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-08-25T12:52:05.510Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T12:52:05.510Z] [0]
+[2026-08-25T12:52:05.511Z] [1]
+[2026-08-25T12:52:05.511Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-08-25T12:52:05.511Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-08-25T12:52:05.511Z] [1]
+[2026-08-25T12:52:06.520Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-08-25T12:52:06.917Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T12:52:07.016Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.110Z] [0] [api] server listening on port 3000
+[2026-08-25T12:52:07.325Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.325Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.326Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.658Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.659Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.659Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-25T12:52:07.660Z] [1] React Compiler enabled
+[2026-08-25T12:52:07.796Z] [1] Starting Metro Bundler
+[2026-08-25T12:52:07.830Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
