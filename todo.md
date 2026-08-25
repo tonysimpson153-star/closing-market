@@ -523,3 +523,7 @@
 - [x] GitHub Push 없이 당시 EAS 빌드·로컬·Git 이력에서 로그인 동의 화면 복구 가능성 확인
 - [x] iOS App Store build 1.0.0 (6) 기준으로 GitHub main/closing-market 최신화 후 커밋·Push
 - [x] GitHub 연결 메뉴가 보이지 않는 경우 웹 기반 대체 Push 경로 확인
+- [x] 업체찾기 탭 진입 시 개별찾기·통합찾기 선택 화면 추가
+- [x] 기존 개별 업체찾기 화면 연결
+- [x] 통합찾기 화면 및 업체 견적 요청 폼 구현
+- [x] GitHub Push 없이 현재 프로젝트에서 화면 검증

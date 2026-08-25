@@ -57,6 +57,7 @@ import {
   XCircle,
   AlertTriangle,
   Loader,
+  Layers,
   Send,
   Copy,
   MoreVertical,
@@ -142,6 +143,7 @@ export type IconName =
   | "x-circle"
   | "alert-triangle"
   | "loader"
+  | "layers"
   | "send"
   | "copy"
   | "more-vertical"
@@ -234,6 +236,7 @@ const iconMap: Record<IconName, React.ComponentType<any>> = {
   "x-circle": XCircle,
   "alert-triangle": AlertTriangle,
   "loader": Loader,
+  "layers": Layers,
   "send": Send,
   "copy": Copy,
   "more-vertical": MoreVertical,
