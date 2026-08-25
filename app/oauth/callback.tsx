@@ -24,8 +24,7 @@ export default function OAuthCallback() {
   }>();
 
   const [status, setStatus] = useState<CallbackStatus>("processing");
-  const [errorMessage, setErrorMessage] =
-    useState<string>("인증 중 오류가 발생했습니다.");
+  const [errorMessage, setErrorMessage] = useState<string>("인증 중 오류가 발생했습니다.");
   const handledRef = useRef(false);
 
   useEffect(() => {
@@ -45,10 +44,7 @@ export default function OAuthCallback() {
 
       try {
         // ── 1. 사용자 취소 처리 ──────────────────────────────
-        if (
-          params.error === "access_denied" ||
-          params.error === "user_cancelled"
-        ) {
+        if (params.error === "access_denied" || params.error === "user_cancelled") {
           console.log("[OAuth] User cancelled login");
           setStatus("cancelled");
           setTimeout(() => router.replace("/(tabs)" as any), 1500);
@@ -83,13 +79,6 @@ export default function OAuthCallback() {
                 email: userData.email,
                 loginMethod: userData.loginMethod,
                 lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
-                role: userData.role ?? "user",
-                userType: userData.userType ?? "buyer",
-                isVerified: userData.isVerified ?? false,
-                sellerStatus: userData.sellerStatus ?? null,
-                companyStatus: userData.companyStatus ?? null,
-                profileImageUrl: userData.profileImageUrl ?? null,
-                phone: userData.phone ?? null,
               });
             } catch (e) {
               console.error("[OAuth] Failed to parse user data:", e);
@@ -103,17 +92,13 @@ export default function OAuthCallback() {
 
         // ── 4. code + state가 route param으로 전달된 경우 ───
         if (params.code && params.state) {
-          console.log(
-            "[OAuth] code+state found in route params, exchanging...",
-          );
+          console.log("[OAuth] code+state found in route params, exchanging...");
           await exchangeAndStore(params.code, params.state);
           return;
         }
 
         // ── 5. Linking.getInitialURL() fallback (딥링크) ────
-        console.log(
-          "[OAuth] No params in route, checking Linking.getInitialURL()...",
-        );
+        console.log("[OAuth] No params in route, checking Linking.getInitialURL()...");
         const initialUrl = await Linking.getInitialURL();
         console.log("[OAuth] Linking.getInitialURL():", initialUrl);
 
@@ -121,10 +106,7 @@ export default function OAuthCallback() {
           const parsed = parseOAuthUrl(initialUrl);
           console.log("[OAuth] Parsed from initialURL:", parsed);
 
-          if (
-            parsed.error === "access_denied" ||
-            parsed.error === "user_cancelled"
-          ) {
+          if (parsed.error === "access_denied" || parsed.error === "user_cancelled") {
             setStatus("cancelled");
             setTimeout(() => router.replace("/(tabs)" as any), 1500);
             return;
@@ -151,24 +133,20 @@ export default function OAuthCallback() {
 
         // ── 6. 아무 파라미터도 없는 경우 ────────────────────
         // 사용자가 로그인을 취소하고 돌아온 경우일 수 있음
-        console.warn(
-          "[OAuth] No code/state/sessionToken found — treating as cancelled",
-        );
+        console.warn("[OAuth] No code/state/sessionToken found — treating as cancelled");
         setStatus("cancelled");
         setTimeout(() => router.replace("/(tabs)" as any), 1500);
       } catch (error) {
         console.error("[OAuth] Callback error:", error);
         setStatus("error");
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "인증 처리 중 오류가 발생했습니다.",
+          error instanceof Error ? error.message : "인증 처리 중 오류가 발생했습니다.",
         );
       }
     };
 
     handleCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // code를 세션 토큰으로 교환하고 저장
@@ -190,13 +168,6 @@ export default function OAuthCallback() {
         email: result.user.email,
         loginMethod: result.user.loginMethod,
         lastSignedIn: new Date(result.user.lastSignedIn || Date.now()),
-        role: result.user.role ?? "user",
-        userType: result.user.userType ?? "buyer",
-        isVerified: result.user.isVerified ?? false,
-        sellerStatus: result.user.sellerStatus ?? null,
-        companyStatus: result.user.companyStatus ?? null,
-        profileImageUrl: result.user.profileImageUrl ?? null,
-        phone: result.user.phone ?? null,
       });
     }
 
@@ -234,39 +205,15 @@ export default function OAuthCallback() {
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1 }}
-      edges={["top", "bottom", "left", "right"]}
-    >
-      <ThemedView
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-        }}
-      >
+    <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom", "left", "right"]}>
+      <ThemedView style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         {status === "processing" && (
           <>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text
-              style={{
-                marginTop: 20,
-                fontSize: 16,
-                color: colors.foreground,
-                textAlign: "center",
-              }}
-            >
+            <Text style={{ marginTop: 20, fontSize: 16, color: colors.foreground, textAlign: "center" }}>
               로그인 처리 중입니다...
             </Text>
-            <Text
-              style={{
-                marginTop: 8,
-                fontSize: 13,
-                color: colors.muted,
-                textAlign: "center",
-              }}
-            >
+            <Text style={{ marginTop: 8, fontSize: 13, color: colors.muted, textAlign: "center" }}>
               잠시만 기다려주세요.
             </Text>
           </>
@@ -274,27 +221,11 @@ export default function OAuthCallback() {
 
         {status === "success" && (
           <>
-            <View style={{ marginBottom: 16 }}>
-              <LucideIcon
-                name="check-circle"
-                size={32}
-                color={colors.primary}
-                strokeWidth={1.5}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                color: colors.foreground,
-                marginBottom: 8,
-              }}
-            >
+            <View style={{ marginBottom: 16 }}><LucideIcon name="check-circle" size={32} color={colors.primary} strokeWidth={1.5} /></View>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
               로그인 성공!
             </Text>
-            <Text
-              style={{ fontSize: 14, color: colors.muted, textAlign: "center" }}
-            >
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center" }}>
               홈 화면으로 이동합니다...
             </Text>
           </>
@@ -302,32 +233,11 @@ export default function OAuthCallback() {
 
         {status === "cancelled" && (
           <>
-            <View style={{ marginBottom: 16 }}>
-              <LucideIcon
-                name="x-circle"
-                size={32}
-                color={colors.muted}
-                strokeWidth={1.5}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                color: colors.foreground,
-                marginBottom: 8,
-              }}
-            >
+            <View style={{ marginBottom: 16 }}><LucideIcon name="x-circle" size={32} color={colors.muted} strokeWidth={1.5} /></View>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
               로그인이 취소되었습니다.
             </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: colors.muted,
-                textAlign: "center",
-                marginBottom: 24,
-              }}
-            >
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 24 }}>
               홈 화면으로 돌아갑니다...
             </Text>
           </>
@@ -335,34 +245,11 @@ export default function OAuthCallback() {
 
         {status === "error" && (
           <>
-            <View style={{ marginBottom: 16 }}>
-              <LucideIcon
-                name="alert-circle"
-                size={32}
-                color={colors.error}
-                strokeWidth={1.5}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                color: colors.error,
-                marginBottom: 12,
-                textAlign: "center",
-              }}
-            >
+            <View style={{ marginBottom: 16 }}><LucideIcon name="alert-circle" size={32} color={colors.error} strokeWidth={1.5} /></View>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.error, marginBottom: 12, textAlign: "center" }}>
               로그인 실패
             </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: colors.muted,
-                textAlign: "center",
-                marginBottom: 32,
-                lineHeight: 22,
-              }}
-            >
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 32, lineHeight: 22 }}>
               {errorMessage}
             </Text>
             <Pressable
@@ -375,9 +262,7 @@ export default function OAuthCallback() {
                 opacity: pressed ? 0.8 : 1,
               })}
             >
-              <Text
-                style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700" }}
-              >
+              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700" }}>
                 홈으로 돌아가기
               </Text>
             </Pressable>

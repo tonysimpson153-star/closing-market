@@ -48,25 +48,16 @@ export async function getDb() {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(users)
-    .where(eq(users.openId, openId))
-    .limit(1);
+  const rows = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return rows[0] ?? null;
 }
 
-export async function upsertUser(
-  data: Partial<InsertUser> & { openId: string },
-) {
+export async function upsertUser(data: Partial<InsertUser> & { openId: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const existing = await getUserByOpenId(data.openId);
   if (existing) {
-    await db
-      .update(users)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(users.openId, data.openId));
+    await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.openId, data.openId));
   } else {
     await db.insert(users).values({ ...data } as InsertUser);
   }
@@ -75,14 +66,7 @@ export async function upsertUser(
 // ─── Products ───────────────────────────────────────────────
 
 export async function getProducts(input?: {
-  category?:
-    | "cafe"
-    | "pcroom"
-    | "restaurant"
-    | "gym"
-    | "office"
-    | "warehouse"
-    | "transfer";
+  category?: "cafe" | "pcroom" | "restaurant" | "gym" | "office" | "warehouse" | "transfer";
   status?: "selling" | "reserved" | "sold";
   limit?: number;
   offset?: number;
@@ -111,11 +95,7 @@ export async function getProductDetail(id: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const rows = await db
-    .select()
-    .from(products)
-    .where(eq(products.id, id))
-    .limit(1);
+  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
   if (!rows[0]) return null;
 
   const [images, seller] = await Promise.all([
@@ -132,10 +112,7 @@ export async function getProductDetail(id: number) {
   ]);
 
   // 조회수 증가
-  await db
-    .update(products)
-    .set({ viewCount: (rows[0].viewCount ?? 0) + 1 })
-    .where(eq(products.id, id));
+  await db.update(products).set({ viewCount: (rows[0].viewCount ?? 0) + 1 }).where(eq(products.id, id));
 
   return {
     ...rows[0],
@@ -147,7 +124,7 @@ export async function getProductDetail(id: number) {
 
 export async function createProduct(
   data: Omit<InsertProduct, "id" | "createdAt" | "updatedAt">,
-  images?: string[],
+  images?: string[]
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -161,7 +138,7 @@ export async function createProduct(
         productId,
         imageUrl,
         sortOrder: index,
-      })),
+      }))
     );
   }
 
@@ -171,7 +148,7 @@ export async function createProduct(
 export async function updateProductStatus(
   id: number,
   status: "selling" | "reserved" | "sold",
-  userId: number,
+  userId: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -197,16 +174,7 @@ export async function getMyProducts(userId: number) {
 // ─── Businesses ──────────────────────────────────────────────
 
 export async function getBusinesses(input?: {
-  type?:
-    | "demolition"
-    | "interior"
-    | "waste"
-    | "sign"
-    | "pos"
-    | "cctv"
-    | "cleaning"
-    | "tax"
-    | "labor";
+  type?: "demolition" | "interior" | "waste" | "sign" | "pos" | "cctv" | "cleaning" | "tax" | "labor";
 }) {
   const db = await getDb();
   if (!db) return [];
@@ -225,11 +193,7 @@ export async function getBusinessDetail(id: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const rows = await db
-    .select()
-    .from(businesses)
-    .where(eq(businesses.id, id))
-    .limit(1);
+  const rows = await db.select().from(businesses).where(eq(businesses.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -251,10 +215,7 @@ export async function getApprovedCompanies(input?: { type?: string }) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [
-    eq(users.role, "company"),
-    eq(users.companyStatus, "approved"),
-  ];
+  const conditions = [eq(users.role, "company"), eq(users.companyStatus, "approved")];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
 
   return db
@@ -271,13 +232,7 @@ export async function getApprovedCompanyById(id: number) {
   const rows = await db
     .select(COMPANY_SELECT_FIELDS)
     .from(users)
-    .where(
-      and(
-        eq(users.id, id),
-        eq(users.role, "company"),
-        eq(users.companyStatus, "approved"),
-      ),
-    )
+    .where(and(eq(users.id, id), eq(users.role, "company"), eq(users.companyStatus, "approved")))
     .limit(1);
   const company = rows[0];
   if (!company) return null;
@@ -298,15 +253,9 @@ export async function addCompanyImages(userId: number, imageUrls: string[]) {
 
   // 기존 소개 사진은 교체 (재신청/수정 시 중복 누적 방지)
   await db.delete(companyImages).where(eq(companyImages.userId, userId));
-  await db
-    .insert(companyImages)
-    .values(
-      imageUrls.map((imageUrl, index) => ({
-        userId,
-        imageUrl,
-        sortOrder: index,
-      })),
-    );
+  await db.insert(companyImages).values(
+    imageUrls.map((imageUrl, index) => ({ userId, imageUrl, sortOrder: index }))
+  );
 }
 
 // ─── Favorites ───────────────────────────────────────────────
@@ -325,29 +274,21 @@ export async function getFavorites(userId: number) {
     rows.map(async (fav) => {
       const [product, business] = await Promise.all([
         fav.productId
-          ? db
-              .select({
-                id: products.id,
-                title: products.title,
-                price: products.price,
-                status: products.status,
-                category: products.category,
-                mainImageUrl: products.mainImageUrl,
-              })
-              .from(products)
-              .where(eq(products.id, fav.productId))
-              .limit(1)
+          ? db.select({
+              id: products.id,
+              title: products.title,
+              price: products.price,
+              status: products.status,
+              category: products.category,
+              mainImageUrl: products.mainImageUrl,
+            }).from(products).where(eq(products.id, fav.productId)).limit(1)
           : Promise.resolve([]),
         fav.businessId
-          ? db
-              .select({
-                id: businesses.id,
-                name: businesses.name,
-                type: businesses.type,
-              })
-              .from(businesses)
-              .where(eq(businesses.id, fav.businessId))
-              .limit(1)
+          ? db.select({
+              id: businesses.id,
+              name: businesses.name,
+              type: businesses.type,
+            }).from(businesses).where(eq(businesses.id, fav.businessId)).limit(1)
           : Promise.resolve([]),
       ]);
 
@@ -356,35 +297,27 @@ export async function getFavorites(userId: number) {
         product: (product as any[])[0] ?? null,
         business: (business as any[])[0] ?? null,
       };
-    }),
+    })
   );
 
   return result;
 }
 
-export async function isFavorited(
-  userId: number,
-  productId?: number,
-  businessId?: number,
-) {
+export async function isFavorited(userId: number, productId?: number, businessId?: number) {
   const db = await getDb();
   if (!db) return false;
   const conditions = [eq(favorites.userId, userId)];
   if (productId) conditions.push(eq(favorites.productId, productId));
   else if (businessId) conditions.push(eq(favorites.businessId, businessId));
   else return false;
-  const existing = await db
-    .select({ id: favorites.id })
-    .from(favorites)
-    .where(and(...conditions))
-    .limit(1);
+  const existing = await db.select({ id: favorites.id }).from(favorites).where(and(...conditions)).limit(1);
   return existing.length > 0;
 }
 
 export async function toggleFavorite(
   userId: number,
   productId?: number,
-  businessId?: number,
+  businessId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -394,11 +327,7 @@ export async function toggleFavorite(
   else if (businessId) conditions.push(eq(favorites.businessId, businessId));
   else throw new Error("productId or businessId required");
 
-  const existing = await db
-    .select()
-    .from(favorites)
-    .where(and(...conditions))
-    .limit(1);
+  const existing = await db.select().from(favorites).where(and(...conditions)).limit(1);
 
   if (existing.length > 0) {
     await db.delete(favorites).where(and(...conditions));
@@ -436,13 +365,7 @@ export async function markNotificationRead(id: number, userId: number) {
 
 // ─── Chats ───────────────────────────────────────────────────
 
-import {
-  chatRooms,
-  chatMessages,
-  users as usersTable,
-  products as productsTable,
-  recentViews,
-} from "../drizzle/schema";
+import { chatRooms, chatMessages, users as usersTable, products as productsTable, recentViews } from "../drizzle/schema";
 import { or, lt, isNull } from "drizzle-orm";
 
 // ─── Recent Views (최근 본 상품) ────────────────────────────────
@@ -454,9 +377,7 @@ export async function addRecentView(userId: number, productId: number) {
   // 이미 본 상품이면 기존 기록 삭제 후 다시 추가 (최신순 유지)
   await db
     .delete(recentViews)
-    .where(
-      and(eq(recentViews.userId, userId), eq(recentViews.productId, productId)),
-    );
+    .where(and(eq(recentViews.userId, userId), eq(recentViews.productId, productId)));
   await db.insert(recentViews).values({ userId, productId });
 
   // 사용자당 최근 50개만 유지
@@ -468,9 +389,7 @@ export async function addRecentView(userId: number, productId: number) {
   const stale = rows.slice(50);
   if (stale.length > 0) {
     await Promise.all(
-      stale.map((row) =>
-        db.delete(recentViews).where(eq(recentViews.id, row.id)),
-      ),
+      stale.map((row) => db.delete(recentViews).where(eq(recentViews.id, row.id)))
     );
   }
 }
@@ -505,7 +424,7 @@ export async function getRecentViews(userId: number) {
         ...view,
         product: product[0] ?? null,
       };
-    }),
+    })
   );
 
   // 삭제된 상품은 제외
@@ -521,32 +440,23 @@ export async function getMyPurchases(userId: number) {
   const rooms = await db
     .select()
     .from(chatRooms)
-    .where(
-      and(eq(chatRooms.buyerId, userId), eq(chatRooms.status, "completed")),
-    )
+    .where(and(eq(chatRooms.buyerId, userId), eq(chatRooms.status, "completed")))
     .orderBy(desc(chatRooms.lastMessageAt));
 
   const result = await Promise.all(
     rooms.map(async (room) => {
       const [product, seller] = await Promise.all([
         room.productId
-          ? db
-              .select({
-                id: productsTable.id,
-                title: productsTable.title,
-                price: productsTable.price,
-                mainImageUrl: productsTable.mainImageUrl,
-                category: productsTable.category,
-              })
-              .from(productsTable)
-              .where(eq(productsTable.id, room.productId))
-              .limit(1)
+          ? db.select({
+              id: productsTable.id,
+              title: productsTable.title,
+              price: productsTable.price,
+              mainImageUrl: productsTable.mainImageUrl,
+              category: productsTable.category,
+            }).from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
           : Promise.resolve([]),
-        db
-          .select({ id: usersTable.id, name: usersTable.name })
-          .from(usersTable)
-          .where(eq(usersTable.id, room.sellerId))
-          .limit(1),
+        db.select({ id: usersTable.id, name: usersTable.name })
+          .from(usersTable).where(eq(usersTable.id, room.sellerId)).limit(1),
       ]);
 
       return {
@@ -555,7 +465,7 @@ export async function getMyPurchases(userId: number) {
         product: (product as any[])[0] ?? null,
         seller: seller[0] ?? null,
       };
-    }),
+    })
   );
 
   return result;
@@ -564,16 +474,7 @@ export async function getMyPurchases(userId: number) {
 // ─── Seller Applications ─────────────────────────────────────
 
 export async function submitSellerApplication(
-  data: Omit<
-    InsertSellerApplication,
-    | "id"
-    | "createdAt"
-    | "updatedAt"
-    | "status"
-    | "rejectionReason"
-    | "reviewedAt"
-    | "reviewedBy"
-  >,
+  data: Omit<InsertSellerApplication, "id" | "createdAt" | "updatedAt" | "status" | "rejectionReason" | "reviewedAt" | "reviewedBy">
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -582,12 +483,7 @@ export async function submitSellerApplication(
   const existing = await db
     .select()
     .from(sellerApplications)
-    .where(
-      and(
-        eq(sellerApplications.userId, data.userId),
-        eq(sellerApplications.status, "pending"),
-      ),
-    )
+    .where(and(eq(sellerApplications.userId, data.userId), eq(sellerApplications.status, "pending")))
     .limit(1);
 
   if (existing.length > 0) {
@@ -615,15 +511,12 @@ export async function getMySellerApplication(userId: number) {
   return rows[0] ?? null;
 }
 
-export async function getAllSellerApplications(input?: {
-  status?: "pending" | "approved" | "rejected" | "suspended";
-}) {
+export async function getAllSellerApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
   const db = await getDb();
   if (!db) return [];
 
   const conditions = [];
-  if (input?.status)
-    conditions.push(eq(sellerApplications.status, input.status));
+  if (input?.status) conditions.push(eq(sellerApplications.status, input.status));
 
   const query = db
     .select({
@@ -653,7 +546,7 @@ export async function reviewSellerApplication(
   applicationId: number,
   action: "approved" | "rejected" | "suspended",
   reviewerId: number,
-  rejectionReason?: string,
+  rejectionReason?: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -678,11 +571,7 @@ export async function reviewSellerApplication(
 
   // 승인 시 users 테이블 업데이트 (관리자 계정은 role을 덮어쓰지 않음)
   if (action === "approved") {
-    const targetUser = await db
-      .select({ role: users.role })
-      .from(users)
-      .where(eq(users.id, app[0].userId))
-      .limit(1);
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, app[0].userId)).limit(1);
     const shouldChangeRole = targetUser[0]?.role !== "admin";
     await db
       .update(users)
@@ -721,66 +610,42 @@ export async function getChatList(userId: number) {
   const rooms = await db
     .select()
     .from(chatRooms)
-    .where(
-      and(
-        or(eq(chatRooms.buyerId, userId), eq(chatRooms.sellerId, userId)),
-        // 업체 문의 채팅(상품 없이 나에게 들어온 문의)은 "업체 문의함"에서 따로 보여주므로
-        // 일반 채팅 목록에서는 제외해 중복 노출을 방지합니다.
-        sql`NOT (${chatRooms.sellerId} = ${userId} AND ${chatRooms.productId} IS NULL)`,
-      ),
-    )
+    .where(and(
+      or(eq(chatRooms.buyerId, userId), eq(chatRooms.sellerId, userId)),
+      // 업체 문의 채팅(상품 없이 나에게 들어온 문의)은 "업체 문의함"에서 따로 보여주므로
+      // 일반 채팅 목록에서는 제외해 중복 노출을 방지합니다.
+      sql`NOT (${chatRooms.sellerId} = ${userId} AND ${chatRooms.productId} IS NULL)`
+    ))
     .orderBy(desc(chatRooms.lastMessageAt))
     .limit(50);
 
   const result = await Promise.all(
     rooms.map(async (room) => {
-      const otherUserId =
-        room.buyerId === userId ? room.sellerId : room.buyerId;
+      const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
 
       const [otherUser, unreadRows, product] = await Promise.all([
-        db
-          .select({
-            id: usersTable.id,
-            name: usersTable.name,
-            profileImageUrl: usersTable.profileImageUrl,
-          })
-          .from(usersTable)
-          .where(eq(usersTable.id, otherUserId))
-          .limit(1),
-        db
-          .select({ id: chatMessages.id })
+        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+          .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
+        db.select({ id: chatMessages.id })
           .from(chatMessages)
-          .where(
-            and(
-              eq(chatMessages.roomId, room.id),
-              eq(chatMessages.isRead, false),
-              eq(chatMessages.senderId, otherUserId),
-            ),
-          ),
+          .where(and(
+            eq(chatMessages.roomId, room.id),
+            eq(chatMessages.isRead, false),
+            eq(chatMessages.senderId, otherUserId)
+          )),
         room.productId
-          ? db
-              .select({
-                id: productsTable.id,
-                title: productsTable.title,
-                mainImageUrl: productsTable.mainImageUrl,
-              })
-              .from(productsTable)
-              .where(eq(productsTable.id, room.productId))
-              .limit(1)
+          ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl })
+              .from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
           : Promise.resolve([]),
       ]);
 
       return {
         ...room,
-        otherUser: otherUser[0] ?? {
-          id: otherUserId,
-          name: "사용자",
-          profileImageUrl: null,
-        },
+        otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
         product: (product as any[])[0] ?? null,
       };
-    }),
+    })
   );
 
   return result;
@@ -793,56 +658,36 @@ export async function getCompanyInquiryChats(userId: number) {
   const rooms = await db
     .select()
     .from(chatRooms)
-    .where(
-      and(eq(chatRooms.sellerId, userId), sql`${chatRooms.productId} IS NULL`),
-    )
+    .where(and(eq(chatRooms.sellerId, userId), sql`${chatRooms.productId} IS NULL`))
     .orderBy(desc(chatRooms.lastMessageAt))
     .limit(50);
 
   const result = await Promise.all(
     rooms.map(async (room) => {
       const [buyer, unreadRows] = await Promise.all([
-        db
-          .select({
-            id: usersTable.id,
-            name: usersTable.name,
-            profileImageUrl: usersTable.profileImageUrl,
-          })
-          .from(usersTable)
-          .where(eq(usersTable.id, room.buyerId))
-          .limit(1),
-        db
-          .select({ id: chatMessages.id })
+        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+          .from(usersTable).where(eq(usersTable.id, room.buyerId)).limit(1),
+        db.select({ id: chatMessages.id })
           .from(chatMessages)
-          .where(
-            and(
-              eq(chatMessages.roomId, room.id),
-              eq(chatMessages.isRead, false),
-              eq(chatMessages.senderId, room.buyerId),
-            ),
-          ),
+          .where(and(
+            eq(chatMessages.roomId, room.id),
+            eq(chatMessages.isRead, false),
+            eq(chatMessages.senderId, room.buyerId)
+          )),
       ]);
 
       return {
         ...room,
-        otherUser: buyer[0] ?? {
-          id: room.buyerId,
-          name: "사용자",
-          profileImageUrl: null,
-        },
+        otherUser: buyer[0] ?? { id: room.buyerId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
       };
-    }),
+    })
   );
 
   return result;
 }
 
-export async function getOrCreateChatRoom(
-  buyerId: number,
-  sellerId: number,
-  productId?: number,
-) {
+export async function getOrCreateChatRoom(buyerId: number, sellerId: number, productId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -853,11 +698,7 @@ export async function getOrCreateChatRoom(
   ];
   if (productId) conditions.push(eq(chatRooms.productId, productId));
 
-  const existing = await db
-    .select()
-    .from(chatRooms)
-    .where(and(...conditions))
-    .limit(1);
+  const existing = await db.select().from(chatRooms).where(and(...conditions)).limit(1);
   if (existing[0]) return existing[0];
 
   // 새 채팅방 생성
@@ -867,11 +708,7 @@ export async function getOrCreateChatRoom(
     productId: productId ?? null,
     status: "active",
   });
-  const newRoom = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, result[0].insertId))
-    .limit(1);
+  const newRoom = await db.select().from(chatRooms).where(eq(chatRooms.id, result[0].insertId)).limit(1);
   return newRoom[0];
 }
 
@@ -879,11 +716,7 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const rooms = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room) return null;
 
@@ -892,59 +725,28 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
 
   const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
   const [otherUser, product] = await Promise.all([
-    db
-      .select({
-        id: usersTable.id,
-        name: usersTable.name,
-        profileImageUrl: usersTable.profileImageUrl,
-        isVerified: usersTable.isVerified,
-      })
-      .from(usersTable)
-      .where(eq(usersTable.id, otherUserId))
-      .limit(1),
+    db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
+      .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
     room.productId
-      ? db
-          .select({
-            id: productsTable.id,
-            title: productsTable.title,
-            mainImageUrl: productsTable.mainImageUrl,
-            price: productsTable.price,
-            status: productsTable.status,
-          })
-          .from(productsTable)
-          .where(eq(productsTable.id, room.productId))
-          .limit(1)
+      ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl, price: productsTable.price, status: productsTable.status })
+          .from(productsTable).where(eq(productsTable.id, room.productId)).limit(1)
       : Promise.resolve([]),
   ]);
 
   return {
     ...room,
-    otherUser: otherUser[0] ?? {
-      id: otherUserId,
-      name: "사용자",
-      profileImageUrl: null,
-      isVerified: false,
-    },
+    otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
     product: (product as any[])[0] ?? null,
     myRole: room.buyerId === userId ? "buyer" : "seller",
   };
 }
 
-export async function getChatMessages(
-  roomId: number,
-  userId: number,
-  limit = 50,
-  beforeId?: number,
-) {
+export async function getChatMessages(roomId: number, userId: number, limit = 50, beforeId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   // 접근 권한 확인
-  const rooms = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room || (room.buyerId !== userId && room.sellerId !== userId)) return [];
 
@@ -961,21 +763,12 @@ export async function getChatMessages(
   return messages.reverse();
 }
 
-export async function sendChatMessage(
-  roomId: number,
-  senderId: number,
-  content?: string,
-  imageUrl?: string,
-) {
+export async function sendChatMessage(roomId: number, senderId: number, content?: string, imageUrl?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   // 접근 권한 확인
-  const rooms = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
     throw new Error("채팅방에 접근할 수 없습니다.");
@@ -990,19 +783,12 @@ export async function sendChatMessage(
   });
 
   // 채팅방 마지막 메시지 업데이트
-  await db
-    .update(chatRooms)
-    .set({
-      lastMessage: content ?? (imageUrl ? "[사진]" : ""),
-      lastMessageAt: new Date(),
-    })
-    .where(eq(chatRooms.id, roomId));
+  await db.update(chatRooms).set({
+    lastMessage: content ?? (imageUrl ? "[사진]" : ""),
+    lastMessageAt: new Date(),
+  }).where(eq(chatRooms.id, roomId));
 
-  const newMsg = await db
-    .select()
-    .from(chatMessages)
-    .where(eq(chatMessages.id, result[0].insertId))
-    .limit(1);
+  const newMsg = await db.select().from(chatMessages).where(eq(chatMessages.id, result[0].insertId)).limit(1);
   return newMsg[0];
 }
 
@@ -1010,11 +796,7 @@ export async function getChatRoomParticipants(roomId: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const rows = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rows = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rows[0];
   if (!room) return null;
   return { buyerId: room.buyerId, sellerId: room.sellerId };
@@ -1025,42 +807,27 @@ export async function markMessagesRead(roomId: number, userId: number) {
   if (!db) return;
 
   // 내가 받은 메시지(상대방이 보낸 것)를 읽음 처리
-  const rooms = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room) return;
 
   const senderId = room.buyerId === userId ? room.sellerId : room.buyerId;
 
-  await db
-    .update(chatMessages)
-    .set({ isRead: true })
-    .where(
-      and(
-        eq(chatMessages.roomId, roomId),
-        eq(chatMessages.senderId, senderId),
-        eq(chatMessages.isRead, false),
-      ),
-    );
+  await db.update(chatMessages).set({ isRead: true }).where(
+    and(
+      eq(chatMessages.roomId, roomId),
+      eq(chatMessages.senderId, senderId),
+      eq(chatMessages.isRead, false)
+    )
+  );
   return { success: true };
 }
 
-export async function updateChatRoomStatus(
-  roomId: number,
-  userId: number,
-  status: "completed" | "cancelled",
-) {
+export async function updateChatRoomStatus(roomId: number, userId: number, status: "completed" | "cancelled") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const rooms = await db
-    .select()
-    .from(chatRooms)
-    .where(eq(chatRooms.id, roomId))
-    .limit(1);
+  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
   const room = rooms[0];
   if (!room || (room.buyerId !== userId && room.sellerId !== userId)) {
     throw new Error("채팅방에 접근할 수 없습니다.");
@@ -1091,12 +858,7 @@ export async function createReview(data: {
     const existing = await db
       .select()
       .from(reviews)
-      .where(
-        and(
-          eq(reviews.userId, data.userId),
-          eq(reviews.chatRoomId, data.chatRoomId),
-        ),
-      )
+      .where(and(eq(reviews.userId, data.userId), eq(reviews.chatRoomId, data.chatRoomId)))
       .limit(1);
     if (existing[0]) throw new Error("이미 후기를 작성했습니다.");
   }
@@ -1110,19 +872,11 @@ export async function createReview(data: {
     content: data.content ?? null,
   });
 
-  const newReview = await db
-    .select()
-    .from(reviews)
-    .where(eq(reviews.id, result[0].insertId))
-    .limit(1);
+  const newReview = await db.select().from(reviews).where(eq(reviews.id, result[0].insertId)).limit(1);
   return newReview[0];
 }
 
-export async function getReviewsByTargetUser(
-  targetUserId: number,
-  limit = 20,
-  offset = 0,
-) {
+export async function getReviewsByTargetUser(targetUserId: number, limit = 20, offset = 0) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1199,33 +953,14 @@ export async function getMyReviews(userId: number) {
 
 export async function getAdminStats() {
   const db = await getDb();
-  if (!db)
-    return {
-      totalUsers: 0,
-      totalProducts: 0,
-      totalReports: 0,
-      pendingReports: 0,
-      pendingSellers: 0,
-    };
+  if (!db) return { totalUsers: 0, totalProducts: 0, totalReports: 0, pendingReports: 0, pendingSellers: 0 };
 
-  const [
-    userCount,
-    productCount,
-    reportCount,
-    pendingReportCount,
-    pendingSellerCount,
-  ] = await Promise.all([
+  const [userCount, productCount, reportCount, pendingReportCount, pendingSellerCount] = await Promise.all([
     db.select({ count: sql`COUNT(*)` }).from(users),
     db.select({ count: sql`COUNT(*)` }).from(products),
     db.select({ count: sql`COUNT(*)` }).from(reports),
-    db
-      .select({ count: sql`COUNT(*)` })
-      .from(reports)
-      .where(eq(reports.status, "pending")),
-    db
-      .select({ count: sql`COUNT(*)` })
-      .from(sellerApplications)
-      .where(eq(sellerApplications.status, "pending")),
+    db.select({ count: sql`COUNT(*)` }).from(reports).where(eq(reports.status, "pending")),
+    db.select({ count: sql`COUNT(*)` }).from(sellerApplications).where(eq(sellerApplications.status, "pending")),
   ]);
 
   return {
@@ -1237,11 +972,7 @@ export async function getAdminStats() {
   };
 }
 
-export async function getAdminProducts(input?: {
-  limit?: number;
-  offset?: number;
-  status?: string;
-}) {
+export async function getAdminProducts(input?: { limit?: number; offset?: number; status?: string }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1279,11 +1010,7 @@ export async function adminDeleteProduct(productId: number) {
   return { success: true };
 }
 
-export async function getAdminReports(input?: {
-  limit?: number;
-  offset?: number;
-  status?: string;
-}) {
+export async function getAdminReports(input?: { limit?: number; offset?: number; status?: string }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1306,8 +1033,7 @@ export async function getAdminReports(input?: {
     .limit(input?.limit ?? 30)
     .offset(input?.offset ?? 0);
 
-  const rows =
-    conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+  const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
 
   // 신고 대상(targetType)에 따라 실제 이름/제목을 조회해서 붙여줍니다.
   const result = await Promise.all(
@@ -1315,18 +1041,10 @@ export async function getAdminReports(input?: {
       let targetName: string | null = null;
       try {
         if (row.targetType === "product") {
-          const p = await db
-            .select({ title: products.title })
-            .from(products)
-            .where(eq(products.id, row.targetId))
-            .limit(1);
+          const p = await db.select({ title: products.title }).from(products).where(eq(products.id, row.targetId)).limit(1);
           targetName = p[0]?.title ?? null;
         } else if (row.targetType === "user") {
-          const u = await db
-            .select({ name: users.name })
-            .from(users)
-            .where(eq(users.id, row.targetId))
-            .limit(1);
+          const u = await db.select({ name: users.name }).from(users).where(eq(users.id, row.targetId)).limit(1);
           targetName = u[0]?.name ?? null;
         } else if (row.targetType === "chat") {
           targetName = `채팅방 #${row.targetId}`;
@@ -1337,16 +1055,14 @@ export async function getAdminReports(input?: {
         targetName = null;
       }
       return { ...row, targetName };
-    }),
+    })
   );
 
   return result;
 }
 
-export async function updateReportStatus(
-  reportId: number,
-  status: "resolved" | "dismissed",
-) {
+
+export async function updateReportStatus(reportId: number, status: "resolved" | "dismissed") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(reports).set({ status }).where(eq(reports.id, reportId));
@@ -1370,10 +1086,7 @@ export async function createReport(data: {
   return { success: true };
 }
 
-export async function getAdminUsers(input?: {
-  limit?: number;
-  offset?: number;
-}) {
+export async function getAdminUsers(input?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1417,12 +1130,7 @@ export async function getNotices(input?: { limit?: number; offset?: number }) {
     .offset(input?.offset ?? 0);
 }
 
-export async function createNotice(data: {
-  authorId: number;
-  title: string;
-  content: string;
-  isPinned?: boolean;
-}) {
+export async function createNotice(data: { authorId: number; title: string; content: string; isPinned?: boolean }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(notices).values({
@@ -1443,12 +1151,7 @@ export async function deleteNotice(noticeId: number) {
 
 // ─── 1:1 고객센터 문의 ───────────────────────────────────────────
 
-export async function createInquiry(data: {
-  userId: number;
-  category: string;
-  title: string;
-  content: string;
-}) {
+export async function createInquiry(data: { userId: number; category: string; title: string; content: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(inquiries).values({
@@ -1463,21 +1166,13 @@ export async function createInquiry(data: {
 export async function getMyInquiries(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select()
-    .from(inquiries)
-    .where(eq(inquiries.userId, userId))
-    .orderBy(desc(inquiries.createdAt));
+  return db.select().from(inquiries).where(eq(inquiries.userId, userId)).orderBy(desc(inquiries.createdAt));
 }
 
 export async function getInquiryById(id: number, userId?: number) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(inquiries)
-    .where(eq(inquiries.id, id))
-    .limit(1);
+  const rows = await db.select().from(inquiries).where(eq(inquiries.id, id)).limit(1);
   const inquiry = rows[0];
   if (!inquiry) return null;
   // userId가 주어지면(일반 사용자 조회) 본인 문의인지 확인
@@ -1485,39 +1180,24 @@ export async function getInquiryById(id: number, userId?: number) {
   return inquiry;
 }
 
-export async function getAllInquiries(input?: {
-  status?: "pending" | "answered";
-  limit?: number;
-  offset?: number;
-}) {
+export async function getAllInquiries(input?: { status?: "pending" | "answered"; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   const conditions = input?.status ? [eq(inquiries.status, input.status)] : [];
   const query = db.select().from(inquiries);
-  const rows = await (
-    conditions.length > 0 ? query.where(and(...conditions)) : query
-  )
+  const rows = await (conditions.length > 0 ? query.where(and(...conditions)) : query)
     .orderBy(desc(inquiries.createdAt))
     .limit(input?.limit ?? 50)
     .offset(input?.offset ?? 0);
   return rows;
 }
 
-export async function answerInquiry(
-  id: number,
-  adminId: number,
-  answerContent: string,
-) {
+export async function answerInquiry(id: number, adminId: number, answerContent: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db
     .update(inquiries)
-    .set({
-      status: "answered",
-      answerContent,
-      answeredBy: adminId,
-      answeredAt: new Date(),
-    })
+    .set({ status: "answered", answerContent, answeredBy: adminId, answeredAt: new Date() })
     .where(eq(inquiries.id, id));
   return { success: true };
 }
@@ -1528,9 +1208,7 @@ export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return null;
 
-  // 구버전 운영 DB에서도 로그인에 필요한 컬럼만 조회하되,
-  // 권한과 계정 상태가 누락되지 않도록 포함합니다.
-  // 누락 컬럼은 서버 시작 시 schemaCompat가 비파괴적으로 보정합니다.
+  // 구버전 운영 DB에서도 로그인에 필요한 핵심 컬럼만 조회합니다.
   const rows = await db
     .select({
       id: users.id,
@@ -1538,42 +1216,25 @@ export async function getUserByEmail(email: string) {
       name: users.name,
       email: users.email,
       password: users.password,
-      role: users.role,
-      isVerified: users.isVerified,
-      sellerStatus: users.sellerStatus,
-      companyStatus: users.companyStatus,
-      profileImageUrl: users.profileImageUrl,
-      phone: users.phone,
-      deletedAt: users.deletedAt,
-      suspendedAt: users.suspendedAt,
-      suspendedReason: users.suspendedReason,
     })
     .from(users)
     .where(eq(users.email, email))
     .limit(1);
 
-  return (rows[0] ?? null) as unknown as User | null;
+  return (rows[0] ?? null) as User | null;
 }
 
 export async function getUserByKakaoId(kakaoId: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(users)
-    .where(eq(users.kakaoId, kakaoId))
-    .limit(1);
+  const rows = await db.select().from(users).where(eq(users.kakaoId, kakaoId)).limit(1);
   return rows[0] ?? null;
 }
 
 export async function getUserByAppleId(appleId: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(users)
-    .where(eq(users.appleId, appleId))
-    .limit(1);
+  const rows = await db.select().from(users).where(eq(users.appleId, appleId)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -1611,103 +1272,72 @@ export async function createUserByEmail(data: {
   return newUser;
 }
 
-export async function updateUserSellerInfo(
-  userId: number,
-  data: {
-    sellerStatus: "pending" | "approved" | "rejected" | "suspended";
-    sellerType:
-      "closing_soon" | "closed" | "relocating" | "inventory" | "transfer";
-    businessNumber: string;
-    businessName: string;
-    representativeName: string;
-    businessCertUrl: string | null;
-  },
-) {
+
+export async function updateUserSellerInfo(userId: number, data: {
+  sellerStatus: "pending" | "approved" | "rejected" | "suspended";
+  sellerType: "closing_soon" | "closed" | "relocating" | "inventory" | "transfer";
+  businessNumber: string;
+  businessName: string;
+  representativeName: string;
+  businessCertUrl: string | null;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(users)
-    .set({
-      sellerStatus: data.sellerStatus,
-      sellerType: data.sellerType,
-      businessNumber: data.businessNumber,
-      businessName: data.businessName,
-      representativeName: data.representativeName,
-      businessCertUrl: data.businessCertUrl ?? undefined,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
+  await db.update(users).set({
+    sellerStatus: data.sellerStatus,
+    sellerType: data.sellerType,
+    businessNumber: data.businessNumber,
+    businessName: data.businessName,
+    representativeName: data.representativeName,
+    businessCertUrl: data.businessCertUrl ?? undefined,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
-export async function updateCompanyProfile(
-  userId: number,
-  data: {
-    companyName?: string;
-    representativeName?: string;
-    companyPhone?: string;
-    companyAddress?: string;
-    companyDesc?: string;
-    companyLogoUrl?: string;
-  },
-) {
+export async function updateCompanyProfile(userId: number, data: {
+  companyName?: string;
+  representativeName?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  companyDesc?: string;
+  companyLogoUrl?: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(users)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
   return getUserById(userId);
 }
 
-export async function updateUserCompanyInfo(
-  userId: number,
-  data: {
-    companyStatus: "pending" | "approved" | "rejected" | "suspended";
-    companyType:
-      | "demolition"
-      | "interior"
-      | "waste"
-      | "signage"
-      | "pos"
-      | "cctv"
-      | "cleaning"
-      | "tax"
-      | "labor"
-      | "kitchen"
-      | "consulting";
-    companyName: string;
-    companyPhone: string;
-    companyAddress: string;
-    companyDesc: string | null;
-    businessNumber: string | null;
-    companyLogoUrl: string | null;
-    companyBusinessCertUrl: string | null;
-    representativeName: string;
-  },
-) {
+export async function updateUserCompanyInfo(userId: number, data: {
+  companyStatus: "pending" | "approved" | "rejected" | "suspended";
+  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cctv" | "cleaning" | "tax" | "labor" | "kitchen" | "consulting";
+  companyName: string;
+  companyPhone: string;
+  companyAddress: string;
+  companyDesc: string | null;
+  businessNumber: string | null;
+  companyLogoUrl: string | null;
+  companyBusinessCertUrl: string | null;
+  representativeName: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(users)
-    .set({
-      companyStatus: data.companyStatus,
-      companyType: data.companyType,
-      companyName: data.companyName,
-      companyPhone: data.companyPhone,
-      companyAddress: data.companyAddress,
-      companyDesc: data.companyDesc ?? undefined,
-      businessNumber: data.businessNumber ?? undefined,
-      companyLogoUrl: data.companyLogoUrl ?? undefined,
-      companyBusinessCertUrl: data.companyBusinessCertUrl ?? undefined,
-      representativeName: data.representativeName,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
+  await db.update(users).set({
+    companyStatus: data.companyStatus,
+    companyType: data.companyType,
+    companyName: data.companyName,
+    companyPhone: data.companyPhone,
+    companyAddress: data.companyAddress,
+    companyDesc: data.companyDesc ?? undefined,
+    businessNumber: data.businessNumber ?? undefined,
+    companyLogoUrl: data.companyLogoUrl ?? undefined,
+    companyBusinessCertUrl: data.companyBusinessCertUrl ?? undefined,
+    representativeName: data.representativeName,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
-export async function getCompanyApplications(input?: {
-  status?: "pending" | "approved" | "rejected" | "suspended";
-}) {
+export async function getCompanyApplications(input?: { status?: "pending" | "approved" | "rejected" | "suspended" }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1733,89 +1363,57 @@ export async function getCompanyApplications(input?: {
   const { isNotNull } = await import("drizzle-orm");
 
   if (input?.status) {
-    return db
-      .select(selectFields)
-      .from(users)
+    return db.select(selectFields).from(users)
       .where(eq(users.companyStatus, input.status))
       .orderBy(desc(users.createdAt))
       .limit(100);
   }
 
-  return db
-    .select(selectFields)
-    .from(users)
+  return db.select(selectFields).from(users)
     .where(isNotNull(users.companyType))
     .orderBy(desc(users.createdAt))
     .limit(100);
 }
 
-export async function reviewCompanyApplication(
-  userId: number,
-  action: "approved" | "rejected" | "suspended",
-  rejectionReason?: string,
-) {
+
+export async function reviewCompanyApplication(userId: number, action: "approved" | "rejected" | "suspended", rejectionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (action === "approved") {
-    const targetUser = await db
-      .select({ role: users.role })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const targetUser = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
     const shouldChangeRole = targetUser[0]?.role !== "admin";
-    await db
-      .update(users)
-      .set({
-        ...(shouldChangeRole ? { role: "company" as const } : {}),
-        companyStatus: "approved",
-        isVerified: true,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
+    await db.update(users).set({
+      ...(shouldChangeRole ? { role: "company" as const } : {}),
+      companyStatus: "approved",
+      isVerified: true,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
   } else if (action === "rejected") {
-    await db
-      .update(users)
-      .set({
-        companyStatus: "rejected",
-        companyRejectionReason: rejectionReason ?? null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
+    await db.update(users).set({
+      companyStatus: "rejected",
+      companyRejectionReason: rejectionReason ?? null,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
   } else if (action === "suspended") {
-    await db
-      .update(users)
-      .set({
-        companyStatus: "suspended",
-        isVerified: false,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
+    await db.update(users).set({
+      companyStatus: "suspended",
+      isVerified: false,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
   }
   return { success: true };
 }
-export async function updateUserProfile(
-  userId: number,
-  data: { name?: string; phone?: string; profileImageUrl?: string },
-) {
+export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(users)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
   return getUserById(userId);
 }
 
-export async function updateUserPassword(
-  userId: number,
-  hashedPassword: string,
-) {
+export async function updateUserPassword(userId: number, hashedPassword: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(users)
-    .set({ password: hashedPassword, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
 // ─── 로그인 브루트포스 방어 ─────────────────────────────────────
@@ -1824,9 +1422,7 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
 
 /** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
-export async function getAccountLockStatus(
-  _userId: number,
-): Promise<number | null> {
+export async function getAccountLockStatus(_userId: number): Promise<number | null> {
   // 구버전 운영 DB에 잠금 컬럼이 없을 때도 정상 로그인할 수 있도록 우선 건너뜁니다.
   return null;
 }
@@ -1845,23 +1441,11 @@ export async function resetFailedLogin(_userId: number) {
 
 // ─── 비밀번호 재설정 (이메일 로그인 전용) ─────────────────────────
 
-export async function createPasswordResetToken(
-  userId: number,
-  token: string,
-  expiresAt: Date,
-) {
+export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   // 기존에 발급했던 미사용 토큰은 무효화 (재요청 시 이전 링크는 못 쓰게)
-  await db
-    .update(passwordResetTokens)
-    .set({ used: true })
-    .where(
-      and(
-        eq(passwordResetTokens.userId, userId),
-        eq(passwordResetTokens.used, false),
-      ),
-    );
+  await db.update(passwordResetTokens).set({ used: true }).where(and(eq(passwordResetTokens.userId, userId), eq(passwordResetTokens.used, false)));
   await db.insert(passwordResetTokens).values({ userId, token, expiresAt });
   return { success: true };
 }
@@ -1872,12 +1456,7 @@ export async function getValidPasswordResetToken(token: string) {
   const rows = await db
     .select()
     .from(passwordResetTokens)
-    .where(
-      and(
-        eq(passwordResetTokens.token, token),
-        eq(passwordResetTokens.used, false),
-      ),
-    )
+    .where(and(eq(passwordResetTokens.token, token), eq(passwordResetTokens.used, false)))
     .limit(1);
   const row = rows[0];
   if (!row) return null;
@@ -1888,10 +1467,7 @@ export async function getValidPasswordResetToken(token: string) {
 export async function markPasswordResetTokenUsed(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db
-    .update(passwordResetTokens)
-    .set({ used: true })
-    .where(eq(passwordResetTokens.id, id));
+  await db.update(passwordResetTokens).set({ used: true }).where(eq(passwordResetTokens.id, id));
 }
 
 // ─── 회원 탈퇴 ─────────────────────────────────────────────────
@@ -1932,6 +1508,7 @@ export async function deleteAccount(userId: number) {
   return { success: true };
 }
 
+
 // ─── 관리자 - 회원 정지/해제 ─────────────────────────────────────
 
 export async function suspendUser(userId: number, reason?: string) {
@@ -1966,10 +1543,7 @@ export async function reactivateUser(userId: number) {
   return { success: true };
 }
 
-export async function setUserRole(
-  userId: number,
-  role: "user" | "seller" | "company" | "admin",
-) {
+export async function setUserRole(userId: number, role: "user" | "seller" | "company" | "admin") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -1996,26 +1570,18 @@ export async function savePushToken(userId: number, token: string) {
   }
 }
 
-export async function updateNotificationSettings(
-  userId: number,
-  data: {
-    notifChat?: boolean;
-    notifPriceDrop?: boolean;
-    notifTrade?: boolean;
-    notifMarketing?: boolean;
-  },
-) {
+export async function updateNotificationSettings(userId: number, data: {
+  notifChat?: boolean;
+  notifPriceDrop?: boolean;
+  notifTrade?: boolean;
+  notifMarketing?: boolean;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: Record<string, boolean | Date> = { updatedAt: new Date() };
   if (data.notifChat !== undefined) updateData.notifChat = data.notifChat;
-  if (data.notifPriceDrop !== undefined)
-    updateData.notifPriceDrop = data.notifPriceDrop;
+  if (data.notifPriceDrop !== undefined) updateData.notifPriceDrop = data.notifPriceDrop;
   if (data.notifTrade !== undefined) updateData.notifTrade = data.notifTrade;
-  if (data.notifMarketing !== undefined)
-    updateData.notifMarketing = data.notifMarketing;
-  await db
-    .update(users)
-    .set(updateData as any)
-    .where(eq(users.id, userId));
+  if (data.notifMarketing !== undefined) updateData.notifMarketing = data.notifMarketing;
+  await db.update(users).set(updateData as any).where(eq(users.id, userId));
 }
