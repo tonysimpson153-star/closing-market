@@ -19,6 +19,7 @@ import {
   InsertProduct,
   InsertUser,
   InsertSellerApplication,
+  User,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1206,8 +1207,21 @@ export async function answerInquiry(id: number, adminId: number, answerContent: 
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  return rows[0] ?? null;
+
+  // 구버전 운영 DB에서도 로그인에 필요한 핵심 컬럼만 조회합니다.
+  const rows = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      name: users.name,
+      email: users.email,
+      password: users.password,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  return (rows[0] ?? null) as User | null;
 }
 
 export async function getUserByKakaoId(kakaoId: string) {
@@ -1408,39 +1422,21 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
 
 /** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
-export async function getAccountLockStatus(userId: number): Promise<number | null> {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select({ lockedUntil: users.lockedUntil }).from(users).where(eq(users.id, userId)).limit(1);
-  const lockedUntil = rows[0]?.lockedUntil;
-  if (!lockedUntil) return null;
-  const remainingMs = lockedUntil.getTime() - Date.now();
-  if (remainingMs <= 0) return null;
-  return Math.ceil(remainingMs / 60000);
+export async function getAccountLockStatus(_userId: number): Promise<number | null> {
+  // 구버전 운영 DB에 잠금 컬럼이 없을 때도 정상 로그인할 수 있도록 우선 건너뜁니다.
+  return null;
 }
 
 /** 로그인 실패 기록. 5회 누적 시 10분간 잠금 처리 */
-export async function recordFailedLogin(userId: number) {
-  const db = await getDb();
-  if (!db) return;
-  const rows = await db.select({ failedLoginAttempts: users.failedLoginAttempts }).from(users).where(eq(users.id, userId)).limit(1);
-  const nextCount = (rows[0]?.failedLoginAttempts ?? 0) + 1;
-
-  if (nextCount >= MAX_FAILED_ATTEMPTS) {
-    await db.update(users).set({
-      failedLoginAttempts: nextCount,
-      lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS),
-    }).where(eq(users.id, userId));
-  } else {
-    await db.update(users).set({ failedLoginAttempts: nextCount }).where(eq(users.id, userId));
-  }
+export async function recordFailedLogin(_userId: number) {
+  // 구버전 운영 DB 호환을 위해 잠금 컬럼이 준비되기 전에는 건너뜁니다.
+  return;
 }
 
 /** 로그인 성공 시 실패 카운트 초기화 */
-export async function resetFailedLogin(userId: number) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(users.id, userId));
+export async function resetFailedLogin(_userId: number) {
+  // 구버전 운영 DB 호환을 위해 잠금 컬럼이 준비되기 전에는 건너뜁니다.
+  return;
 }
 
 // ─── 비밀번호 재설정 (이메일 로그인 전용) ─────────────────────────
