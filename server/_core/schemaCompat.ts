@@ -55,6 +55,9 @@ export async function ensureUsersSchemaCompatibility() {
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `deletedAt` TIMESTAMP NULL",
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `suspendedAt` TIMESTAMP NULL",
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `suspendedReason` TEXT NULL",
+    // 기존 회원 시스템에서 관리자였던 계정의 권한만 복구합니다.
+    // 상품·업체·채팅 등 다른 데이터는 변경하지 않습니다.
+    "UPDATE `users` SET `role` = 'admin' WHERE `email` IN ('mm328i@naver.com', 'admin@closingmarket.com')",
   ];
 
   for (const statement of statements) {

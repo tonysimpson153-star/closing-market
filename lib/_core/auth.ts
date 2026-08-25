@@ -9,10 +9,13 @@ export type User = {
   email: string | null;
   loginMethod: string | null;
   lastSignedIn: Date;
-  role?: "user" | "admin";
+  role?: "user" | "seller" | "company" | "admin";
   userType?: "buyer" | "seller";
   isVerified?: boolean;
   sellerStatus?: "pending" | "approved" | "rejected" | "suspended" | null;
+  companyStatus?: "pending" | "approved" | "rejected" | "suspended" | null;
+  profileImageUrl?: string | null;
+  phone?: string | null;
 };
 
 export async function getSessionToken(): Promise<string | null> {
