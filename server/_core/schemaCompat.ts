@@ -10,7 +10,9 @@ import { getDb } from "../db";
 export async function ensureUsersSchemaCompatibility() {
   const db = await getDb();
   if (!db) {
-    console.warn("[schema] DATABASE_URL이 없어 users 스키마 보정을 건너뜁니다.");
+    console.warn(
+      "[schema] DATABASE_URL이 없어 users 스키마 보정을 건너뜁니다.",
+    );
     return;
   }
 
@@ -55,6 +57,9 @@ export async function ensureUsersSchemaCompatibility() {
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `deletedAt` TIMESTAMP NULL",
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `suspendedAt` TIMESTAMP NULL",
     "ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `suspendedReason` TEXT NULL",
+    // 이전 회원 시스템 마이그레이션에서 관리자였던 계정의 권한을 복구합니다.
+    // role만 보정하며 상품·업체·채팅 등 다른 데이터는 변경하지 않습니다.
+    "UPDATE `users` SET `role` = 'admin' WHERE `email` IN ('mm328i@naver.com', 'admin@closingmarket.com')",
   ];
 
   for (const statement of statements) {
