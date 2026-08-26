@@ -200,6 +200,10 @@ export async function getBusinessDetail(id: number) {
 // ─── 업체회원 (실제 가입한 업체) ────────────────────────────────
 // businesses 테이블과 달리, 회원가입 후 관리자 승인을 받은 실제 "업체회원" 계정을 조회합니다.
 
+// Temporary moderation hide-list. The account and all related data remain intact.
+// Remove the ID after the owner confirms the account should be visible again.
+const HIDDEN_COMPANY_IDS = [390001] as const;
+
 const COMPANY_SELECT_FIELDS = {
   id: users.id,
   name: users.companyName,
@@ -215,7 +219,11 @@ export async function getApprovedCompanies(input?: { type?: string }) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [eq(users.role, "company"), eq(users.companyStatus, "approved")];
+  const conditions = [
+    eq(users.role, "company"),
+    eq(users.companyStatus, "approved"),
+    sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
+  ];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
 
   return db
@@ -232,7 +240,14 @@ export async function getApprovedCompanyById(id: number) {
   const rows = await db
     .select(COMPANY_SELECT_FIELDS)
     .from(users)
-    .where(and(eq(users.id, id), eq(users.role, "company"), eq(users.companyStatus, "approved")))
+    .where(
+      and(
+        eq(users.id, id),
+        eq(users.role, "company"),
+        eq(users.companyStatus, "approved"),
+        sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
+      ),
+    )
     .limit(1);
   const company = rows[0];
   if (!company) return null;
