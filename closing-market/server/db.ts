@@ -1,4 +1,5 @@
 import { eq, desc, and, sql } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -1293,11 +1294,20 @@ export async function createAppleUserLegacySafe(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // openId는 구버전 운영 DB의 varchar(64) 제한을 넘지 않도록 안정적인 짧은 값으로 만듭니다.
+  const openId = data.openId.length <= 64
+    ? data.openId
+    : `apple_${createHash("sha256").update(data.appleId).digest("hex").slice(0, 58)}`;
+
   // Drizzle insert(users).values()가 스키마의 모든 컬럼을 INSERT에 포함해
-  // 구버전 운영 DB의 누락 컬럼에서 실패하지 않도록 핵심 컬럼만 직접 저장합니다.
+  // 구버전 운영 DB의 누락 컬럼에서 실패하지 않도록 핵심 컬럼만 저장합니다.
+  // 이미 같은 openId 또는 이메일이 있으면 Apple ID를 연결해 재시도에도 중복 오류가 나지 않게 합니다.
   await db.execute(sql`
     INSERT INTO users (\`openId\`, \`email\`, \`name\`, \`loginMethod\`, \`appleId\`)
-    VALUES (${data.openId}, ${data.email}, ${data.name}, 'apple', ${data.appleId})
+    VALUES (${openId}, ${data.email}, ${data.name}, 'apple', ${data.appleId})
+    ON DUPLICATE KEY UPDATE
+      \`appleId\` = VALUES(\`appleId\`),
+      \`loginMethod\` = 'apple'
   `);
 
   const newUser = await getUserByAppleId(data.appleId);
