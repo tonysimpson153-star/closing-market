@@ -32,7 +32,7 @@ export function registerLegalRoutes(app: Express) {
     h1 {
       font-size: 32px;
       margin-bottom: 10px;
-      color: #0a7ea4;
+      color: #D4AF37;
     }
     .meta {
       font-size: 14px;
@@ -71,7 +71,7 @@ export function registerLegalRoutes(app: Express) {
 <body>
   <div class="container">
     <h1>클로징마켓 이용약관</h1>
-    <div class="meta">시행일자: 2026년 7월 4일</div>
+    <div class="meta">시행일자: 2026년 8월 6일</div>
 
     <div class="section">
       <h2>제1조 (목적)</h2>
@@ -196,7 +196,7 @@ export function registerLegalRoutes(app: Express) {
     h1 {
       font-size: 32px;
       margin-bottom: 10px;
-      color: #0a7ea4;
+      color: #D4AF37;
     }
     .meta {
       font-size: 14px;
@@ -235,7 +235,7 @@ export function registerLegalRoutes(app: Express) {
 <body>
   <div class="container">
     <h1>클로징마켓 개인정보처리방침</h1>
-    <div class="meta">시행일자: 2026년 7월 4일</div>
+    <div class="meta">시행일자: 2026년 8월 6일</div>
 
     <div class="section">
       <h2>1. 개인정보의 수집 및 이용 목적</h2>
@@ -300,8 +300,8 @@ export function registerLegalRoutes(app: Express) {
     <div class="section">
       <h2>8. 개인정보 보호책임자</h2>
       <p>개인정보 관련 문의 사항이 있으시면 아래로 연락주시기 바랍니다.
-- 이메일: support@closingmarket.com
-- 고객센터: 1234-5678</p>
+- 이메일: closingmarket.help@gmail.com
+- 고객센터 문의는 /support 페이지에서 확인할 수 있습니다.</p>
     </div>
 
     <div class="footer-note">
@@ -311,6 +311,81 @@ export function registerLegalRoutes(app: Express) {
 </body>
 </html>
     `;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
+  });
+
+  // 신고 및 커뮤니티 운영정책 페이지
+  app.get(["/community-policy", "/report-policy"], (_req: Request, res: Response) => {
+    const html = `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>신고 및 커뮤니티 운영정책 - 클로징마켓</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #f7f7f7; color: #222; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px 64px; background: #fff; min-height: 100vh; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    nav { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0 30px; padding-bottom: 16px; border-bottom: 1px solid #eadfb8; }
+    nav a { color: #6d5a20; text-decoration: none; font-size: 13px; }
+    h1 { font-size: 30px; margin: 8px 0 10px; color: #222; line-height: 1.3; }
+    .meta { font-size: 14px; color: #888; margin-bottom: 34px; padding-bottom: 18px; border-bottom: 1px solid #eee; }
+    h2 { font-size: 19px; margin: 28px 0 10px; color: #222; }
+    p { margin-bottom: 12px; white-space: pre-wrap; }
+    .section { margin-bottom: 24px; }
+    .footer-note { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">CLOSING MARKET</div>
+    <nav>
+      <a href="/privacy">개인정보처리방침</a>
+      <a href="/terms">이용약관</a>
+      <a href="/support">고객지원/문의</a>
+      <a href="/community-policy">신고 및 커뮤니티 운영정책</a>
+    </nav>
+    <h1>신고 및 커뮤니티 운영정책</h1>
+    <div class="meta">시행일자: 2026년 8월 6일</div>
+    <div class="section">
+      <h2>1. 목적</h2>
+      <p>본 운영정책은 클로징마켓 서비스에서 회원이 지켜야 할 기본적인 이용 질서와 신고·게시물 관리 기준을 정합니다.</p>
+    </div>
+    <div class="section">
+      <h2>2. 회원 및 게시물의 기본 원칙</h2>
+      <p>회원은 정확한 정보를 제공하고, 다른 회원의 권리와 안전을 존중해야 합니다. 상품 게시물, 업체 소개, 후기, 채팅 등 서비스에 등록되는 모든 내용은 관련 법령과 이용약관을 준수해야 합니다.</p>
+    </div>
+    <div class="section">
+      <h2>3. 제한되는 게시물 및 행위</h2>
+      <p>다음의 게시물이나 행위는 사전 통보 없이 삭제·수정·비공개 처리될 수 있으며, 반복되거나 중대한 경우 계정 이용이 제한될 수 있습니다.
+
+1. 허위 매물, 허위 사업자 정보, 과장 또는 기만 광고
+2. 장물·위조품 등 불법 물품의 등록 또는 거래
+3. 타인의 개인정보, 초상, 상표, 저작물 및 기타 권리를 침해하는 내용
+4. 욕설, 비방, 혐오·차별 표현, 성적 수치심을 유발하는 내용 또는 협박
+5. 동일 내용의 반복 게시, 무관한 광고·홍보, 스팸 및 서비스 운영을 방해하는 행위
+6. 외부 사기 사이트로 유도하거나 금전·인증정보를 부정하게 요구하는 행위
+7. 신고·심사 절차를 방해하거나 다른 회원의 신고를 보복하는 행위</p>
+    </div>
+    <div class="section">
+      <h2>4. 신고 접수 및 처리</h2>
+      <p>회원은 서비스 내 고객센터 문의를 통해 신고 대상과 사유를 구체적으로 알려주실 수 있습니다. 운영자는 접수된 내용을 확인하여 게시물 숨김·삭제, 상대방 이용 제한, 추가 자료 요청 등의 조치를 취할 수 있습니다. 신고 내용과 처리 결과는 개인정보 보호 및 분쟁 예방을 위해 필요한 범위에서만 안내합니다.</p>
+    </div>
+    <div class="section">
+      <h2>5. 회원 자격 제한</h2>
+      <p>허위 사업자 정보 제출, 반복적인 금지행위, 다수 회원에 대한 피해 유발, 관계 법령 위반 또는 본 정책의 중대한 위반이 확인되면 경고, 게시물 제한, 일시 정지 또는 영구 이용 정지 조치가 이루어질 수 있습니다. 회원은 고객센터를 통해 조치에 대한 사실관계와 의견을 제출할 수 있습니다.</p>
+    </div>
+    <div class="section">
+      <h2>6. 문의처</h2>
+      <p>신고 및 커뮤니티 운영 관련 문의: closingmarket.help@gmail.com</p>
+    </div>
+    <div class="footer-note">본 문서는 서비스 운영을 위한 정책 초안입니다. 실제 적용 전 관련 법령과 운영 절차에 맞춘 법률 전문가 검토를 권장합니다.</div>
+  </div>
+</body>
+</html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(html);
   });
