@@ -6,6 +6,8 @@ root = Path(__file__).resolve().parents[1]
 files = [
     ("closing-market/server/db.ts", root / "server/db.ts"),
     ("closing-market/server/routers.ts", root / "server/routers.ts"),
+    ("closing-market/app/auth/login.tsx", root / "app/auth/login.tsx"),
+    ("closing-market/constants/oauth.ts", root / "constants/oauth.ts"),
 ]
 
 def api(endpoint, method="GET", payload=None):
@@ -31,6 +33,6 @@ if not tree_items:
     raise SystemExit
 
 tree = api(f"{repo}/git/trees", "POST", {"base_tree": base_tree, "tree": tree_items})
-commit = api(f"{repo}/git/commits", "POST", {"message": "fix: make Apple account creation legacy-schema safe", "tree": tree["sha"], "parents": [head]})
+commit = api(f"{repo}/git/commits", "POST", {"message": "fix: connect Apple login to production API", "tree": tree["sha"], "parents": [head]})
 api(f"{repo}/git/refs/heads/main", "PATCH", {"sha": commit["sha"], "force": False})
 print(json.dumps({"previous": head, "commit": commit["sha"], "files": [item["path"] for item in tree_items]}))

@@ -50,6 +50,21 @@ export default function LoginScreen() {
     },
   });
 
+  const appleLoginMutation = trpc.auth.appleLogin.useMutation({
+    onSuccess: (data) => {
+      queryClient.clear();
+      setAuth(data.token, data.user);
+      router.replace("/(tabs)/" as any);
+    },
+    onError: (err) => {
+      if (Platform.OS === "web") {
+        window.alert(`Apple 로그인 실패: ${err.message}`);
+      } else {
+        Alert.alert("Apple 로그인 실패", err.message);
+      }
+    },
+  });
+
   const handleLogin = () => {
     if (!agreedToTerms) {
       if (Platform.OS === "web") {
@@ -347,7 +362,12 @@ export default function LoginScreen() {
                 opacity: pressed ? 0.85 : 1,
               },
             ]}
+            disabled={appleLoginMutation.isPending}
             onPress={async () => {
+              if (!agreedToTerms) {
+                Alert.alert("동의 필요", "이용약관 및 운영정책에 동의해주세요.");
+                return;
+              }
               try {
                 const credential = await AppleAuthentication.signInAsync({
                   requestedScopes: [
@@ -355,19 +375,24 @@ export default function LoginScreen() {
                     AppleAuthentication.AppleAuthenticationScope.EMAIL,
                   ],
                 });
-                if (credential.identityToken) {
-                  console.log("Apple 로그인 성공:", credential);
+                if (!credential.identityToken) {
+                  throw new Error("Apple 인증 토큰을 받지 못했습니다.");
                 }
+                appleLoginMutation.mutate({ identityToken: credential.identityToken });
               } catch (e: any) {
-                if (e.code !== "ERR_CANCELED") {
-                  Alert.alert("오류", "Apple 로그인 중 오류가 발생했습니다.");
+                if (e.code !== "ERR_REQUEST_CANCELED" && e.code !== "ERR_CANCELED") {
+                  Alert.alert("Apple 로그인 실패", e.message || "Apple 로그인 중 오류가 발생했습니다.");
                 }
               }
             }}
           >
-            <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>
-              Apple로 로그인
-            </Text>
+            {appleLoginMutation.isPending ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>
+                Apple로 로그인
+              </Text>
+            )}
           </Pressable>
         )}
 

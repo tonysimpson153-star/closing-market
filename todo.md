@@ -552,3 +552,6 @@
 - [x] Apple 로그인 최소 컬럼 INSERT 실패의 실제 운영 DB 오류코드·제약조건 확인
 - [x] Apple ID·Apple relay 이메일 중복 계정 처리 및 안전한 로그인 경로 수정
 - [ ] 수정 후 운영 배포와 iPhone Apple 로그인 성공 여부 재검증 (Render live·health 200 확인, iPhone 최종 테스트 대기)
+- [x] 출시 iPhone 앱의 Apple 로그인 API 주소와 운영 서버 연결 경로 확인
+- [x] Network request failed 원인에 맞는 API 연결·타임아웃·오류 처리 수정
+- [ ] 수정 후 운영 API와 iPhone Apple 로그인 재검증 (GitHub bf04a73 반영 완료, 새 iOS 빌드와 실제 기기 테스트 대기)
