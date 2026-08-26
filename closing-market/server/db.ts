@@ -1259,8 +1259,50 @@ export async function getUserByKakaoId(kakaoId: string) {
 export async function getUserByAppleId(appleId: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(users).where(eq(users.appleId, appleId)).limit(1);
-  return rows[0] ?? null;
+
+  // Apple 로그인 조회는 운영 레거시 DB에서 필요한 컬럼만 읽습니다.
+  const rows = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      name: users.name,
+      email: users.email,
+      loginMethod: users.loginMethod,
+      role: users.role,
+      isVerified: users.isVerified,
+      sellerStatus: users.sellerStatus,
+      companyStatus: users.companyStatus,
+      profileImageUrl: users.profileImageUrl,
+      phone: users.phone,
+      appleId: users.appleId,
+      suspendedAt: users.suspendedAt,
+      suspendedReason: users.suspendedReason,
+    })
+    .from(users)
+    .where(eq(users.appleId, appleId))
+    .limit(1);
+  return (rows[0] ?? null) as unknown as User | null;
+}
+
+export async function createAppleUserLegacySafe(data: {
+  openId: string;
+  email: string | null;
+  name: string;
+  appleId: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Drizzle insert(users).values()가 스키마의 모든 컬럼을 INSERT에 포함해
+  // 구버전 운영 DB의 누락 컬럼에서 실패하지 않도록 핵심 컬럼만 직접 저장합니다.
+  await db.execute(sql`
+    INSERT INTO users (\`openId\`, \`email\`, \`name\`, \`loginMethod\`, \`appleId\`)
+    VALUES (${data.openId}, ${data.email}, ${data.name}, 'apple', ${data.appleId})
+  `);
+
+  const newUser = await getUserByAppleId(data.appleId);
+  if (!newUser) throw new Error("Failed to create Apple user");
+  return newUser;
 }
 
 export async function createUserByEmail(data: {
