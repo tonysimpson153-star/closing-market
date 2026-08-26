@@ -170,6 +170,18 @@ async function startServer() {
 </html>`);
   });
 
+  app.get(["/community-policy", "/report-policy"], (_req, res) => {
+    res
+      .status(200)
+      .type("html")
+      .send(`<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>신고 및 커뮤니티 운영정책 - 클로징마켓</title>
+<style>body{margin:0;background:#f7f7f7;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.7}.container{max-width:900px;margin:0 auto;padding:40px 20px 64px;background:#fff;min-height:100vh}.brand{color:#D4AF37;font-weight:800;letter-spacing:.08em;font-size:14px}nav{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 30px;padding-bottom:16px;border-bottom:1px solid #eadfb8}nav a{color:#6d5a20;text-decoration:none;font-size:13px}h1{font-size:30px;line-height:1.3}h2{font-size:19px;margin:28px 0 10px}p{white-space:pre-wrap}.meta{color:#888;border-bottom:1px solid #eee;padding-bottom:18px}.note{margin-top:40px;padding-top:20px;border-top:1px solid #eee;color:#888;font-size:12px}</style>
+</head>
+<body><div class="container"><div class="brand">CLOSING MARKET</div><nav><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/support">고객지원/문의</a><a href="/community-policy">신고 및 커뮤니티 운영정책</a></nav><h1>신고 및 커뮤니티 운영정책</h1><div class="meta">시행일자: 2026년 8월 6일</div><h2>1. 목적</h2><p>클로징마켓 서비스의 안전한 이용 질서와 신고·게시물 관리 기준을 정합니다.</p><h2>2. 제한되는 게시물 및 행위</h2><p>허위 매물·허위 사업자 정보·과장 광고, 불법 물품 거래, 타인의 권리 침해, 욕설·비방·혐오 표현, 개인정보 무단 노출, 스팸·사기 유도 및 신고 보복 행위는 제한됩니다.</p><h2>3. 신고 및 처리</h2><p>회원은 고객지원/문의 경로를 통해 신고 대상과 사유를 알려주실 수 있습니다. 운영자는 확인 후 게시물 삭제·비공개, 이용 제한, 추가 자료 요청 등의 조치를 취할 수 있습니다.</p><h2>4. 이용 제한</h2><p>금지행위가 반복되거나 중대한 경우 경고, 게시물 제한, 일시 정지 또는 영구 이용 정지가 이루어질 수 있습니다.</p><h2>5. 문의처</h2><p>closingmarket.help@gmail.com</p><div class="note">본 정책은 서비스 운영을 위한 초안이며 실제 적용 전 관련 법령과 운영 절차에 맞춘 법률 전문가 검토를 권장합니다.</div></div></body></html>`);
+  });
+
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
   });
