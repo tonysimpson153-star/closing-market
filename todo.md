@@ -549,3 +549,6 @@
 - [x] 숨김 처리 후 공개 업체 목록과 홈 추천 노출 여부 확인
 - [x] Apple 로그인 신규 계정 생성 시 운영 레거시 users 스키마 INSERT 실패 원인 확인 및 호환 수정
 - [ ] Apple 로그인 실패 수정 후 운영 API와 기존 로그인 회귀 검증 (운영 배포 완료, 실제 Apple 계정 최종 확인 대기)
+- [x] Apple 로그인 최소 컬럼 INSERT 실패의 실제 운영 DB 오류코드·제약조건 확인
+- [x] Apple ID·Apple relay 이메일 중복 계정 처리 및 안전한 로그인 경로 수정
+- [ ] 수정 후 운영 배포와 iPhone Apple 로그인 성공 여부 재검증 (Render live·health 200 확인, iPhone 최종 테스트 대기)
