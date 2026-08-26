@@ -228,15 +228,11 @@ export const appRouter = router({
         let user = await db.getUserByAppleId(appleId);
         if (!user) {
           const openId = `apple_${appleId}`;
-          user = await db.createUserByEmail({
+          user = await db.createAppleUserLegacySafe({
             openId,
             email: email || null,
-            password: null,
             name,
-            phone: null,
-            loginMethod: "apple",
             appleId,
-            profileImageUrl: null,
           });
         }
         if (user.suspendedAt) {
