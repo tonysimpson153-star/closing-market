@@ -4248,3 +4248,37 @@
 [2026-08-26T08:06:44.125Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-26T08:06:54.863Z] [0] [schema] users 스키마 호환성 확인 완료
 [2026-08-26T08:06:54.870Z] [0] [api] server listening on port 3000
+[2026-08-26T08:13:24.496Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T08:13:24.499Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T08:13:24.503Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T08:13:24.772Z] [1] λ Bundled 150ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (1 module)
+[2026-08-26T08:13:25.191Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-26T08:13:25.214Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-26T08:13:25.214Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-26T08:13:25.214Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-26T08:13:25.214Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-26T08:13:25.214Z] [1]   '--color-foreground': '#222222',
+[2026-08-26T08:13:25.214Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-26T08:13:25.214Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-26T08:13:25.214Z] [1]   '--color-success': '#3FAE68',
+[2026-08-26T08:13:25.214Z] [1]   '--color-warning': '#D9A441',
+[2026-08-26T08:13:25.214Z] [1]   '--color-error': '#E0554F'
+[2026-08-26T08:13:25.214Z] [1] }
+[2026-08-26T08:13:25.229Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-26T08:13:25.280Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-26T08:13:25.323Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T08:13:25.333Z] [1] Web Bundled 830ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T08:13:25.523Z] [1] Web Bundled 110ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T08:13:26.274Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-26T08:22:07.177Z] [0] 8:22:07 AM [tsx] change in ./server/_core/legal.ts Restarting...
+[2026-08-26T08:22:08.308Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-26T08:22:18.807Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-08-26T08:22:18.815Z] [0] [api] server listening on port 3000
+[2026-08-26T08:22:23.787Z] [0] 8:22:23 AM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-26T08:22:24.979Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-26T08:22:35.401Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-08-26T08:22:35.408Z] [0] [api] server listening on port 3000
+[2026-08-26T08:27:27.098Z] [0] 8:27:27 AM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-26T08:27:28.261Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-26T08:27:38.972Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-08-26T08:27:38.979Z] [0] [api] server listening on port 3000

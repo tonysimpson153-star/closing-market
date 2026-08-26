@@ -2040,7 +2040,7 @@ function registerLegalRoutes(app) {
     h1 {
       font-size: 32px;
       margin-bottom: 10px;
-      color: #0a7ea4;
+      color: #D4AF37;
     }
     .meta {
       font-size: 14px;
@@ -2079,7 +2079,7 @@ function registerLegalRoutes(app) {
 <body>
   <div class="container">
     <h1>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uC774\uC6A9\uC57D\uAD00</h1>
-    <div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 7\uC6D4 4\uC77C</div>
+    <div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 8\uC6D4 6\uC77C</div>
 
     <div class="section">
       <h2>\uC81C1\uC870 (\uBAA9\uC801)</h2>
@@ -2202,7 +2202,7 @@ function registerLegalRoutes(app) {
     h1 {
       font-size: 32px;
       margin-bottom: 10px;
-      color: #0a7ea4;
+      color: #D4AF37;
     }
     .meta {
       font-size: 14px;
@@ -2241,7 +2241,7 @@ function registerLegalRoutes(app) {
 <body>
   <div class="container">
     <h1>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68</h1>
-    <div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 7\uC6D4 4\uC77C</div>
+    <div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 8\uC6D4 6\uC77C</div>
 
     <div class="section">
       <h2>1. \uAC1C\uC778\uC815\uBCF4\uC758 \uC218\uC9D1 \uBC0F \uC774\uC6A9 \uBAA9\uC801</h2>
@@ -2306,8 +2306,8 @@ function registerLegalRoutes(app) {
     <div class="section">
       <h2>8. \uAC1C\uC778\uC815\uBCF4 \uBCF4\uD638\uCC45\uC784\uC790</h2>
       <p>\uAC1C\uC778\uC815\uBCF4 \uAD00\uB828 \uBB38\uC758 \uC0AC\uD56D\uC774 \uC788\uC73C\uC2DC\uBA74 \uC544\uB798\uB85C \uC5F0\uB77D\uC8FC\uC2DC\uAE30 \uBC14\uB78D\uB2C8\uB2E4.
-- \uC774\uBA54\uC77C: support@closingmarket.com
-- \uACE0\uAC1D\uC13C\uD130: 1234-5678</p>
+- \uC774\uBA54\uC77C: closingmarket.help@gmail.com
+- \uACE0\uAC1D\uC13C\uD130 \uBB38\uC758\uB294 /support \uD398\uC774\uC9C0\uC5D0\uC11C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
     </div>
 
     <div class="footer-note">
@@ -2317,6 +2317,79 @@ function registerLegalRoutes(app) {
 </body>
 </html>
     `;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
+  });
+  app.get(["/community-policy", "/report-policy"], (_req, res) => {
+    const html = `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45 - \uD074\uB85C\uC9D5\uB9C8\uCF13</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #f7f7f7; color: #222; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px 64px; background: #fff; min-height: 100vh; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    nav { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0 30px; padding-bottom: 16px; border-bottom: 1px solid #eadfb8; }
+    nav a { color: #6d5a20; text-decoration: none; font-size: 13px; }
+    h1 { font-size: 30px; margin: 8px 0 10px; color: #222; line-height: 1.3; }
+    .meta { font-size: 14px; color: #888; margin-bottom: 34px; padding-bottom: 18px; border-bottom: 1px solid #eee; }
+    h2 { font-size: 19px; margin: 28px 0 10px; color: #222; }
+    p { margin-bottom: 12px; white-space: pre-wrap; }
+    .section { margin-bottom: 24px; }
+    .footer-note { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">CLOSING MARKET</div>
+    <nav>
+      <a href="/privacy">\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68</a>
+      <a href="/terms">\uC774\uC6A9\uC57D\uAD00</a>
+      <a href="/support">\uACE0\uAC1D\uC9C0\uC6D0/\uBB38\uC758</a>
+      <a href="/community-policy">\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45</a>
+    </nav>
+    <h1>\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45</h1>
+    <div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 8\uC6D4 6\uC77C</div>
+    <div class="section">
+      <h2>1. \uBAA9\uC801</h2>
+      <p>\uBCF8 \uC6B4\uC601\uC815\uCC45\uC740 \uD074\uB85C\uC9D5\uB9C8\uCF13 \uC11C\uBE44\uC2A4\uC5D0\uC11C \uD68C\uC6D0\uC774 \uC9C0\uCF1C\uC57C \uD560 \uAE30\uBCF8\uC801\uC778 \uC774\uC6A9 \uC9C8\uC11C\uC640 \uC2E0\uACE0\xB7\uAC8C\uC2DC\uBB3C \uAD00\uB9AC \uAE30\uC900\uC744 \uC815\uD569\uB2C8\uB2E4.</p>
+    </div>
+    <div class="section">
+      <h2>2. \uD68C\uC6D0 \uBC0F \uAC8C\uC2DC\uBB3C\uC758 \uAE30\uBCF8 \uC6D0\uCE59</h2>
+      <p>\uD68C\uC6D0\uC740 \uC815\uD655\uD55C \uC815\uBCF4\uB97C \uC81C\uACF5\uD558\uACE0, \uB2E4\uB978 \uD68C\uC6D0\uC758 \uAD8C\uB9AC\uC640 \uC548\uC804\uC744 \uC874\uC911\uD574\uC57C \uD569\uB2C8\uB2E4. \uC0C1\uD488 \uAC8C\uC2DC\uBB3C, \uC5C5\uCCB4 \uC18C\uAC1C, \uD6C4\uAE30, \uCC44\uD305 \uB4F1 \uC11C\uBE44\uC2A4\uC5D0 \uB4F1\uB85D\uB418\uB294 \uBAA8\uB4E0 \uB0B4\uC6A9\uC740 \uAD00\uB828 \uBC95\uB839\uACFC \uC774\uC6A9\uC57D\uAD00\uC744 \uC900\uC218\uD574\uC57C \uD569\uB2C8\uB2E4.</p>
+    </div>
+    <div class="section">
+      <h2>3. \uC81C\uD55C\uB418\uB294 \uAC8C\uC2DC\uBB3C \uBC0F \uD589\uC704</h2>
+      <p>\uB2E4\uC74C\uC758 \uAC8C\uC2DC\uBB3C\uC774\uB098 \uD589\uC704\uB294 \uC0AC\uC804 \uD1B5\uBCF4 \uC5C6\uC774 \uC0AD\uC81C\xB7\uC218\uC815\xB7\uBE44\uACF5\uAC1C \uCC98\uB9AC\uB420 \uC218 \uC788\uC73C\uBA70, \uBC18\uBCF5\uB418\uAC70\uB098 \uC911\uB300\uD55C \uACBD\uC6B0 \uACC4\uC815 \uC774\uC6A9\uC774 \uC81C\uD55C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.
+
+1. \uD5C8\uC704 \uB9E4\uBB3C, \uD5C8\uC704 \uC0AC\uC5C5\uC790 \uC815\uBCF4, \uACFC\uC7A5 \uB610\uB294 \uAE30\uB9CC \uAD11\uACE0
+2. \uC7A5\uBB3C\xB7\uC704\uC870\uD488 \uB4F1 \uBD88\uBC95 \uBB3C\uD488\uC758 \uB4F1\uB85D \uB610\uB294 \uAC70\uB798
+3. \uD0C0\uC778\uC758 \uAC1C\uC778\uC815\uBCF4, \uCD08\uC0C1, \uC0C1\uD45C, \uC800\uC791\uBB3C \uBC0F \uAE30\uD0C0 \uAD8C\uB9AC\uB97C \uCE68\uD574\uD558\uB294 \uB0B4\uC6A9
+4. \uC695\uC124, \uBE44\uBC29, \uD610\uC624\xB7\uCC28\uBCC4 \uD45C\uD604, \uC131\uC801 \uC218\uCE58\uC2EC\uC744 \uC720\uBC1C\uD558\uB294 \uB0B4\uC6A9 \uB610\uB294 \uD611\uBC15
+5. \uB3D9\uC77C \uB0B4\uC6A9\uC758 \uBC18\uBCF5 \uAC8C\uC2DC, \uBB34\uAD00\uD55C \uAD11\uACE0\xB7\uD64D\uBCF4, \uC2A4\uD338 \uBC0F \uC11C\uBE44\uC2A4 \uC6B4\uC601\uC744 \uBC29\uD574\uD558\uB294 \uD589\uC704
+6. \uC678\uBD80 \uC0AC\uAE30 \uC0AC\uC774\uD2B8\uB85C \uC720\uB3C4\uD558\uAC70\uB098 \uAE08\uC804\xB7\uC778\uC99D\uC815\uBCF4\uB97C \uBD80\uC815\uD558\uAC8C \uC694\uAD6C\uD558\uB294 \uD589\uC704
+7. \uC2E0\uACE0\xB7\uC2EC\uC0AC \uC808\uCC28\uB97C \uBC29\uD574\uD558\uAC70\uB098 \uB2E4\uB978 \uD68C\uC6D0\uC758 \uC2E0\uACE0\uB97C \uBCF4\uBCF5\uD558\uB294 \uD589\uC704</p>
+    </div>
+    <div class="section">
+      <h2>4. \uC2E0\uACE0 \uC811\uC218 \uBC0F \uCC98\uB9AC</h2>
+      <p>\uD68C\uC6D0\uC740 \uC11C\uBE44\uC2A4 \uB0B4 \uACE0\uAC1D\uC13C\uD130 \uBB38\uC758\uB97C \uD1B5\uD574 \uC2E0\uACE0 \uB300\uC0C1\uACFC \uC0AC\uC720\uB97C \uAD6C\uCCB4\uC801\uC73C\uB85C \uC54C\uB824\uC8FC\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC6B4\uC601\uC790\uB294 \uC811\uC218\uB41C \uB0B4\uC6A9\uC744 \uD655\uC778\uD558\uC5EC \uAC8C\uC2DC\uBB3C \uC228\uAE40\xB7\uC0AD\uC81C, \uC0C1\uB300\uBC29 \uC774\uC6A9 \uC81C\uD55C, \uCD94\uAC00 \uC790\uB8CC \uC694\uCCAD \uB4F1\uC758 \uC870\uCE58\uB97C \uCDE8\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC2E0\uACE0 \uB0B4\uC6A9\uACFC \uCC98\uB9AC \uACB0\uACFC\uB294 \uAC1C\uC778\uC815\uBCF4 \uBCF4\uD638 \uBC0F \uBD84\uC7C1 \uC608\uBC29\uC744 \uC704\uD574 \uD544\uC694\uD55C \uBC94\uC704\uC5D0\uC11C\uB9CC \uC548\uB0B4\uD569\uB2C8\uB2E4.</p>
+    </div>
+    <div class="section">
+      <h2>5. \uD68C\uC6D0 \uC790\uACA9 \uC81C\uD55C</h2>
+      <p>\uD5C8\uC704 \uC0AC\uC5C5\uC790 \uC815\uBCF4 \uC81C\uCD9C, \uBC18\uBCF5\uC801\uC778 \uAE08\uC9C0\uD589\uC704, \uB2E4\uC218 \uD68C\uC6D0\uC5D0 \uB300\uD55C \uD53C\uD574 \uC720\uBC1C, \uAD00\uACC4 \uBC95\uB839 \uC704\uBC18 \uB610\uB294 \uBCF8 \uC815\uCC45\uC758 \uC911\uB300\uD55C \uC704\uBC18\uC774 \uD655\uC778\uB418\uBA74 \uACBD\uACE0, \uAC8C\uC2DC\uBB3C \uC81C\uD55C, \uC77C\uC2DC \uC815\uC9C0 \uB610\uB294 \uC601\uAD6C \uC774\uC6A9 \uC815\uC9C0 \uC870\uCE58\uAC00 \uC774\uB8E8\uC5B4\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uD68C\uC6D0\uC740 \uACE0\uAC1D\uC13C\uD130\uB97C \uD1B5\uD574 \uC870\uCE58\uC5D0 \uB300\uD55C \uC0AC\uC2E4\uAD00\uACC4\uC640 \uC758\uACAC\uC744 \uC81C\uCD9C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
+    </div>
+    <div class="section">
+      <h2>6. \uBB38\uC758\uCC98</h2>
+      <p>\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601 \uAD00\uB828 \uBB38\uC758: closingmarket.help@gmail.com</p>
+    </div>
+    <div class="footer-note">\uBCF8 \uBB38\uC11C\uB294 \uC11C\uBE44\uC2A4 \uC6B4\uC601\uC744 \uC704\uD55C \uC815\uCC45 \uCD08\uC548\uC785\uB2C8\uB2E4. \uC2E4\uC81C \uC801\uC6A9 \uC804 \uAD00\uB828 \uBC95\uB839\uACFC \uC6B4\uC601 \uC808\uCC28\uC5D0 \uB9DE\uCD98 \uBC95\uB960 \uC804\uBB38\uAC00 \uAC80\uD1A0\uB97C \uAD8C\uC7A5\uD569\uB2C8\uB2E4.</div>
+  </div>
+</body>
+</html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(html);
   });
@@ -3390,6 +3463,42 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
+  app.get(["/", "/home"], (_req, res) => {
+    res.status(200).type("html").send(`<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>\uD074\uB85C\uC9D5\uB9C8\uCF13</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    body { margin: 0; background: #fff; color: #222; }
+    main { box-sizing: border-box; width: min(760px, 100%); margin: 0 auto; padding: 56px 24px 64px; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    h1 { margin: 18px 0 12px; font-size: 34px; line-height: 1.25; }
+    .lead { color: #666; line-height: 1.7; margin: 0 0 28px; }
+    .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .links a { display: block; padding: 20px; border: 1px solid #eadfb8; border-radius: 16px; color: #222; text-decoration: none; background: #fffdf7; font-weight: 700; }
+    .links a span { display: block; margin-top: 7px; color: #777; font-size: 13px; font-weight: 400; line-height: 1.5; }
+    footer { margin-top: 34px; color: #888; font-size: 12px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">CLOSING MARKET</div>
+    <h1>\uC0AC\uC5C5\uC744 \uC815\uB9AC\uD558\uACE0, \uB2E4\uC2DC \uC2DC\uC791\uD558\uB294 \uACF3</h1>
+    <p class="lead">\uD3D0\uC5C5\xB7\uC0AC\uC5C5\uC815\uB9AC \uBB3C\uD488 \uC911\uACE0\uAC70\uB798\uC640 \uC0AC\uC5C5\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC5C5\uCCB4 \uC5F0\uACB0\uC744 \uC81C\uACF5\uD558\uB294 \uD074\uB85C\uC9D5\uB9C8\uCF13\uC785\uB2C8\uB2E4.</p>
+    <div class="links">
+      <a href="/privacy">\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68<span>\uAC1C\uC778\uC815\uBCF4 \uC218\uC9D1\xB7\uC774\uC6A9 \uBC0F \uBCF4\uD638 \uC548\uB0B4</span></a>
+      <a href="/terms">\uC774\uC6A9\uC57D\uAD00<span>\uC11C\uBE44\uC2A4 \uC774\uC6A9 \uC870\uAC74\uACFC \uD68C\uC6D0\uC758 \uAD8C\uB9AC\xB7\uC758\uBB34</span></a>
+      <a href="/support">\uACE0\uAC1D\uC9C0\uC6D0/\uBB38\uC758<span>\uC11C\uBE44\uC2A4 \uC774\uC6A9 \uBB38\uC758\uC640 \uC774\uBA54\uC77C \uC0C1\uB2F4 \uC548\uB0B4</span></a>
+      <a href="/community-policy">\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45<span>\uAC8C\uC2DC\uBB3C \uAE30\uC900\uACFC \uC2E0\uACE0 \uCC98\uB9AC \uC808\uCC28</span></a>
+    </div>
+    <footer>\uBB38\uC758: closingmarket.help@gmail.com</footer>
+  </main>
+</body>
+</html>`);
+  });
   app.get(["/support", "/support/"], (_req, res) => {
     res.status(200).type("html").send(`<!doctype html>
 <html lang="ko">
@@ -3429,6 +3538,14 @@ async function startServer() {
   </main>
 </body>
 </html>`);
+  });
+  app.get(["/community-policy", "/report-policy"], (_req, res) => {
+    res.status(200).type("html").send(`<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45 - \uD074\uB85C\uC9D5\uB9C8\uCF13</title>
+<style>body{margin:0;background:#f7f7f7;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.7}.container{max-width:900px;margin:0 auto;padding:40px 20px 64px;background:#fff;min-height:100vh}.brand{color:#D4AF37;font-weight:800;letter-spacing:.08em;font-size:14px}nav{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 30px;padding-bottom:16px;border-bottom:1px solid #eadfb8}nav a{color:#6d5a20;text-decoration:none;font-size:13px}h1{font-size:30px;line-height:1.3}h2{font-size:19px;margin:28px 0 10px}p{white-space:pre-wrap}.meta{color:#888;border-bottom:1px solid #eee;padding-bottom:18px}.note{margin-top:40px;padding-top:20px;border-top:1px solid #eee;color:#888;font-size:12px}</style>
+</head>
+<body><div class="container"><div class="brand">CLOSING MARKET</div><nav><a href="/privacy">\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68</a><a href="/terms">\uC774\uC6A9\uC57D\uAD00</a><a href="/support">\uACE0\uAC1D\uC9C0\uC6D0/\uBB38\uC758</a><a href="/community-policy">\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45</a></nav><h1>\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45</h1><div class="meta">\uC2DC\uD589\uC77C\uC790: 2026\uB144 8\uC6D4 6\uC77C</div><h2>1. \uBAA9\uC801</h2><p>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uC11C\uBE44\uC2A4\uC758 \uC548\uC804\uD55C \uC774\uC6A9 \uC9C8\uC11C\uC640 \uC2E0\uACE0\xB7\uAC8C\uC2DC\uBB3C \uAD00\uB9AC \uAE30\uC900\uC744 \uC815\uD569\uB2C8\uB2E4.</p><h2>2. \uC81C\uD55C\uB418\uB294 \uAC8C\uC2DC\uBB3C \uBC0F \uD589\uC704</h2><p>\uD5C8\uC704 \uB9E4\uBB3C\xB7\uD5C8\uC704 \uC0AC\uC5C5\uC790 \uC815\uBCF4\xB7\uACFC\uC7A5 \uAD11\uACE0, \uBD88\uBC95 \uBB3C\uD488 \uAC70\uB798, \uD0C0\uC778\uC758 \uAD8C\uB9AC \uCE68\uD574, \uC695\uC124\xB7\uBE44\uBC29\xB7\uD610\uC624 \uD45C\uD604, \uAC1C\uC778\uC815\uBCF4 \uBB34\uB2E8 \uB178\uCD9C, \uC2A4\uD338\xB7\uC0AC\uAE30 \uC720\uB3C4 \uBC0F \uC2E0\uACE0 \uBCF4\uBCF5 \uD589\uC704\uB294 \uC81C\uD55C\uB429\uB2C8\uB2E4.</p><h2>3. \uC2E0\uACE0 \uBC0F \uCC98\uB9AC</h2><p>\uD68C\uC6D0\uC740 \uACE0\uAC1D\uC9C0\uC6D0/\uBB38\uC758 \uACBD\uB85C\uB97C \uD1B5\uD574 \uC2E0\uACE0 \uB300\uC0C1\uACFC \uC0AC\uC720\uB97C \uC54C\uB824\uC8FC\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC6B4\uC601\uC790\uB294 \uD655\uC778 \uD6C4 \uAC8C\uC2DC\uBB3C \uC0AD\uC81C\xB7\uBE44\uACF5\uAC1C, \uC774\uC6A9 \uC81C\uD55C, \uCD94\uAC00 \uC790\uB8CC \uC694\uCCAD \uB4F1\uC758 \uC870\uCE58\uB97C \uCDE8\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p><h2>4. \uC774\uC6A9 \uC81C\uD55C</h2><p>\uAE08\uC9C0\uD589\uC704\uAC00 \uBC18\uBCF5\uB418\uAC70\uB098 \uC911\uB300\uD55C \uACBD\uC6B0 \uACBD\uACE0, \uAC8C\uC2DC\uBB3C \uC81C\uD55C, \uC77C\uC2DC \uC815\uC9C0 \uB610\uB294 \uC601\uAD6C \uC774\uC6A9 \uC815\uC9C0\uAC00 \uC774\uB8E8\uC5B4\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p><h2>5. \uBB38\uC758\uCC98</h2><p>closingmarket.help@gmail.com</p><div class="note">\uBCF8 \uC815\uCC45\uC740 \uC11C\uBE44\uC2A4 \uC6B4\uC601\uC744 \uC704\uD55C \uCD08\uC548\uC774\uBA70 \uC2E4\uC81C \uC801\uC6A9 \uC804 \uAD00\uB828 \uBC95\uB839\uACFC \uC6B4\uC601 \uC808\uCC28\uC5D0 \uB9DE\uCD98 \uBC95\uB960 \uC804\uBB38\uAC00 \uAC80\uD1A0\uB97C \uAD8C\uC7A5\uD569\uB2C8\uB2E4.</div></div></body></html>`);
   });
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
