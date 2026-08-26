@@ -19,6 +19,8 @@ const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 // app.config.ts의 schemeFromBundleId와 완전히 동일하게 계산
 const schemeFromBundleId = `manus${timestamp}`;
 
+const DEFAULT_API_BASE_URL = "https://closing-market.onrender.com";
+
 const env = {
   portal: process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL ?? "",
   server: process.env.EXPO_PUBLIC_OAUTH_SERVER_URL ?? "",
@@ -74,7 +76,9 @@ export function getApiBaseUrl(): string {
     return `http://${host}:3000`;
   }
 
-  return "";
+  // standalone iOS/Android 빌드에는 Metro hostUri가 없으므로 운영 API로 안전하게 연결합니다.
+  // Expo Go에서는 위의 hostUri 추론을 사용하고, 별도 API URL 환경변수가 있으면 그것을 우선합니다.
+  return DEFAULT_API_BASE_URL;
 }
 
 export const SESSION_TOKEN_KEY = "app_session_token";
