@@ -84,7 +84,47 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
 
-  // Render 서비스는 API 서버이므로, 브라우저에서 직접 열 수 있는 고객센터 안내 경로를 제공합니다.
+  // Render 서비스는 API 서버이므로, 브라우저에서 직접 열 수 있는 공개 안내 페이지를 제공합니다.
+  app.get(["/", "/home"], (_req, res) => {
+    res
+      .status(200)
+      .type("html")
+      .send(`<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>클로징마켓</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    body { margin: 0; background: #fff; color: #222; }
+    main { box-sizing: border-box; width: min(760px, 100%); margin: 0 auto; padding: 56px 24px 64px; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    h1 { margin: 18px 0 12px; font-size: 34px; line-height: 1.25; }
+    .lead { color: #666; line-height: 1.7; margin: 0 0 28px; }
+    .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .links a { display: block; padding: 20px; border: 1px solid #eadfb8; border-radius: 16px; color: #222; text-decoration: none; background: #fffdf7; font-weight: 700; }
+    .links a span { display: block; margin-top: 7px; color: #777; font-size: 13px; font-weight: 400; line-height: 1.5; }
+    footer { margin-top: 34px; color: #888; font-size: 12px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">CLOSING MARKET</div>
+    <h1>사업을 정리하고, 다시 시작하는 곳</h1>
+    <p class="lead">폐업·사업정리 물품 중고거래와 사업에 필요한 전문 업체 연결을 제공하는 클로징마켓입니다.</p>
+    <div class="links">
+      <a href="/privacy">개인정보처리방침<span>개인정보 수집·이용 및 보호 안내</span></a>
+      <a href="/terms">이용약관<span>서비스 이용 조건과 회원의 권리·의무</span></a>
+      <a href="/support">고객지원/문의<span>서비스 이용 문의와 이메일 상담 안내</span></a>
+      <a href="/community-policy">신고 및 커뮤니티 운영정책<span>게시물 기준과 신고 처리 절차</span></a>
+    </div>
+    <footer>문의: closingmarket.help@gmail.com</footer>
+  </main>
+</body>
+</html>`);
+  });
+
   // 실제 1:1 문의 작성·조회는 앱 내부의 /support/inquiries 화면에서 처리합니다.
   app.get(["/support", "/support/"], (_req, res) => {
     res
