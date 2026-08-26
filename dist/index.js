@@ -3390,6 +3390,46 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
+  app.get(["/support", "/support/"], (_req, res) => {
+    res.status(200).type("html").send(`<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uACE0\uAC1D\uC13C\uD130</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    body { margin: 0; background: #fff; color: #222; }
+    main { box-sizing: border-box; width: min(680px, 100%); margin: 0 auto; padding: 56px 24px 64px; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    h1 { margin: 18px 0 10px; font-size: 32px; line-height: 1.25; }
+    .lead { color: #666; line-height: 1.7; margin: 0 0 28px; }
+    section { border: 1px solid #eadfb8; border-radius: 16px; padding: 22px; margin-top: 14px; background: #fffdf7; }
+    h2 { font-size: 17px; margin: 0 0 10px; }
+    p { line-height: 1.7; margin: 0; }
+    a { display: inline-block; margin-top: 18px; padding: 12px 18px; border-radius: 10px; background: #D4AF37; color: #222; text-decoration: none; font-weight: 700; }
+    small { display: block; color: #888; margin-top: 28px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">CLOSING MARKET</div>
+    <h1>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uACE0\uAC1D\uC13C\uD130</h1>
+    <p class="lead">\uC11C\uBE44\uC2A4 \uC774\uC6A9 \uC911 \uAD81\uAE08\uD55C \uC810\uC774\uB098 \uBD88\uD3B8\uD55C \uC810\uC774 \uC788\uC73C\uC2E0\uAC00\uC694?</p>
+    <section>
+      <h2>1:1 \uBB38\uC758\uB294 \uC571\uC5D0\uC11C \uC774\uC6A9\uD574\uC8FC\uC138\uC694</h2>
+      <p>\uD074\uB85C\uC9D5\uB9C8\uCF13 \uC571\uC5D0\uC11C <strong>\uB9C8\uC774\uD398\uC774\uC9C0 \u2192 \uACE0\uAC1D\uC13C\uD130 \uBB38\uC758</strong>\uB85C \uB4E4\uC5B4\uAC00 \uBB38\uC758\uB97C \uC791\uC131\uD558\uACE0 \uB2F5\uBCC0\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
+    </section>
+    <section>
+      <h2>\uC774\uBA54\uC77C \uBB38\uC758</h2>
+      <p>closingmarket.help@gmail.com</p>
+      <a href="mailto:closingmarket.help@gmail.com">\uC774\uBA54\uC77C \uBCF4\uB0B4\uAE30</a>
+    </section>
+    <small>\uC774 \uD398\uC774\uC9C0\uB294 \uACE0\uAC1D\uC13C\uD130 \uC548\uB0B4\uC6A9 \uC6F9 \uD398\uC774\uC9C0\uC785\uB2C8\uB2E4. \uD68C\uC6D0\uBCC4 \uBB38\uC758 \uB0B4\uC5ED\uC740 \uB85C\uADF8\uC778\uB41C \uC571\uC5D0\uC11C \uC548\uC804\uD558\uAC8C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</small>
+  </main>
+</body>
+</html>`);
+  });
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
   });

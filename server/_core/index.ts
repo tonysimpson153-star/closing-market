@@ -84,6 +84,52 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
 
+  // Render 서비스는 API 서버이므로, 브라우저에서 직접 열 수 있는 고객센터 안내 경로를 제공합니다.
+  // 실제 1:1 문의 작성·조회는 앱 내부의 /support/inquiries 화면에서 처리합니다.
+  app.get(["/support", "/support/"], (_req, res) => {
+    res
+      .status(200)
+      .type("html")
+      .send(`<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>클로징마켓 고객센터</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    body { margin: 0; background: #fff; color: #222; }
+    main { box-sizing: border-box; width: min(680px, 100%); margin: 0 auto; padding: 56px 24px 64px; }
+    .brand { color: #D4AF37; font-weight: 800; letter-spacing: .08em; font-size: 14px; }
+    h1 { margin: 18px 0 10px; font-size: 32px; line-height: 1.25; }
+    .lead { color: #666; line-height: 1.7; margin: 0 0 28px; }
+    section { border: 1px solid #eadfb8; border-radius: 16px; padding: 22px; margin-top: 14px; background: #fffdf7; }
+    h2 { font-size: 17px; margin: 0 0 10px; }
+    p { line-height: 1.7; margin: 0; }
+    a { display: inline-block; margin-top: 18px; padding: 12px 18px; border-radius: 10px; background: #D4AF37; color: #222; text-decoration: none; font-weight: 700; }
+    small { display: block; color: #888; margin-top: 28px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">CLOSING MARKET</div>
+    <h1>클로징마켓 고객센터</h1>
+    <p class="lead">서비스 이용 중 궁금한 점이나 불편한 점이 있으신가요?</p>
+    <section>
+      <h2>1:1 문의는 앱에서 이용해주세요</h2>
+      <p>클로징마켓 앱에서 <strong>마이페이지 → 고객센터 문의</strong>로 들어가 문의를 작성하고 답변을 확인할 수 있습니다.</p>
+    </section>
+    <section>
+      <h2>이메일 문의</h2>
+      <p>closingmarket.help@gmail.com</p>
+      <a href="mailto:closingmarket.help@gmail.com">이메일 보내기</a>
+    </section>
+    <small>이 페이지는 고객센터 안내용 웹 페이지입니다. 회원별 문의 내역은 로그인된 앱에서 안전하게 확인할 수 있습니다.</small>
+  </main>
+</body>
+</html>`);
+  });
+
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
   });

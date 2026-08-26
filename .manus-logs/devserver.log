@@ -4200,3 +4200,51 @@
 [2026-08-26T06:18:36.686Z] [1] Web Bundled 707ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
 [2026-08-26T06:18:36.915Z] [1] Web Bundled 139ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
 [2026-08-26T06:18:37.640Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-26T06:23:56.626Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T06:23:56.630Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T06:23:56.633Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T06:23:56.873Z] [1] λ Bundled 129ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (1 module)
+[2026-08-26T06:23:57.289Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-26T06:23:57.311Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-26T06:23:57.311Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-26T06:23:57.311Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-26T06:23:57.311Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-26T06:23:57.311Z] [1]   '--color-foreground': '#222222',
+[2026-08-26T06:23:57.311Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-26T06:23:57.311Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-26T06:23:57.311Z] [1]   '--color-success': '#3FAE68',
+[2026-08-26T06:23:57.311Z] [1]   '--color-warning': '#D9A441',
+[2026-08-26T06:23:57.312Z] [1]   '--color-error': '#E0554F'
+[2026-08-26T06:23:57.312Z] [1] }
+[2026-08-26T06:23:57.326Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-26T06:23:57.376Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-26T06:23:57.417Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T06:23:57.427Z] [1] Web Bundled 793ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T06:23:57.672Z] [1] Web Bundled 99ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T06:23:58.411Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-26T08:05:12.984Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T08:05:12.989Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-08-26T08:05:12.995Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T08:05:13.248Z] [1] λ Bundled 134ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (1 module)
+[2026-08-26T08:05:13.670Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-08-26T08:05:13.695Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-08-26T08:05:13.695Z] [1]   '--color-primary': '#D4AF37',
+[2026-08-26T08:05:13.695Z] [1]   '--color-background': '#FFFFFF',
+[2026-08-26T08:05:13.695Z] [1]   '--color-surface': '#FAFAFA',
+[2026-08-26T08:05:13.695Z] [1]   '--color-foreground': '#222222',
+[2026-08-26T08:05:13.695Z] [1]   '--color-muted': '#8A8A8A',
+[2026-08-26T08:05:13.695Z] [1]   '--color-border': '#E5E5E5',
+[2026-08-26T08:05:13.695Z] [1]   '--color-success': '#3FAE68',
+[2026-08-26T08:05:13.695Z] [1]   '--color-warning': '#D9A441',
+[2026-08-26T08:05:13.695Z] [1]   '--color-error': '#E0554F'
+[2026-08-26T08:05:13.695Z] [1] }
+[2026-08-26T08:05:13.712Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-08-26T08:05:13.764Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-08-26T08:05:13.825Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-08-26T08:05:13.836Z] [1] Web Bundled 841ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T08:05:14.097Z] [1] Web Bundled 109ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-08-26T08:05:14.875Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-08-26T08:06:42.560Z] [0] 8:06:42 AM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-26T08:06:44.125Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-26T08:06:54.863Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-08-26T08:06:54.870Z] [0] [api] server listening on port 3000
