@@ -1,4 +1,4 @@
-import { eq, desc, and, notIn, sql } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -222,7 +222,7 @@ export async function getApprovedCompanies(input?: { type?: string }) {
   const conditions = [
     eq(users.role, "company"),
     eq(users.companyStatus, "approved"),
-    notIn(users.id, [...HIDDEN_COMPANY_IDS]),
+    sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
   ];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
 
@@ -245,7 +245,7 @@ export async function getApprovedCompanyById(id: number) {
         eq(users.id, id),
         eq(users.role, "company"),
         eq(users.companyStatus, "approved"),
-        notIn(users.id, [...HIDDEN_COMPANY_IDS]),
+        sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
       ),
     )
     .limit(1);
