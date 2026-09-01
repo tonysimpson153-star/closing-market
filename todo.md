@@ -598,3 +598,17 @@
 - [x] 앱 다운로드 버튼과 iOS·Android 링크 연결 구조 추가 (PUBLIC_IOS_APP_URL/PUBLIC_ANDROID_APP_URL 입력 시 활성화)
 - [x] SEO·Open Graph·favicon·정책·사업자 정보·문의 영역 추가
 - [x] 모바일·PC 반응형 화면과 핵심 링크 검증 (로컬 번들·공개 URL 응답 확인)
+- [x] 앱 저장소와 분리된 공식 홈페이지 프로젝트 폴더 생성
+- [x] 독립 홈페이지 랜딩페이지 구현
+- [x] 독립 홈페이지에 SEO·정책·문의·다운로드 구조 구성
+- [x] 앱 저장소에 홈페이지 코드가 남지 않았는지 확인
+- [x] 독립 홈페이지 모바일·PC 화면 검증
+- [x] GitHub main과 feature/integrated-search-draft의 통합찾기 파일 비교
+- [x] 홈페이지 작업이 통합찾기 앱 파일을 변경했는지 교차 확인
+- [x] 통합찾기가 main에 섞여 있으면 출시 전 상태로 분리 복구 (main에는 통합찾기 화면 파일이 없고 draft 브랜치에만 있음)
+- [x] Apple 현재 출시 iOS 앱의 식별 정보·버전 확인
+- [x] Apple 출시본과 GitHub main·draft·로컬 통합찾기 파일 비교
+- [x] 출시본 기준으로 통합찾기 출시 여부 확정
+- [x] 홈페이지 관련 GitHub 커밋의 변경 파일 목록 확인
+- [x] 홈페이지 커밋과 통합찾기 draft 파일 변경 여부 대조
+- [x] Apple 출시본·GitHub main·draft 보관 상태 최종 확인
