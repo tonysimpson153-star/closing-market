@@ -2395,6 +2395,168 @@ function registerLegalRoutes(app) {
   });
 }
 
+// server/_core/landing.ts
+var IOS_APP_URL = process.env.PUBLIC_IOS_APP_URL || "";
+var ANDROID_APP_URL = process.env.PUBLIC_ANDROID_APP_URL || "";
+var LOGO_URL = "/manus-storage/A71123BB-7000-4C17-8CB0-B14B00164F80_f02a2e90.png";
+var HERO_IMAGE = "/manus-storage/closing-market-startup-ad-broad-market-updated_b3ef74c9.png";
+var CLOSURE_IMAGE = "/manus-storage/closing-market-closure-sale-ad-logo-updated_49d32a62.png";
+var PROVIDER_IMAGE = "/manus-storage/closing-market-provider-ad-no-people-broad-services_51d5f055.png";
+function downloadButton(label, url, className = "button button-gold") {
+  return url ? `<a class="${className}" href="${url}" target="_blank" rel="noopener noreferrer">${label}<span aria-hidden="true">\u2197</span></a>` : `<span class="${className} is-disabled" aria-disabled="true">${label}<small>\uCD9C\uC2DC \uB9C1\uD06C \uC900\uBE44 \uC911</small></span>`;
+}
+function registerLandingRoutes(app) {
+  app.get("/robots.txt", (_req, res) => {
+    res.type("text/plain").send("User-agent: *\\nAllow: /\\nSitemap: https://closing-market.onrender.com/sitemap.xml\\n");
+  });
+  app.get("/sitemap.xml", (_req, res) => {
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://closing-market.onrender.com/</loc></url>
+  <url><loc>https://closing-market.onrender.com/terms</loc></url>
+  <url><loc>https://closing-market.onrender.com/privacy</loc></url>
+  <url><loc>https://closing-market.onrender.com/support</loc></url>
+  <url><loc>https://closing-market.onrender.com/community-policy</loc></url>
+</urlset>`);
+  });
+  app.get(["/", "/home"], (_req, res) => {
+    const html = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>\uD074\uB85C\uC9D5\uB9C8\uCF13 | \uC0AC\uC5C5\uC758 \uB05D, \uC2DC\uC791\uC758 \uAC00\uCE58</title>
+  <meta name="description" content="\uD3D0\uC5C5\xB7\uC0AC\uC5C5\uC815\uB9AC \uBB3C\uD488\uC744 \uD310\uB9E4\uD558\uACE0, \uCC3D\uC5C5\uC5D0 \uD544\uC694\uD55C \uBB3C\uD488\uACFC \uC5C5\uCCB4\uB97C \uCC3E\uB294 \uD074\uB85C\uC9D5\uB9C8\uCF13 \uACF5\uC2DD \uD648\uD398\uC774\uC9C0\uC785\uB2C8\uB2E4." />
+  <meta name="keywords" content="\uD3D0\uC5C5\uBB3C\uD488, \uC0AC\uC5C5\uC815\uB9AC, \uC911\uACE0\uAC70\uB798, \uCC3D\uC5C5\uBB3C\uD488, \uC5C5\uCCB4\uCC3E\uAE30, \uD074\uB85C\uC9D5\uB9C8\uCF13" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://closing-market.onrender.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="\uD074\uB85C\uC9D5\uB9C8\uCF13" />
+  <meta property="og:title" content="\uD074\uB85C\uC9D5\uB9C8\uCF13 | \uC0AC\uC5C5\uC758 \uB05D, \uC2DC\uC791\uC758 \uAC00\uCE58" />
+  <meta property="og:description" content="\uD3D0\uC5C5\uD558\uB294 \uC0AC\uC5C5\uC790\uC758 \uBB3C\uD488\uC744 \uC0C8\uB85C\uC6B4 \uCC3D\uC5C5\uC790\uC5D0\uAC8C \uC5F0\uACB0\uD569\uB2C8\uB2E4." />
+  <meta property="og:url" content="https://closing-market.onrender.com/" />
+  <meta property="og:image" content="${HERO_IMAGE}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="\uD074\uB85C\uC9D5\uB9C8\uCF13 | \uC0AC\uC5C5\uC758 \uB05D, \uC2DC\uC791\uC758 \uAC00\uCE58" />
+  <meta name="twitter:description" content="\uD3D0\uC5C5\uBB3C\uD488 \uC911\uACE0\uAC70\uB798\uBD80\uD130 \uCC3D\uC5C5 \uAD00\uB828 \uC5C5\uCCB4 \uC5F0\uACB0\uAE4C\uC9C0." />
+  <meta name="twitter:image" content="${HERO_IMAGE}" />
+  <link rel="icon" href="${LOGO_URL}" />
+  <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "\uD074\uB85C\uC9D5\uB9C8\uCF13",
+      url: "https://closing-market.onrender.com/",
+      logo: "https://closing-market.onrender.com" + LOGO_URL,
+      email: "closingmarket.help@gmail.com",
+      description: "\uD3D0\uC5C5\xB7\uC0AC\uC5C5\uC815\uB9AC \uBB3C\uD488 \uC911\uACE0\uAC70\uB798\uC640 \uCC3D\uC5C5 \uAD00\uB828 \uC5C5\uCCB4 \uC5F0\uACB0 \uD50C\uB7AB\uD3FC"
+    })}</script>
+  <style>
+    :root { --ink:#f8f7f2; --muted:#a9a9a4; --line:rgba(255,255,255,.12); --gold:#d4af37; --gold-soft:#f1d783; --panel:#141414; --black:#0a0a0a; --ease:cubic-bezier(.23,1,.32,1); }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--black); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; line-height:1.6; }
+    a { color:inherit; }
+    .site { overflow:hidden; }
+    .shell { width:min(1160px,100%); margin:0 auto; padding:0 24px; }
+    .nav { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; height:72px; border-bottom:1px solid var(--line); background:rgba(10,10,10,.88); backdrop-filter:blur(16px); }
+    .logo { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:800; letter-spacing:.08em; text-decoration:none; }
+    .logo img { width:35px; height:35px; object-fit:contain; }
+    .nav-links { display:flex; gap:26px; align-items:center; color:var(--muted); font-size:13px; }
+    .nav-links a { text-decoration:none; transition:color 180ms var(--ease); }
+    .nav-links a:hover { color:var(--gold-soft); }
+    .nav-cta { padding:10px 15px; border:1px solid rgba(212,175,55,.65); color:var(--gold-soft) !important; border-radius:999px; }
+    .hero { min-height:calc(100vh - 72px); display:grid; grid-template-columns:1.08fr .92fr; align-items:center; gap:60px; padding:90px 0 105px; position:relative; }
+    .hero:before { content:""; position:absolute; width:560px; height:560px; right:-220px; top:-130px; border-radius:50%; background:radial-gradient(circle,rgba(212,175,55,.16),transparent 68%); pointer-events:none; }
+    .eyebrow { display:inline-flex; align-items:center; gap:9px; color:var(--gold-soft); font-size:12px; letter-spacing:.14em; font-weight:700; text-transform:uppercase; }
+    .eyebrow:before { content:""; width:28px; height:1px; background:var(--gold); }
+    h1 { font-size:clamp(45px,7vw,84px); line-height:1.08; letter-spacing:-.065em; margin:23px 0 26px; max-width:660px; }
+    h1 em { color:var(--gold-soft); font-style:normal; }
+    .hero-copy { font-size:18px; color:#d2d2cd; max-width:550px; line-height:1.8; margin:0 0 33px; }
+    .button-row { display:flex; flex-wrap:wrap; gap:12px; }
+    .button { display:inline-flex; align-items:center; justify-content:center; gap:12px; min-height:50px; padding:0 21px; border-radius:7px; text-decoration:none; font-weight:750; font-size:14px; transition:transform 160ms var(--ease),background 160ms var(--ease),border-color 160ms var(--ease); }
+    .button:hover { transform:translateY(-2px); }
+    .button:active { transform:scale(.97); }
+    .button-gold { background:var(--gold); color:#101010; }
+    .button-dark { border:1px solid rgba(255,255,255,.24); color:var(--ink); }
+    .button-dark:hover { border-color:var(--gold); }
+    .is-disabled { cursor:not-allowed; opacity:.58; flex-direction:column; gap:0; padding:8px 21px; }
+    .is-disabled small { font-size:10px; font-weight:500; color:#222; }
+    .hero-card { position:relative; border:1px solid rgba(212,175,55,.45); background:#171717; padding:10px; box-shadow:0 28px 80px rgba(0,0,0,.38); transform:rotate(2deg); }
+    .hero-card img { display:block; width:100%; aspect-ratio:4/5; object-fit:cover; filter:saturate(.78) contrast(1.04); }
+    .hero-card-caption { position:absolute; left:26px; bottom:24px; padding:11px 15px; background:rgba(10,10,10,.82); border-left:2px solid var(--gold); font-size:12px; color:#eee; }
+    .marquee { border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:19px 0; color:var(--gold-soft); font-size:12px; letter-spacing:.16em; text-transform:uppercase; }
+    .marquee span { margin-right:34px; }
+    section { padding:110px 0; }
+    .section-head { display:flex; justify-content:space-between; align-items:end; gap:30px; margin-bottom:44px; }
+    .section-kicker { color:var(--gold-soft); font-size:12px; letter-spacing:.16em; font-weight:750; }
+    h2 { font-size:clamp(30px,4.5vw,54px); line-height:1.15; letter-spacing:-.055em; margin:10px 0 0; max-width:650px; }
+    .section-intro { max-width:380px; color:var(--muted); font-size:14px; line-height:1.8; margin:0; }
+    .manifesto { background:linear-gradient(115deg,#161616,#0e0e0e); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .manifesto-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); }
+    .manifesto-item { background:#111; padding:32px 28px; min-height:210px; }
+    .number { color:var(--gold); font-size:13px; letter-spacing:.12em; }
+    .manifesto-item h3 { margin:42px 0 8px; font-size:21px; letter-spacing:-.04em; }
+    .manifesto-item p { margin:0; color:var(--muted); font-size:14px; line-height:1.7; }
+    .steps { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .step-card { border:1px solid var(--line); background:var(--panel); padding:30px; border-radius:3px; }
+    .step-card h3 { margin:6px 0 23px; font-size:24px; letter-spacing:-.04em; }
+    .step-list { display:flex; flex-direction:column; gap:14px; }
+    .step-list div { display:flex; align-items:center; gap:12px; color:#ddd; font-size:14px; }
+    .step-list div:before { content:""; width:8px; height:8px; border:1px solid var(--gold); border-radius:50%; flex:none; }
+    .step-card.gold-card { background:linear-gradient(145deg,#d4af37,#9a781e); color:#111; }
+    .gold-card .number,.gold-card p { color:#332b15; }
+    .gold-card .step-list div { color:#17130a; }
+    .gold-card .step-list div:before { border-color:#17130a; }
+    .audience { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
+    .audience-list { display:grid; gap:12px; }
+    .audience-item { display:flex; align-items:center; gap:18px; padding:18px 0; border-bottom:1px solid var(--line); color:#ddd; font-size:16px; }
+    .audience-item b { display:grid; place-items:center; width:30px; height:30px; border:1px solid var(--gold); border-radius:50%; color:var(--gold-soft); font-size:12px; }
+    .category-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+    .category { aspect-ratio:1; display:flex; align-items:end; padding:16px; border:1px solid var(--line); background:linear-gradient(145deg,#1a1a1a,#101010); color:#eee; font-weight:700; font-size:14px; position:relative; overflow:hidden; }
+    .category:before { content:""; position:absolute; width:64px; height:64px; border:1px solid rgba(212,175,55,.45); border-radius:50%; right:-15px; top:-15px; }
+    .category span { position:relative; }
+    .feature-grid { display:grid; grid-template-columns:1.25fr .75fr; gap:16px; }
+    .feature { min-height:420px; position:relative; overflow:hidden; border:1px solid var(--line); background:#151515; }
+    .feature img { width:100%; height:100%; object-fit:cover; opacity:.72; filter:saturate(.62); transition:transform 500ms var(--ease); }
+    .feature:hover img { transform:scale(1.04); }
+    .feature-overlay { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:end; padding:28px; background:linear-gradient(transparent 25%,rgba(0,0,0,.92)); }
+    .feature-overlay h3 { font-size:28px; margin:0 0 6px; letter-spacing:-.05em; }
+    .feature-overlay p { margin:0; color:#c5c5bf; font-size:14px; }
+    .download { background:var(--gold); color:#111; padding:84px 0; }
+    .download-grid { display:flex; align-items:center; justify-content:space-between; gap:30px; }
+    .download h2 { color:#111; max-width:590px; }
+    .download p { color:#3d3216; max-width:500px; margin:18px 0 0; }
+    .download .button-dark { border-color:#5f4b16; color:#111; }
+    footer { border-top:1px solid var(--line); padding:44px 0 50px; color:var(--muted); font-size:12px; }
+    .footer-top { display:flex; justify-content:space-between; gap:30px; }
+    .footer-links { display:flex; flex-wrap:wrap; gap:18px; }
+    .footer-links a { color:#d0d0c9; text-decoration:none; }
+    .business { margin-top:28px; line-height:1.9; }
+    @media (max-width:820px) { .shell{padding:0 18px}.nav{height:64px}.nav-links a:not(.nav-cta){display:none}.hero{grid-template-columns:1fr;gap:45px;padding:68px 0 80px}.hero-card{max-width:520px;margin:0 auto;transform:rotate(1deg)}section{padding:78px 0}.section-head{display:block}.section-intro{margin-top:18px}.manifesto-grid{grid-template-columns:1fr}.manifesto-item{min-height:auto}.steps,.audience,.feature-grid{grid-template-columns:1fr}.category-grid{grid-template-columns:repeat(4,1fr)}.category{aspect-ratio:1.2;padding:12px;font-size:12px}.download-grid{display:block}.download .button-row{margin-top:26px}.footer-top{display:block}.footer-links{margin-top:24px} }
+    @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.feature img{transition:none}}
+  </style>
+</head>
+<body>
+<div class="site">
+  <header class="nav"><div class="shell" style="display:flex;align-items:center;justify-content:space-between;width:100%"><a class="logo" href="/"><img src="${LOGO_URL}" alt="\uD074\uB85C\uC9D5\uB9C8\uCF13 \uB85C\uACE0" />\uD074\uB85C\uC9D5\uB9C8\uCF13</a><nav class="nav-links" aria-label="\uC8FC\uC694 \uBA54\uB274"><a href="#service">\uC11C\uBE44\uC2A4</a><a href="#how">\uC774\uC6A9 \uBC29\uBC95</a><a href="#providers">\uC5C5\uCCB4 \uCC3E\uAE30</a><a class="nav-cta" href="#download">\uC571\uC5D0\uC11C \uC2DC\uC791\uD558\uAE30</a></nav></div></header>
+  <main>
+    <div class="shell"><section class="hero" aria-labelledby="hero-title"><div><div class="eyebrow">\uC0AC\uC5C5\uC758 \uB05D, \uC2DC\uC791\uC758 \uAC00\uCE58</div><h1 id="hero-title">\uB05D\uB09C \uC0AC\uC5C5\uC5D0<br /><em>\uC0C8\uB85C\uC6B4 \uAC00\uCE58</em>\uB97C<br />\uC5F0\uACB0\uD569\uB2C8\uB2E4.</h1><p class="hero-copy">\uD3D0\uC5C5\uC744 \uC900\uBE44\uD558\uB294 \uC0AC\uC5C5\uC790\uB294 \uC0AC\uC6A9\uD558\uB358 \uBB3C\uD488\uACFC \uC9D1\uAE30\uB97C \uD310\uB9E4\uD558\uACE0, \uCC3D\uC5C5\uC744 \uC900\uBE44\uD558\uB294 \uC0AC\uB78C\uC740 \uD544\uC694\uD55C \uBB3C\uD488\uACFC \uC5C5\uCCB4\uB97C \uD55C \uACF3\uC5D0\uC11C \uCC3E\uC2B5\uB2C8\uB2E4.</p><div class="button-row">${downloadButton("\uC571\uC5D0\uC11C \uC2DC\uC791\uD558\uAE30", IOS_APP_URL || ANDROID_APP_URL)}<a class="button button-dark" href="#service">\uC11C\uBE44\uC2A4 \uB458\uB7EC\uBCF4\uAE30 <span aria-hidden="true">\u2193</span></a></div></div><div class="hero-card"><img src="${HERO_IMAGE}" alt="\uB2E4\uC591\uD55C \uC5C5\uC885\uC758 \uD3D0\uC5C5\uBB3C\uD488\uACFC \uCC3D\uC5C5 \uC900\uBE44 \uBB3C\uD488" /><div class="hero-card-caption">\uD3D0\uC5C5\uBB3C\uD488 \uC911\uACE0\uAC70\uB798 \xB7 \uC5C5\uCCB4 \uC5F0\uACB0</div></div></section></div>
+    <div class="marquee"><div class="shell"><span>LIQUIDATE WITH VALUE</span><span>START WITH CONFIDENCE</span><span>CONNECT THE NEXT</span></div></div>
+    <section id="service"><div class="shell"><div class="section-head"><div><div class="section-kicker">01 / ABOUT CLOSING MARKET</div><h2>\uC0AC\uC5C5\uC758 \uB9C8\uC9C0\uB9C9\uC744<br />\uB204\uAD70\uAC00\uC758 \uC2DC\uC791\uC73C\uB85C.</h2></div><p class="section-intro">\uD074\uB85C\uC9D5\uB9C8\uCF13\uC740 \uC0AC\uC5C5 \uC815\uB9AC\uC640 \uC0C8\uB85C\uC6B4 \uCC3D\uC5C5 \uC0AC\uC774\uC5D0 \uD544\uC694\uD55C \uAC70\uB798\uC640 \uC5F0\uACB0\uC744 \uD55C \uACF3\uC5D0 \uBAA8\uC740 \uD50C\uB7AB\uD3FC\uC785\uB2C8\uB2E4.</p></div><div class="manifesto-grid"><article class="manifesto-item"><div class="number">01</div><h3>\uD3D0\uC5C5\uC790\uB294 \uD310\uB9E4</h3><p>\uC0AC\uC5C5\uC7A5\uC5D0\uC11C \uC0AC\uC6A9\uD558\uB358 \uBB3C\uD488\uACFC \uC9D1\uAE30\uB97C \uB4F1\uB85D\uD558\uACE0, \uD544\uC694\uD55C \uAD6C\uB9E4\uC790\uC640 \uCC44\uD305\uC73C\uB85C \uC5F0\uACB0\uB429\uB2C8\uB2E4.</p></article><article class="manifesto-item"><div class="number">02</div><h3>\uCC3D\uC5C5\uC790\uB294 \uBC1C\uACAC</h3><p>\uC9C0\uC5ED\uACFC \uCE74\uD14C\uACE0\uB9AC\uB85C \uD544\uC694\uD55C \uC911\uACE0 \uBB3C\uD488\uC744 \uCC3E\uC544 \uD569\uB9AC\uC801\uC778 \uC120\uD0DD\uC744 \uC2DC\uC791\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p></article><article class="manifesto-item"><div class="number">03</div><h3>\uC5C5\uCCB4\uAE4C\uC9C0 \uD55C \uACF3\uC5D0\uC11C</h3><p>\uCCA0\uAC70\xB7\uC778\uD14C\uB9AC\uC5B4\xB7\uCCAD\uC18C \uB4F1 \uCC3D\uC5C5\uACFC \uD3D0\uC5C5\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC5C5\uCCB4\uB97C \uD0D0\uC0C9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p></article></div></div></section>
+    <section id="how" style="background:#101010"><div class="shell"><div class="section-head"><div><div class="section-kicker">02 / HOW IT WORKS</div><h2>\uD544\uC694\uD55C \uC5F0\uACB0\uB9CC,<br />\uAC04\uB2E8\uD558\uAC8C.</h2></div><p class="section-intro">\uC0AC\uC5C5\uC744 \uC815\uB9AC\uD558\uB294 \uC0AC\uB78C\uACFC \uC0C8\uB85C \uC2DC\uC791\uD558\uB294 \uC0AC\uB78C \uBAA8\uB450\uC5D0\uAC8C \uD544\uC694\uD55C \uD750\uB984\uC73C\uB85C \uC124\uACC4\uD588\uC2B5\uB2C8\uB2E4.</p></div><div class="steps"><article class="step-card"><div class="number">FOR SELLERS</div><h3>\uD3D0\uC5C5\xB7\uC0AC\uC5C5\uC815\uB9AC \uC0AC\uC5C5\uC790</h3><div class="step-list"><div>\uC0AC\uC5C5\uC790 \uC778\uC99D</div><div>\uBB3C\uD488 \uB4F1\uB85D</div><div>\uAD6C\uB9E4\uC790\uC640 \uCC44\uD305</div><div>\uC548\uC804\uD558\uAC8C \uD310\uB9E4</div></div></article><article class="step-card gold-card"><div class="number">FOR STARTERS</div><h3>\uC0C8\uB85C\uC6B4 \uCC3D\uC5C5\uC790</h3><div class="step-list"><div>\uC9C0\uC5ED\xB7\uCE74\uD14C\uACE0\uB9AC \uAC80\uC0C9</div><div>\uBB3C\uD488 \uC0C1\uD0DC\uC640 \uC815\uBCF4 \uD655\uC778</div><div>\uD310\uB9E4\uC790\uC640 \uCC44\uD305</div><div>\uD544\uC694\uD55C \uBB3C\uD488 \uAD6C\uB9E4</div></div></article></div></div></section>
+    <section><div class="shell"><div class="audience"><div><div class="section-kicker">03 / WHO IT IS FOR</div><h2>\uB2E4\uC2DC \uC2DC\uC791\uD560 \uC900\uBE44\uAC00<br />\uB41C \uC0AC\uB78C\uB4E4.</h2><p class="section-intro">\uC5C5\uC885\uACFC \uC0C1\uD669\uC740 \uB2EC\uB77C\uB3C4, \uB354 \uB098\uC740 \uC120\uD0DD\uC744 \uC6D0\uD558\uB294 \uC0AC\uB78C\uC774\uB77C\uBA74 \uD074\uB85C\uC9D5\uB9C8\uCF13\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p></div><div class="audience-list"><div class="audience-item"><b>01</b>\uD3D0\uC5C5\uC744 \uC900\uBE44\uD558\uACE0 \uC788\uB294 \uC0AC\uC5C5\uC790</div><div class="audience-item"><b>02</b>\uCE74\uD398\xB7\uC2DD\uB2F9\xB7PC\uBC29\xB7\uD5EC\uC2A4\uC7A5 \uCC3D\uC5C5 \uC608\uC815\uC790</div><div class="audience-item"><b>03</b>\uC911\uACE0 \uC9D1\uAE30\uC640 \uC7A5\uBE44\uB97C \uD569\uB9AC\uC801\uC73C\uB85C \uAD6C\uD558\uB824\uB294 \uC0AC\uC5C5\uC790</div><div class="audience-item"><b>04</b>\uCCA0\uAC70\xB7\uC778\uD14C\uB9AC\uC5B4 \uB4F1 \uCC3D\uC5C5 \uAD00\uB828 \uC5C5\uCCB4\uB97C \uCC3E\uB294 \uC0AC\uB78C</div></div></div></div></section>
+    <section style="padding-top:0"><div class="shell"><div class="section-head"><div><div class="section-kicker">04 / CATEGORIES</div><h2>\uC5C5\uC885\uC5D0 \uB9DE\uB294 \uBB3C\uD488\uC744<br />\uB354 \uBE60\uB974\uAC8C.</h2></div><p class="section-intro">\uD604\uC7AC \uC571\uC5D0\uC11C \uC81C\uACF5\uD558\uB294 \uC8FC\uC694 \uCE74\uD14C\uACE0\uB9AC\uC785\uB2C8\uB2E4.</p></div><div class="category-grid"><div class="category"><span>\uCE74\uD398</span></div><div class="category"><span>\uC74C\uC2DD\uC810</span></div><div class="category"><span>PC\uBC29</span></div><div class="category"><span>\uD5EC\uC2A4\uC7A5</span></div><div class="category"><span>\uC0AC\uBB34\uC2E4</span></div><div class="category"><span>\uCC3D\uACE0</span></div><div class="category"><span>\uAE30\uD0C0</span></div></div></div></section>
+    <section id="providers" style="padding-top:0"><div class="shell"><div class="section-head"><div><div class="section-kicker">05 / FIND A PROVIDER</div><h2>\uC0AC\uC5C5\uC758 \uC2DC\uC791\uACFC \uB05D\uC5D0<br />\uD544\uC694\uD55C \uC804\uBB38\uAC00.</h2></div><p class="section-intro">\uCC3D\uC5C5\uACFC \uD3D0\uC5C5\uC5D0 \uD544\uC694\uD55C \uC5C5\uCCB4\uB97C \uCE74\uD14C\uACE0\uB9AC\uBCC4\uB85C \uCC3E\uACE0, \uBB38\uC758\uC640 \uC5F0\uACB0\uAE4C\uC9C0 \uC774\uC5B4\uAC08 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p></div><div class="feature-grid"><article class="feature"><img src="${PROVIDER_IMAGE}" alt="\uD074\uB85C\uC9D5\uB9C8\uCF13 \uC804\uBB38 \uC5C5\uCCB4 \uC785\uC810 \uC548\uB0B4" /><div class="feature-overlay"><h3>\uC804\uBB38 \uC5C5\uCCB4 \uCC3E\uAE30</h3><p>\uCCA0\uAC70 \xB7 \uC778\uD14C\uB9AC\uC5B4 \xB7 \uC7A5\uBE44 \xB7 \uCCAD\uC18C \xB7 \uD3D0\uAE30\uBB3C\uCC98\uB9AC \xB7 \uC774\uC0AC \xB7 \uC218\uB9AC \xB7 \uC138\uBB34\xB7\uB178\uBB34</p></div></article><article class="feature"><img src="${CLOSURE_IMAGE}" alt="\uD074\uB85C\uC9D5\uB9C8\uCF13 \uD3D0\uC5C5 \uBB3C\uD488 \uD310\uB9E4 \uC548\uB0B4" /><div class="feature-overlay"><h3>\uD544\uC694\uD55C \uC5F0\uACB0</h3><p>\uCC44\uD305 \xB7 \uCC1C \xB7 \uD6C4\uAE30 \xB7 \uC0AC\uC5C5\uC790 \uC778\uC99D</p></div></article></div></div></section>
+    <section id="download" class="download"><div class="shell"><div class="download-grid"><div><div class="section-kicker" style="color:#473916">START YOUR NEXT CHAPTER</div><h2>\uD3D0\uC5C5\uC740 \uB05D\uC774 \uC544\uB2C8\uB77C<br />\uB204\uAD70\uAC00\uC758 \uC2DC\uC791\uC774 \uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</h2><p>\uD074\uB85C\uC9D5\uB9C8\uCF13\uC5D0\uC11C \uC0AC\uC5C5\uC758 \uB2E4\uC74C \uC7A5\uBA74\uC744 \uC2DC\uC791\uD558\uC138\uC694.</p></div><div class="button-row">${downloadButton("iOS \uB2E4\uC6B4\uB85C\uB4DC", IOS_APP_URL, "button button-dark")}${downloadButton("Android \uB2E4\uC6B4\uB85C\uB4DC", ANDROID_APP_URL, "button button-dark")}</div></div></div></section>
+  </main>
+  <footer><div class="shell"><div class="footer-top"><a class="logo" href="/"><img src="${LOGO_URL}" alt="" />\uD074\uB85C\uC9D5\uB9C8\uCF13</a><div class="footer-links"><a href="/privacy">\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68</a><a href="/terms">\uC774\uC6A9\uC57D\uAD00</a><a href="/support">\uACE0\uAC1D\uC9C0\uC6D0/\uBB38\uC758</a><a href="/community-policy">\uC2E0\uACE0 \uBC0F \uCEE4\uBBA4\uB2C8\uD2F0 \uC6B4\uC601\uC815\uCC45</a></div></div><div class="business">\uC0C1\uD638\uBA85: \uD074\uB85C\uC9D5\uB9C8\uCF13 \xB7 \uB300\uD45C\uC790\uBA85: \uAE40\uCC2C\uC601 \xB7 \uC0AC\uC5C5\uC790\uB4F1\uB85D\uBC88\uD638: 347-70-00504<br />\uBB38\uC758: closingmarket.help@gmail.com<br />\uD074\uB85C\uC9D5\uB9C8\uCF13\uC740 \uD68C\uC6D0 \uAC04 \uBB3C\uD488 \uAC70\uB798\uC640 \uC804\uBB38 \uC5C5\uCCB4 \uC5F0\uACB0\uC744 \uC81C\uACF5\uD558\uB294 \uD50C\uB7AB\uD3FC\uC785\uB2C8\uB2E4.</div></div></footer>
+</div>
+</body>
+</html>`;
+    res.status(200).type("html").send(html);
+  });
+}
+
 // server/routers.ts
 import { z } from "zod";
 import { TRPCError as TRPCError3 } from "@trpc/server";
@@ -3463,6 +3625,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
+  registerLandingRoutes(app);
   app.get(["/", "/home"], (_req, res) => {
     res.status(200).type("html").send(`<!doctype html>
 <html lang="ko">

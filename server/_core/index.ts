@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerLegalRoutes } from "./legal";
+import { registerLandingRoutes } from "./landing";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { ensureUsersSchemaCompatibility } from "./schemaCompat";
@@ -83,6 +84,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLegalRoutes(app);
+  registerLandingRoutes(app);
 
   // Render 서비스는 API 서버이므로, 브라우저에서 직접 열 수 있는 공개 안내 페이지를 제공합니다.
   app.get(["/", "/home"], (_req, res) => {
