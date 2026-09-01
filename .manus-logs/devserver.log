@@ -4682,3 +4682,25 @@
 [2026-09-01T04:17:17.458Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
 [2026-09-01T04:17:27.988Z] [0] [schema] users 스키마 호환성 확인 완료
 [2026-09-01T04:17:27.995Z] [0] [api] server listening on port 3000
+[2026-09-01T04:26:02.602Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-01T04:26:02.609Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-01T04:26:02.616Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-09-01T04:26:02.939Z] [1] λ Bundled 213ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/node/render.js (1 module)
+[2026-09-01T04:26:03.590Z] [1] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[2026-09-01T04:26:03.614Z] [1] λ  LOG  { colorScheme: 'light', setColorScheme: [Function (anonymous)] } {
+[2026-09-01T04:26:03.614Z] [1]   '--color-primary': '#D4AF37',
+[2026-09-01T04:26:03.614Z] [1]   '--color-background': '#FFFFFF',
+[2026-09-01T04:26:03.614Z] [1]   '--color-surface': '#FAFAFA',
+[2026-09-01T04:26:03.615Z] [1]   '--color-foreground': '#222222',
+[2026-09-01T04:26:03.615Z] [1]   '--color-muted': '#8A8A8A',
+[2026-09-01T04:26:03.615Z] [1]   '--color-border': '#E5E5E5',
+[2026-09-01T04:26:03.615Z] [1]   '--color-success': '#3FAE68',
+[2026-09-01T04:26:03.615Z] [1]   '--color-warning': '#D9A441',
+[2026-09-01T04:26:03.615Z] [1]   '--color-error': '#E0554F'
+[2026-09-01T04:26:03.615Z] [1] }
+[2026-09-01T04:26:03.630Z] [1] λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[2026-09-01T04:26:03.683Z] [1] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-09-01T04:26:03.725Z] [1] Web node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[2026-09-01T04:26:03.731Z] [1] Web Bundled 1115ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-09-01T04:26:03.952Z] [1] Web Bundled 112ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
+[2026-09-01T04:26:04.730Z] [1]  LOG  [web] Logs will appear in the browser console
