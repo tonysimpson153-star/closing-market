@@ -664,4 +664,8 @@
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
 - [x] 독립 홈페이지의 canonical·OG·사이트맵·robots·RSS 주소를 closingmarket.netlify.app 기준으로 갱신
-- [ ] 새 Netlify 주소 기준의 네이버 수집 재등록 필요사항 안내
+- [x] 새 Netlify 주소 기준의 네이버 수집 재등록 필요사항 안내
+- [x] closingmarket.netlify.app의 공개 상태와 sitemap·RSS 응답 확인
+- [x] 네이버 서치어드바이저에 closingmarket.netlify.app 사이트 등록
+- [x] 새 주소 소유 확인과 sitemap·RSS·주요 페이지 수집 요청 제출
+- [x] 새 주소의 네이버 검색 등록 결과 확인
