@@ -660,6 +660,19 @@
 - [x] 생성 영상의 세로 비율과 서비스 메시지 검수
 - [x] 네이버 서치어드바이저의 사이트 소유 확인·수집 요청 상태 재확인
 - [x] 네이버 리포트의 수집·색인 상태 확인 및 결과 안내
+- [x] closingmarket.netlify.app의 네이버 검색 노출 상태 재확인 (공식 홈페이지는 아직 검색 결과에 미노출)
+- [ ] 네이버 서치어드바이저 수집·색인 리포트 변화 재확인 (로그인 세션 만료로 재로그인 필요)
+- [x] closingmarket.netlify.app 네이버 검색 결과 최신 노출 여부 확인 (site: 검색 결과 기준 아직 색인 미노출)
+- [x] closingmarket.netlify.app의 네이버 검색 노출 최신 상태 확인 (site: 검색 결과 기준 아직 색인 미노출)
+- [x] closingmarket.netlify.app의 네이버 도메인 색인 최신 재확인 (site: 검색 결과 기준 아직 색인 미노출)
+- [x] closingmarket.netlify.app의 네이버 도메인 색인 최신 상태 재확인 (site: 검색 결과 기준 아직 색인 미노출)
+- [x] Google에서 closingmarket.netlify.app 도메인 색인·검색 노출 확인 (Google 자동 확인은 보안 검증으로 차단)
+- [x] Bing에서 closingmarket.netlify.app 도메인 색인·검색 노출 확인 (site: 검색 결과 기준 아직 색인 미노출)
+- [x] 네이버와 Bing에서 closingmarket.netlify.app 최신 검색 노출 재확인 (네이버 메인 페이지 색인 완료, Bing은 아직 미노출)
+- [x] 현재 홈페이지와 Netlify의 방문·검색 유입 분석 설정 확인 (방문 분석 도구 미설치)
+- [x] 검색 유입 분석 방식과 확인 가능 데이터 범위 안내
+- [x] App Store와 Google Play의 클로징마켓 공개 버전·등록 상태 비교 확인 (iOS 공개됨, Android 패키지 com.app.closingmarket은 Google Play 공개 페이지 없음)
+- [x] EAS iOS·Android 최신 빌드의 버전·빌드 번호·생성 기준 비교 확인 (iOS 최신 1.0.0(6)·커밋 dc5790b, Android 최신 1.0.0(2)·커밋 0a0b06a)
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
@@ -669,3 +682,5 @@
 - [x] 네이버 서치어드바이저에 closingmarket.netlify.app 사이트 등록
 - [x] 새 주소 소유 확인과 sitemap·RSS·주요 페이지 수집 요청 제출
 - [x] 새 주소의 네이버 검색 등록 결과 확인
+- [x] 네이버에서 closingmarket.netlify.app 브랜드·핵심 키워드 검색 노출 재확인
+- [x] 새 주소의 네이버 서치어드바이저 수집·색인 리포트 상태 재확인
