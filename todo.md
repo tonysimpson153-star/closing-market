@@ -673,6 +673,7 @@
 - [x] 검색 유입 분석 방식과 확인 가능 데이터 범위 안내
 - [x] App Store와 Google Play의 클로징마켓 공개 버전·등록 상태 비교 확인 (iOS 공개됨, Android 패키지 com.app.closingmarket은 Google Play 공개 페이지 없음)
 - [x] EAS iOS·Android 최신 빌드의 버전·빌드 번호·생성 기준 비교 확인 (iOS 최신 1.0.0(6)·커밋 dc5790b, Android 최신 1.0.0(2)·커밋 0a0b06a)
+- [x] iOS 1.0.0(6)·Android 1.0.0(2) 커밋 간 실제 파일·기능 차이 비교 (Android 권한·위치 요청 개선 기준, iOS 카카오 로그인 인증 상태 반영 수정 기준)
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
