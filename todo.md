@@ -684,6 +684,17 @@
 - [x] 폐업·사업정리 고객 대상 릴스용 세로 만화 4컷 제작
 - [x] 참조 만화체·공식 로고·폐업 집기 전문성을 반영한 릴스 만화 4컷 재제작
 - [x] Netlify 개인 액세스 토큰 만료 영향과 새 토큰 연결 상태 점검 (새 토큰 인증·공식 홈페이지 프로젝트 접근·공개 사이트 응답 확인)
+- [x] GitHub main 기준 Android 프로덕션 AAB 빌드 준비 및 생성 (초기 시도 후 사용자 요청으로 iOS 최신 출시 기준 커밋 빌드로 전환)
+- [x] Expo 프로젝트 소유 계정(mm328i) 기준 Android EAS 빌드 권한 연결
+- [x] Play Console 프로덕션 출시 초안에 AAB·출시명·출시 노트 입력 (심사 제출·공개 제외; iOS 최신 기준 AAB로 재개 완료)
+- [x] 사용자 요청으로 진행 중인 Android 프로덕션 AAB 빌드 취소 및 Play Console 미업로드 상태 확인 (빌드 d4fa566b 상태 CANCELED, AAB 미생성·Play Console 미업로드)
+- [x] Expo Starter 요금제의 추가 Android·iOS 빌드 단가 확인 (Android medium US$1, iOS large US$4; Starter 월간 빌드 크레딧 US$45)
+- [x] 현재 Expo Billing 기준 Android 프로덕션 빌드 1회 추가 청구 예상액 재확인 (현 빌드 구성이 Android medium이면 US$1, 총 예상 청구액은 US$53)
+- [x] iOS 최신 출시 기준 커밋으로 Android 1.0.0(3) 프로덕션 AAB 빌드 생성 (커밋 bc7a125 기준, EAS 빌드 성공)
+- [x] Kakao Maven 저장소 누락으로 실패한 Android Gradle 빌드 설정 수정 및 로컬 검증 (격리 빌드 사본에만 반영)
+- [x] Android AAB 재빌드 비용 증가 후 재시도 여부 확인 (사용자 승인 후 재빌드)
+- [x] Play Console 프로덕션 출시 초안에 iOS 기준 Android AAB·출시명·출시 노트 입력 (심사 제출·공개 제외)
+- [x] Google Play 스토어 표시 앱 이름을 클로징마켓 | 폐업물품·사업장물품 중고거래로 업데이트
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
