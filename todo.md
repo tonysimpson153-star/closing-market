@@ -695,6 +695,8 @@
 - [x] Android AAB 재빌드 비용 증가 후 재시도 여부 확인 (사용자 승인 후 재빌드)
 - [x] Play Console 프로덕션 출시 초안에 iOS 기준 Android AAB·출시명·출시 노트 입력 (심사 제출·공개 제외)
 - [x] Google Play 스토어 표시 앱 이름을 클로징마켓 | 폐업물품·사업장물품 중고거래로 업데이트
+- [x] Google Play 정책용 공개 계정 삭제 안내 페이지를 독립 홈페이지에 작성·배포
+- [x] Play Console의 계정 삭제 URL을 공개 페이지로 갱신하고 오류 해소 확인 (검토 제출 가능 상태, 심사 제출·프로덕션 공개 미실행)
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
