@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "pdf": "/home/ubuntu/closing-market/partner-catalog/brief-catalog.pdf",
+  "mode": "standard",
+  "page_count": 2,
+  "selected_pages": [
+    1,
+    2
+  ],
+  "rendered_pages": [
+    "/home/ubuntu/closing-market/partner-catalog/review-brief/pages/page-0001.png",
+    "/home/ubuntu/closing-market/partner-catalog/review-brief/pages/page-0002.png"
+  ],
+  "contact_sheets": [
+    "/home/ubuntu/closing-market/partner-catalog/review-brief/sheets/sheet-01.jpg"
+  ],
+  "settings": {
+    "dpi": 144,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}
