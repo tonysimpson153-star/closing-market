@@ -102,7 +102,9 @@
     },
   )
 
-  set heading(numbering: "1.1")
+  // Source Markdown carries the approved section numbers explicitly.
+  // Disable automatic numbering to avoid duplicated labels in print.
+  set heading(numbering: none)
   show heading: set text(
     font: ("Noto Sans", "Noto Sans CJK KR"),
     fill: report-accent,

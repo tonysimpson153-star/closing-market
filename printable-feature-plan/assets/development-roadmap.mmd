@@ -1,0 +1,17 @@
+flowchart TB
+  P0[0. 기반 안정화<br/>이용자 · 판매자 · 물품 · 거래 확보]
+  P1[1. 찾아요<br/>구매 수요 등록]
+  P2[2. 통합찾기<br/>상황별 안내]
+  P3[3. 업체찾기 고도화<br/>카테고리·지역 탐색]
+  P4[4. 견적 요청<br/>업체 상담 연결]
+  P5[5. 방문예약<br/>일정 확정·변경]
+  P6[6. 연결 과금<br/>리드 품질 검증 후]
+
+  P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6
+
+  classDef now fill:#1f1f1f,stroke:#1f1f1f,color:#ffffff,stroke-width:2px;
+  classDef next fill:#fffdf4,stroke:#d4af37,color:#222222,stroke-width:2px;
+  classDef later fill:#f6edc8,stroke:#d4af37,color:#1f1f1f,stroke-width:2px;
+  class P0 now;
+  class P1,P2,P3,P4,P5 next;
+  class P6 later;

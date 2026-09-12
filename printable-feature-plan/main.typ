@@ -6,6 +6,28 @@
 #import "report-theme.typ": report-theme
 
 #let markdown-source = "source.md"
+#let visual = (name, width: auto, height: auto) => image(
+  "assets/" + name,
+  width: width,
+  height: height,
+)
+#let app-screen-grid = (left, left-caption, right, right-caption, caption) => figure(
+  grid(
+    columns: (1fr, 1fr),
+    gutter: 12pt,
+    align(center)[
+      #visual(left, width: 74%)
+      #v(4pt)
+      #text(size: 8.5pt, weight: "medium")[#left-caption]
+    ],
+    align(center)[
+      #visual(right, width: 74%)
+      #v(4pt)
+      #text(size: 8.5pt, weight: "medium")[#right-caption]
+    ],
+  ),
+  caption: caption,
+)
 
 #show: report-theme.with(
   title: "클로징마켓 향후 기능 기획서",
@@ -39,4 +61,8 @@
 #show table.cell.where(y: 0): set text(weight: "bold")
 
 // mitex renders LaTeX equations found in the Markdown source.
-#cmarker.render(read(markdown-source), math: mitex)
+#cmarker.render(
+  read(markdown-source),
+  math: mitex,
+  scope: (visual: visual, app-screen-grid: app-screen-grid),
+)

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "pdf": "/home/ubuntu/closing-market/printable-feature-plan/main.pdf",
+  "mode": "exhaustive",
+  "page_count": 13,
+  "selected_pages": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13
+  ],
+  "rendered_pages": [
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0001.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0002.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0003.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0004.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0005.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0006.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0007.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0008.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0009.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0010.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0011.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0012.png",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/pages/page-0013.png"
+  ],
+  "contact_sheets": [
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/sheets/sheet-01.jpg",
+    "/home/ubuntu/closing-market/printable-feature-plan/review-visual-all/sheets/sheet-02.jpg"
+  ],
+  "settings": {
+    "dpi": 140,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}

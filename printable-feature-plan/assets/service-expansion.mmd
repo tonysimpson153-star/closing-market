@@ -1,0 +1,22 @@
+flowchart TB
+  A[현재 운영 기반<br/>사업장 물품 등록 · 탐색 · 채팅 · 찜 · 후기 · 사업자 인증]
+  B[양방향 물품 거래<br/>찾아요]
+  C[상황별 서비스 탐색<br/>통합찾기]
+  D[전문 업체 비교·상담<br/>업체찾기 고도화]
+  E[구조화된 상담 접수<br/>견적 요청]
+  F[현장 일정 관리<br/>방문예약]
+  G[신뢰 기반 수익화<br/>단계 공개 · 연결 과금]
+
+  A --> B
+  A --> C
+  C --> D
+  D --> E
+  E --> F
+  F --> G
+
+  classDef base fill:#1f1f1f,stroke:#1f1f1f,color:#ffffff,stroke-width:2px;
+  classDef feature fill:#fffdf4,stroke:#d4af37,color:#222222,stroke-width:2px;
+  classDef revenue fill:#d4af37,stroke:#b89424,color:#1f1f1f,stroke-width:2px;
+  class A base;
+  class B,C,D,E,F feature;
+  class G revenue;
