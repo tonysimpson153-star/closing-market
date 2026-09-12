@@ -21,15 +21,15 @@
     {
       "name": "page-count",
       "status": "PASS",
-      "message": "pages=14",
+      "message": "pages=20",
       "evidence": {
-        "pages": 14
+        "pages": 20
       }
     },
     {
       "name": "text-presence",
       "status": "PASS",
-      "message": "characters=13571",
+      "message": "characters=19198",
       "evidence": {}
     },
     {
@@ -43,7 +43,7 @@
     {
       "name": "fonts",
       "status": "PASS",
-      "message": "font_records=9",
+      "message": "font_records=8",
       "evidence": {}
     }
   ]

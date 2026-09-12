@@ -1,0 +1,18 @@
+erDiagram
+  USERS ||--o{ PRODUCTS : registers
+  PRODUCTS ||--o{ PRODUCT_IMAGES : has
+  USERS ||--o{ FAVORITES : creates
+  PRODUCTS ||--o{ FAVORITES : receives
+  USERS ||--o{ RECENT_VIEWS : creates
+  PRODUCTS ||--o{ RECENT_VIEWS : receives
+  USERS ||--o{ CHAT_ROOMS : buyer_or_seller
+  PRODUCTS ||--o{ CHAT_ROOMS : relates_to
+  CHAT_ROOMS ||--o{ CHAT_MESSAGES : contains
+  USERS ||--o{ CHAT_MESSAGES : sends
+  USERS ||--o{ REVIEWS : writes_or_receives
+  CHAT_ROOMS ||--o{ REVIEWS : supports
+  USERS ||--o{ REPORTS : submits
+  USERS ||--o{ NOTIFICATIONS : receives
+  USERS ||--o{ SELLER_APPLICATIONS : applies
+  USERS ||--o{ INQUIRIES : submits
+  USERS ||--o{ COMPANY_IMAGES : owns

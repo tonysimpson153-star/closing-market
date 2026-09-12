@@ -5,7 +5,7 @@
 #import "@preview/mitex:0.2.7": mitex
 #import "report-theme.typ": report-theme
 
-#let markdown-source = "source.md"
+#let markdown-source = "master-source.md"
 #let visual = (name, width: auto, height: auto) => image(
   "assets/" + name,
   width: width,
@@ -30,7 +30,7 @@
 )
 
 #show: report-theme.with(
-  title: "클로징마켓 향후 기능 기획서",
+  title: "클로징마켓 프로젝트 전체 마스터 문서",
   author: "Manus AI",
   rhythm: "longform",
   body-size: 10.2pt,

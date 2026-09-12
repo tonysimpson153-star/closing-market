@@ -1,0 +1,18 @@
+flowchart TB
+  U[사용자<br/>iOS · Android] --> APP[Expo React Native 앱<br/>Expo Router · NativeWind]
+  APP --> API[Render Node.js API<br/>Express · tRPC]
+  API --> DB[(TiDB / MySQL<br/>Drizzle ORM)]
+  APP --> AUTH[이메일 · Kakao · Apple]
+  API --> R2[Cloudflare R2<br/>상품·채팅·증빙 이미지]
+  API --> PUSH[Expo Push Notifications]
+  WEB[공식 홈페이지<br/>정적 HTML/CSS/JS] --> NET[Netlify]
+  NET --> SEO[네이버 검색 등록<br/>sitemap · RSS · robots]
+  SRC[GitHub 저장소] --> API
+  SRC --> APP
+
+  classDef app fill:#FFF7E8,stroke:#B88928,color:#342B1E,stroke-width:2px;
+  classDef infra fill:#F4F6FA,stroke:#526275,color:#202735,stroke-width:1.5px;
+  classDef external fill:#F2F8F4,stroke:#4C7A58,color:#173D22,stroke-width:1.5px;
+  class U,APP,WEB app;
+  class API,DB,R2,NET,SRC infra;
+  class AUTH,PUSH,SEO external;
