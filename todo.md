@@ -713,6 +713,7 @@
 - [x] Android 앱 아이콘 비율·적응형 아이콘 설정 검수 후 최신 AAB 빌드·Google Play 임시 출시 업로드 (아이콘 512×512 정사각형·흰 배경 적응형 설정 확인, Android 1.0.0(4) AAB 빌드·임시 출시 저장 완료)
 - [x] Android 1.0.0(4) Google Play 검토 제출 및 심사·공개 상태 확인 (변경사항 2건 제출 완료, 현재 Google 빠른 검사·심사 대기)
 - [x] Google Play 프로덕션 임시 출시의 중복 버전코드 3 AAB 제거 후 버전코드 4만으로 검토 제출
+- [x] Google Play 거부 사유인 계정 삭제 링크 404를 새 Netlify 공개 URL로 수정·검증 후 재제출 (데이터 보안 선언 Netlify URL 확인·재저장, Android 1.0.0(4) 재심사 대기)
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증
