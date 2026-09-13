@@ -698,7 +698,7 @@
 - [x] Google Play 정책용 공개 계정 삭제 안내 페이지를 독립 홈페이지에 작성·배포
 - [x] Play Console의 계정 삭제 URL을 공개 페이지로 갱신하고 오류 해소 확인 (검토 제출 가능 상태, 심사 제출·프로덕션 공개 미실행)
 - [ ] Google Play 심사 제출 전 Android 1.0.0(3) AAB·핵심 기능·정책 항목 최종 점검
-- [ ] 최종 점검에서 차단 문제가 없을 때 Google Play 검토 제출
+- [x] 최종 점검에서 차단 문제가 없을 때 Google Play 검토 제출 (Android 1.0.0(10) 프로덕션 변경사항 재심사 중)
 - [x] 독립 홈페이지의 메인·서비스 소개·판매자 안내를 폐업·사업장 정리·이전·교체 물품 거래 범위로 수정
 - [x] 독립 홈페이지 SEO에 폐업물품·사업장물품·사업장 중고거래·업소용 중고물품·사업장 정리 키워드 반영 및 Netlify 재배포
 - [x] 앱·DB·UI·배포 변경 없이 클로징마켓 향후 기능 기획서 파일 작성 및 보관
@@ -714,6 +714,16 @@
 - [x] Android 1.0.0(4) Google Play 검토 제출 및 심사·공개 상태 확인 (변경사항 2건 제출 완료, 현재 Google 빠른 검사·심사 대기)
 - [x] Google Play 프로덕션 임시 출시의 중복 버전코드 3 AAB 제거 후 버전코드 4만으로 검토 제출
 - [x] Google Play 거부 사유인 계정 삭제 링크 404를 새 Netlify 공개 URL로 수정·검증 후 재제출 (데이터 보안 선언 Netlify URL 확인·재저장, Android 1.0.0(4) 재심사 대기)
+- [x] Android 1.0.0(4) Google Play 재심사 상태와 추가 조치 알림 확인 (검토 중, 추가 오류·조치 요청 없음)
+- [x] Google Play 데이터 보안 선언의 2개 주의 항목 상세 확인 및 실제 앱 동작에 맞춘 정정 (Netlify 계정 삭제 URL 저장, 정책 수정 AAB 재심사 중)
+- [x] Android 1.0.0(5)~1.0.0(8) AAB에 남은 포그라운드 서비스 권한·서비스 타입(expo-video·expo-audio·expo-location 위치 작업 서비스)을 완전 제거·검증 후 새 AAB 빌드·Google Play 재심사 (1.0.0(10) 실제 AAB 검증 후 프로덕션 재심사 중)
+- [x] Google Play 데이터 보안 선언의 현재 계정 삭제 URL을 재확인하고 옛 Render URL 거부 표시를 Netlify 공개 URL로 정정·저장 (현재 저장값: https://closingmarket.netlify.app/account-deletion.html)
+- [x] Google Play에 검증된 Android 1.0.0(10) AAB 업로드 시 발생한 일반 오류를 진단·해결하고 유효한 번들만 재심사에 제출 (사용자 직접 업로드로 정상 처리)
+- [x] 새 Android 빌드 없이 검증된 1.0.0(10) AAB만 Play Console에 업로드하고, 오류가 없을 때만 재심사 제출 (사용자 직접 업로드·프로덕션 재심사 중)
+- [x] Google Play Console AAB 업로드 일반 오류(79F61F73)를 공식 지원 경로로 확인하고 문의 메시지 발송 전 검토 (직접 업로드가 정상 처리되어 공식 문의 불필요)
+- [x] Google 문자 인증으로 Play Console 재로그인 후 새 빌드 없이 검증된 1.0.0(10) AAB 업로드 재개 (사용자 직접 업로드로 대체)
+- [x] 문자 코드 입력 대신 Google 휴대폰 ‘예’ 승인 인증으로 Play Console 재로그인 (사용자 직접 업로드로 대체)
+- [x] Google Play 재심사용 Netlify 계정 삭제 페이지의 공개 접근을 외부에서 재확인하고 필요 시 배포·링크 복구 (원본·아이폰 Safari 요청 모두 HTTP 200, 캐시 우회 주소로 사용자 확인)
 - [x] Netlify 무료 주소 closingmarket.netlify.app 사용 가능 여부 확인
 - [x] 클로징마켓 홈페이지의 Netlify 무료 주소 변경
 - [x] 변경된 주소의 홈페이지·정책 페이지 접속 검증

@@ -65,3 +65,54 @@ Google Play 거부 알림은 과거 계정 삭제 URL `https://closing-market.on
 게시 개요는 Android 1.0.0(4) 프로덕션 변경과 대한민국 국가/지역 변경을 재검토를 위해 전송할 수 있는 상태로 표시했습니다. 사용자 승인에 따라 최종 재심사 제출 확인 창을 열었습니다.
 
 Google Play가 수정된 데이터 보안 선언과 Android 1.0.0(4) 변경사항 2건의 재심사 전송을 완료했습니다. 게시 개요는 현재 `검토 중인 변경사항`으로 표시하며, 프로덕션 1.0.0(4) 전체 출시 시작과 대한민국 국가/지역 변경이 심사 대기 상태입니다. 관리형 게시가 사용 중지되어 있어 심사 승인 후 자동 공개될 수 있습니다.
+
+재확인 시에도 게시 개요는 `검토 중인 변경사항`으로 유지되고 있습니다. 추가 정책 오류나 추가 조치 요청은 표시되지 않았습니다.
+
+## Android 1.0.0(5) 포그라운드 서비스 정책 수정 빌드
+
+- 빌드 ID: `1341b1cd-3546-4fc1-baea-0558b33ac893`
+- 기준: iOS 최신 출시 기준 커밋 `bc7a125`의 격리된 Android 사본
+- Android 변경: `expo-video`의 `supportsBackgroundPlayback`과 `supportsPictureInPicture`를 모두 `false`로 설정하여 미디어 재생 포그라운드 서비스 권한을 제거함.
+- 로컬 CNG 사전 생성 매니페스트에서 `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `foregroundServiceType`이 없는 것을 확인함.
+- Expo 원격 빌드는 현재 Gradle 서명 검증 단계까지 정상 진행 중이며, 오류는 표시되지 않음.
+
+## 실제 AAB 매니페스트 검증과 후속 조치
+
+- `1.0.0(5)` 실제 AAB에는 `android.permission.FOREGROUND_SERVICE`, `android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `mediaPlayback` 서비스 타입이 남아 있어 Play Console에 업로드하지 않음.
+- `1.0.0(6)`에서는 `android.blockedPermissions`로 두 권한은 제거됐으나 `mediaPlayback` 서비스 타입이 남아 있어 역시 업로드하지 않음.
+- 앱 런타임에 동영상 모듈 사용처가 없음을 재확인한 뒤, 격리 Android 사본에서 `expo-video` 의존성·config plugin·오픈소스 라이선스 표기를 제거하고 잠금파일을 갱신함. 원본 앱·GitHub main·iOS 출시본은 변경하지 않음.
+- 새로 생성한 Android 매니페스트에서 동영상 재생 서비스·`mediaPlayback`·`foregroundServiceType` 흔적이 없고, FGS 권한 차단 지시만 남은 것을 확인함.
+- Android `1.0.0(7)` 정책 해결 빌드(ID `ea8d15f9-3a27-465e-8cfe-763d64673699`)가 Expo 원격 빌드에서 진행 중이며, 완료 후 실제 AAB 매니페스트를 다시 검사할 예정임.
+
+## Android 1.0.0(8)·1.0.0(9) 추가 검증
+
+- `1.0.0(8)`에서 미사용 `expo-audio` 의존성·config plugin·라이선스 표기를 제거한 뒤 실제 AAB를 검사했으나, `expo-location`의 `LocationTaskService`가 `foregroundServiceType="location"`을 남기는 것을 확인함. 앱 코드에는 `Location.getCurrentPositionAsync` 1회 조회만 있으며, 백그라운드 위치 추적·지오펜싱·위치 작업 등록은 없음.
+- 현재 위치 1회 조회는 유지하면서 `LocationTaskService`만 Android 매니페스트 병합에서 제거하는 격리 사본 전용 config plugin을 추가함. 생성 매니페스트에 `tools:node="remove"` 지시가 정확히 추가됨을 확인함.
+- Android `1.0.0(9)` 빌드(ID `fe881abb-b255-464d-8d61-794eee9a7de3`)는 `Read app config` 단계에서 `Unexpected token '{'` 오류로 실패했으며, Expo 화면에서 해당 실패가 빌드 사용량에 포함되지 않는다고 확인함. AAB는 생성되지 않았고 Play Console에는 업로드하지 않음.
+
+## Google Play 계정 삭제 URL 재확인
+
+- Play Console의 **데이터 보안 → 데이터 수집 및 보안** 설문에서 `계정 URL 삭제` 입력값이 `https://closingmarket.netlify.app/account-deletion.html`로 저장되어 있음을 2026-09-13에 다시 확인함.
+- 정책 상태에 표시되는 `https://closing-market.onrender.com/delete-account` 404는 2026-09-13 거부 심사에서 사용된 이전 Render 주소의 기록임. 현재 입력값은 Render가 아니며, 이 과거 거부 표시는 유효한 다음 변경사항을 재심사에 전송한 뒤에만 해소될 수 있음.
+
+## Android 1.0.0(10) 정책 해결 AAB
+
+- 빌드 ID: `56c7e2a6-98f3-44cc-afe0-0f8296b7f1c5`, versionCode: `10`.
+- 격리 Android 사본에서 사용하지 않는 `expo-video`·`expo-audio`를 제거하고, 현재 위치 1회 조회에 불필요한 `expo.modules.location.services.LocationTaskService`를 최종 매니페스트 병합에서 제외함.
+- 완료 AAB를 실제로 내려받아 `base/manifest/AndroidManifest.xml`을 검사했으며 `android.permission.FOREGROUND_SERVICE`, `foregroundServiceType`, `mediaPlayback`, `LocationTaskService`, 오디오·동영상 재생 서비스가 모두 없음을 확인함.
+- Google Play 프로덕션의 새 임시 출시 생성 화면까지 열었으며, `1.0.0(10)` AAB 업로드와 재심사 제출은 사용자 승인에 따라 진행 중임. `1.0.0(5)`~`1.0.0(9)`은 업로드하지 않음.
+- 2026-09-13에 `closingmarket-1.0.0-10.aab`(36.5MB)의 Google Play 프로덕션 업로드를 시작했으며, 파일 전송은 `36.5MB / 36.5MB`까지 완료된 상태임. Google의 번들 처리 결과와 출시 버전 코드 확인 전에는 제출하지 않음.
+- 업로드 완료 뒤 Play Console에는 `업로드가 배포에 맞게 최적화되는 동안 이 페이지를 나가셔도 됩니다`가 표시됨. 현재는 Google 측 번들 최적화·처리 대기 단계이며, 처리 후 버전코드 10 단독 포함 여부를 다시 확인해 출시명·한국어 출시 노트를 입력함.
+- 최적화 진행 상태는 2026-09-13 09:48 GMT 기준에도 유지되며, 업로드 오류·정책 오류·번들 거부 메시지는 표시되지 않음.
+- 이후 Play Console이 번들 처리 완료 직후 `업로드할 수 없습니다. 다시 시도해 보세요.`라는 일반 오류를 표시해, 출시 임시 버전에 AAB가 추가되지는 않았음. 정책·매니페스트 오류 상세는 표시되지 않음.
+- 새 AAB와 기존 Play 업로드본 `1.0.0(4)`의 JAR 서명 인증서 SHA-256은 모두 `7A:60:98:9B:34:7B:55:12:1B:63:E9:B0:93:D4:61:7C:62:5F:61:DA:3E:6E:8B:03:67:DA:65:89:91:4F:3A:DF`로 일치함. 즉, 업로드 실패는 앱 서명 키 불일치가 아님.
+- 실패 항목을 제거한 뒤 동일한 검증 AAB로 업로드를 한 번 재시도했으며, 2026-09-13 09:51 GMT 기준 Play Console은 아직 `0B / 36.5MB` 전송 대기 상태를 표시함. 추가 반복 업로드는 하지 않고 처리 결과를 확인함.
+- 재시도도 동일한 일반 업로드 오류로 끝났음. 이어서 `라이브러리에서 추가` 경로로 기존 서버 등록 번들을 확인하려 했으나 Play Console이 목록을 불러오지 못하고 `예기치 않은 오류가 발생했습니다. 다시 시도해 주세요. (79F61F73)`를 표시함. 따라서 현재 장애 지점은 AAB 구조·서명 검증 이후의 Play Console 업로드/라이브러리 서버 처리 단계로 보이며, 동일 브라우저 세션에서 추가 반복 업로드는 중지함.
+
+## Android 1.0.0(10) 사용자 직접 업로드 및 재심사
+
+- 사용자가 본인 Play Console 세션에서 검증된 `1.0.0(10)` AAB를 직접 업로드함. 프로덕션 출시 대시보드에서 `최신(10 (1.0.0))` 및 `출시 이름: 10 (1.0.0)`이 표시되어 번들이 정상 인식됐음을 확인함.
+- 번들 라이브러리의 `추가 가능한 App Bundle` 목록에는 기존 2·3·4만 표시되었으나, 버전 10은 이미 프로덕션 변경사항에 연결되어 있어 새 버전 생성 화면에서 재선택할 대상이 아님.
+- 게시 개요에서 `변경사항을 검토 중입니다` 상태와 프로덕션 `10 (1.0.0)`의 `전체 출시 시작`이 확인됨. 새 차단 오류는 표시되지 않았으며, 관리형 게시가 사용 중지되어 심사 통과 시 자동 공개될 수 있음.
+- 출시 대시보드의 난독화 2% 최적화 안내는 해결 기한이 2027년 2월인 품질 권고로, 현재 업로드·사전 검사·재심사를 막는 오류가 아님.
+- Netlify 계정 삭제 정식 URL은 원본 서버와 아이폰 Safari 형식 요청에서 모두 HTTP 200을 확인했으며, 아이폰의 기존 404 캐시는 `?v=20260913a` 쿼리로 우회해 사용자가 계정 삭제 페이지를 직접 열어 확인함. Google Play 데이터 보안에는 쿼리 없는 정식 URL `https://closingmarket.netlify.app/account-deletion.html`을 유지함.
