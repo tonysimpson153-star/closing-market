@@ -789,48 +789,57 @@ export async function sendChatMessage(
   if (!db) throw new Error("Database not available");
   const startedAt = Date.now();
 
-  // 접근 권한 확인
-  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
-  const accessCheckedAt = Date.now();
-  const room = rooms[0];
-  if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
+  // 권한 확인과 메시지 저장을 하나의 INSERT ... SELECT로 수행한다.
+  // 기존에는 권한 확인, INSERT, 채팅방 갱신, 메시지 재조회가 순차 실행되어
+  // TiDB와의 왕복 지연이 전송 응답에 누적됐다.
+  const writeResult = await db.execute(sql`
+    INSERT INTO chat_messages (
+      \`roomId\`, \`senderId\`, \`content\`, \`imageUrl\`, \`isRead\`
+    )
+    SELECT \`id\`, ${senderId}, ${content ?? null}, ${imageUrl ?? null}, false
+    FROM chat_rooms
+    WHERE \`id\` = ${roomId}
+      AND (\`buyerId\` = ${senderId} OR \`sellerId\` = ${senderId})
+  `);
+  const writeHeader = Array.isArray(writeResult) ? writeResult[0] : writeResult;
+  const insertedId = Number((writeHeader as { insertId?: number }).insertId ?? 0);
+  if (!insertedId) {
     throw new Error("채팅방에 접근할 수 없습니다.");
   }
 
-  const result = await db.insert(chatMessages).values({
+  const createdAt = new Date();
+  const lastMessage = content ?? (imageUrl ? "[사진]" : "");
+
+  // 채팅 목록의 마지막 메시지 갱신은 전송 성공 응답을 지연시키지 않도록 분리한다.
+  // 실패해도 메시지 본문은 이미 보존되며, 오류는 운영 로그에서 확인한다.
+  void db
+    .update(chatRooms)
+    .set({ lastMessage, lastMessageAt: createdAt })
+    .where(eq(chatRooms.id, roomId))
+    .then(() => {
+      console.info("[chat.send.room-updated]", {
+        roomId,
+        elapsedMs: Date.now() - startedAt,
+      });
+    })
+    .catch((err) => {
+      console.error("채팅방 마지막 메시지 갱신 중 오류:", err);
+    });
+
+  console.info("[chat.send.persisted]", {
+    roomId,
+    senderId,
+    writeMs: Date.now() - startedAt,
+  });
+  return {
+    id: insertedId,
     roomId,
     senderId,
     content: content ?? null,
     imageUrl: imageUrl ?? null,
     isRead: false,
-  });
-  const insertedAt = Date.now();
-
-  // 채팅방 마지막 메시지 업데이트
-  await db
-    .update(chatRooms)
-    .set({
-      lastMessage: content ?? (imageUrl ? "[사진]" : ""),
-      lastMessageAt: new Date(),
-    })
-    .where(eq(chatRooms.id, roomId));
-  const roomUpdatedAt = Date.now();
-
-  const newMsg = await db
-    .select()
-    .from(chatMessages)
-    .where(eq(chatMessages.id, result[0].insertId))
-    .limit(1);
-  console.info("[chat.send.persisted]", {
-    roomId,
-    senderId,
-    accessCheckMs: accessCheckedAt - startedAt,
-    insertMs: insertedAt - accessCheckedAt,
-    roomUpdateMs: roomUpdatedAt - insertedAt,
-    messageReadbackMs: Date.now() - roomUpdatedAt,
-    totalMs: Date.now() - startedAt,
-  });
-  return newMsg[0];
+    createdAt,
+  };
 }
 
 export async function getChatRoomParticipants(roomId: number) {
