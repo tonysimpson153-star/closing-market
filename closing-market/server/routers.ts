@@ -655,26 +655,47 @@ export const appRouter = router({
         if (!input.content && !input.imageUrl) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "내용 또는 이미지가 필요합니다." });
         }
+        const requestStartedAt = Date.now();
         const message = await db.sendChatMessage(input.roomId, ctx.user.id, input.content, input.imageUrl);
 
-        try {
-          const participants = await db.getChatRoomParticipants(input.roomId);
-          if (participants) {
-            const recipientId = participants.buyerId === ctx.user.id ? participants.sellerId : participants.buyerId;
-            const recipient = await db.getUserById(recipientId);
-            const sender = await db.getUserById(ctx.user.id);
+        console.info("[chat.send.response]", {
+          roomId: input.roomId,
+          senderId: ctx.user.id,
+          persistenceMs: Date.now() - requestStartedAt,
+        });
+
+        // 푸시 알림은 메시지 저장 성공과 독립적으로 처리한다. 푸시 서비스 지연이
+        // 전송 응답을 막지 않도록 응답을 먼저 반환하며, 실패는 서버 로그로만 남긴다.
+        void (async () => {
+          const notificationStartedAt = Date.now();
+          try {
+            const participants = await db.getChatRoomParticipants(input.roomId);
+            if (!participants) return;
+
+            const recipientId =
+              participants.buyerId === ctx.user.id ? participants.sellerId : participants.buyerId;
+            const [recipient, sender] = await Promise.all([
+              db.getUserById(recipientId),
+              db.getUserById(ctx.user.id),
+            ]);
+
             if (recipient?.expoPushToken) {
-              await sendChatPushNotification(
+              const delivered = await sendChatPushNotification(
                 recipient.expoPushToken,
                 sender?.name ?? "새 메시지",
                 input.content ?? "사진을 보냈습니다.",
-                input.roomId
+                input.roomId,
               );
+              console.info("[chat.send.push]", {
+                roomId: input.roomId,
+                delivered,
+                elapsedMs: Date.now() - notificationStartedAt,
+              });
             }
+          } catch (err) {
+            console.error("채팅 푸시 알림 전송 중 오류:", err);
           }
-        } catch (err) {
-          console.error("채팅 푸시 알림 전송 중 오류:", err);
-        }
+        })();
 
         return message;
       }),

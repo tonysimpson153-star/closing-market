@@ -1,4 +1,23 @@
 const EXPO_PUSH_API = "https://exp.host/--/api/v2/push/send";
+const PUSH_REQUEST_TIMEOUT_MS = 4_000;
+
+async function postExpoPush(payload: Record<string, unknown>) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PUSH_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(EXPO_PUSH_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 /**
  * 채팅 메시지 도착 시 상대방에게 푸시 알림 전송
@@ -7,7 +26,7 @@ export async function sendChatPushNotification(
   recipientPushToken: string,
   senderName: string,
   messagePreview: string,
-  chatRoomId: number
+  chatRoomId: number,
 ) {
   if (!recipientPushToken) {
     console.log("푸시 토큰이 없습니다.");
@@ -15,24 +34,17 @@ export async function sendChatPushNotification(
   }
 
   try {
-    // Expo 푸시 알림 API 호출
-    const response = await fetch(EXPO_PUSH_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await postExpoPush({
+      to: recipientPushToken,
+      sound: "default",
+      title: `💬 ${senderName}`,
+      body: messagePreview.substring(0, 100),
+      data: {
+        chatRoomId: chatRoomId.toString(),
+        type: "chat_message",
       },
-      body: JSON.stringify({
-        to: recipientPushToken,
-        sound: "default",
-        title: `💬 ${senderName}`,
-        body: messagePreview.substring(0, 100),
-        data: {
-          chatRoomId: chatRoomId.toString(),
-          type: "chat_message",
-        },
-        badge: 1,
-        priority: "high",
-      }),
+      badge: 1,
+      priority: "high",
     });
 
     if (!response.ok) {
@@ -56,7 +68,7 @@ export async function sendBulkPushNotification(
   pushTokens: string[],
   title: string,
   body: string,
-  data?: Record<string, string>
+  data?: Record<string, string>,
 ) {
   if (pushTokens.length === 0) {
     console.log("푸시 토큰이 없습니다.");
@@ -64,20 +76,13 @@ export async function sendBulkPushNotification(
   }
 
   try {
-    // Expo 푸시 알림 API 호출 (배치)
-    const response = await fetch(EXPO_PUSH_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: pushTokens,
-        sound: "default",
-        title,
-        body,
-        data: data || {},
-        priority: "high",
-      }),
+    const response = await postExpoPush({
+      to: pushTokens,
+      sound: "default",
+      title,
+      body,
+      data: data || {},
+      priority: "high",
     });
 
     if (!response.ok) {
