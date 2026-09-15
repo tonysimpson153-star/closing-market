@@ -779,12 +779,19 @@ export async function getChatMessages(roomId: number, userId: number, limit = 50
   return messages.reverse();
 }
 
-export async function sendChatMessage(roomId: number, senderId: number, content?: string, imageUrl?: string) {
+export async function sendChatMessage(
+  roomId: number,
+  senderId: number,
+  content?: string,
+  imageUrl?: string,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const startedAt = Date.now();
 
   // 접근 권한 확인
   const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
+  const accessCheckedAt = Date.now();
   const room = rooms[0];
   if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
     throw new Error("채팅방에 접근할 수 없습니다.");
@@ -797,14 +804,32 @@ export async function sendChatMessage(roomId: number, senderId: number, content?
     imageUrl: imageUrl ?? null,
     isRead: false,
   });
+  const insertedAt = Date.now();
 
   // 채팅방 마지막 메시지 업데이트
-  await db.update(chatRooms).set({
-    lastMessage: content ?? (imageUrl ? "[사진]" : ""),
-    lastMessageAt: new Date(),
-  }).where(eq(chatRooms.id, roomId));
+  await db
+    .update(chatRooms)
+    .set({
+      lastMessage: content ?? (imageUrl ? "[사진]" : ""),
+      lastMessageAt: new Date(),
+    })
+    .where(eq(chatRooms.id, roomId));
+  const roomUpdatedAt = Date.now();
 
-  const newMsg = await db.select().from(chatMessages).where(eq(chatMessages.id, result[0].insertId)).limit(1);
+  const newMsg = await db
+    .select()
+    .from(chatMessages)
+    .where(eq(chatMessages.id, result[0].insertId))
+    .limit(1);
+  console.info("[chat.send.persisted]", {
+    roomId,
+    senderId,
+    accessCheckMs: accessCheckedAt - startedAt,
+    insertMs: insertedAt - accessCheckedAt,
+    roomUpdateMs: roomUpdatedAt - insertedAt,
+    messageReadbackMs: Date.now() - roomUpdatedAt,
+    totalMs: Date.now() - startedAt,
+  });
   return newMsg[0];
 }
 
