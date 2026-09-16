@@ -186,6 +186,43 @@ async function startServer() {
     res.json({ ok: true, timestamp: Date.now() });
   });
 
+  // iOS에서 서버 저장은 성공했지만 네트워크 실패가 표시되는 현상을 추적한다.
+  // 요청 본문·토큰·메시지 내용은 기록하지 않고, tRPC 절차명·상태·연결 종료 여부만 남긴다.
+  app.use("/api/trpc", (req, res, next) => {
+    const requestId = Math.random().toString(36).slice(2, 10);
+    const startedAt = Date.now();
+    const procedurePath = req.path.replace(/^\//, "") || "batch-root";
+    let responseFinished = false;
+
+    res.setHeader("X-Request-Id", requestId);
+    res.on("finish", () => {
+      responseFinished = true;
+      console.info("[trpc.response.finished]", {
+        requestId,
+        procedurePath,
+        statusCode: res.statusCode,
+        elapsedMs: Date.now() - startedAt,
+      });
+    });
+    res.on("close", () => {
+      if (!responseFinished) {
+        console.warn("[trpc.response.closed]", {
+          requestId,
+          procedurePath,
+          elapsedMs: Date.now() - startedAt,
+        });
+      }
+    });
+    req.on("aborted", () => {
+      console.warn("[trpc.request.aborted]", {
+        requestId,
+        procedurePath,
+        elapsedMs: Date.now() - startedAt,
+      });
+    });
+    next();
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({
