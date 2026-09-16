@@ -8,6 +8,31 @@ import { sendChatPushNotification } from "./_core/push-notifications";
 import { ENV } from "./_core/env";
 
 const JWT_SECRET = ENV.jwtSecret;
+const MARK_READ_DEDUPLICATION_WINDOW_MS = 2500;
+const recentMarkReadAt = new Map<string, number>();
+
+function shouldSkipDuplicateMarkRead(roomId: number, userId: number) {
+  const key = `${roomId}:${userId}`;
+  const now = Date.now();
+  const previous = recentMarkReadAt.get(key);
+
+  if (previous && now - previous < MARK_READ_DEDUPLICATION_WINDOW_MS) {
+    return true;
+  }
+
+  recentMarkReadAt.set(key, now);
+
+  // 활성 채팅방 기준의 짧은 시간 창만 보관한다. 장기 유휴 키는 새 요청이 들어올 때 정리한다.
+  if (recentMarkReadAt.size > 2000) {
+    for (const [savedKey, savedAt] of recentMarkReadAt) {
+      if (now - savedAt > MARK_READ_DEDUPLICATION_WINDOW_MS) {
+        recentMarkReadAt.delete(savedKey);
+      }
+    }
+  }
+
+  return false;
+}
 
 export const appRouter = router({
   // Public routes
@@ -703,6 +728,13 @@ export const appRouter = router({
     markRead: protectedProcedure
       .input(z.object({ roomId: z.number() }))
       .mutation(({ ctx, input }) => {
+        if (shouldSkipDuplicateMarkRead(input.roomId, ctx.user.id)) {
+          console.info("[chat.mark-read.deduplicated]", {
+            roomId: input.roomId,
+            userId: ctx.user.id,
+          });
+          return { success: true, deduplicated: true };
+        }
         return db.markMessagesRead(input.roomId, ctx.user.id);
       }),
 
