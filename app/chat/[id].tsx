@@ -60,6 +60,19 @@ function createOptimisticMessage(
   };
 }
 
+function ChatInputLayout({ children }: { children: React.ReactNode }) {
+  // 웹 미리보기와 Android는 화면 자체가 resize되므로 별도 보정을 하면 입력창이 두 번 움직인다.
+  if (Platform.OS !== "ios") {
+    return <View style={{ flex: 1 }}>{children}</View>;
+  }
+
+  return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={100}>
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
 export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = parseInt(id ?? "0", 10);
@@ -381,11 +394,7 @@ export default function ChatRoomScreen() {
       )}
 
       {/* 메시지 목록 */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-      >
+      <ChatInputLayout>
 
         <FlatList
           data={displayMessages}
@@ -514,7 +523,7 @@ export default function ChatRoomScreen() {
             <IconSymbol name="paperplane.fill" size={18} color="#000000" />
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+      </ChatInputLayout>
     </ScreenContainer>
   );
 }
