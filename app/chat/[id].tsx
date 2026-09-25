@@ -8,7 +8,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  InteractionManager,
   Platform,
   StyleSheet,
 } from "react-native";
@@ -53,29 +52,25 @@ export default function ChatRoomScreen() {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const hasScrolledToLatestOnOpenRef = useRef(false);
-  const isInitialScrollScheduledRef = useRef(false);
 
   const utils = trpc.useUtils();
 
   const scrollToLatest = useCallback((animated: boolean) => {
-    InteractionManager.runAfterInteractions(() => {
-      requestAnimationFrame(() => {
-        flatListRef.current?.scrollToEnd({ animated });
-      });
+    requestAnimationFrame(() => {
+      flatListRef.current?.scrollToEnd({ animated });
     });
   }, []);
 
   const scrollToInitialLatest = useCallback(() => {
-    if (hasScrolledToLatestOnOpenRef.current || isInitialScrollScheduledRef.current) return;
+    if (hasScrolledToLatestOnOpenRef.current) return;
 
-    isInitialScrollScheduledRef.current = true;
-    InteractionManager.runAfterInteractions(() => {
-      requestAnimationFrame(() => {
-        flatListRef.current?.scrollToEnd({ animated: false });
-        hasScrolledToLatestOnOpenRef.current = true;
-        isInitialScrollScheduledRef.current = false;
-      });
+    requestAnimationFrame(() => {
+      flatListRef.current?.scrollToEnd({ animated: false });
+      // 첫 스크롤 뒤 한 프레임 더 실행해 이미지·날짜 구분선 렌더링 이후에도 최신 위치를 보장한다.
+      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: false }));
+      hasScrolledToLatestOnOpenRef.current = true;
     });
   }, []);
 
@@ -111,6 +106,7 @@ export default function ChatRoomScreen() {
       utils.chats.list.invalidate();
       setInputText("");
       scrollToLatest(true);
+      requestAnimationFrame(() => inputRef.current?.focus());
     },
     onError: (err) => {
       Alert.alert("오류", err.message);
@@ -129,7 +125,6 @@ export default function ChatRoomScreen() {
   // 이후 폴링으로 목록이 갱신돼도 위로 올려 본 이전 대화 위치는 유지한다.
   useEffect(() => {
     hasScrolledToLatestOnOpenRef.current = false;
-    isInitialScrollScheduledRef.current = false;
   }, [roomId]);
 
   useEffect(() => {
@@ -148,7 +143,12 @@ export default function ChatRoomScreen() {
     setIsSending(true);
     sendMutation.mutate(
       { roomId, content: text },
-      { onSettled: () => setIsSending(false) }
+      {
+        onSettled: () => {
+          setIsSending(false);
+          requestAnimationFrame(() => inputRef.current?.focus());
+        },
+      }
     );
   }, [inputText, isSending, roomId, sendMutation]);
 
@@ -454,6 +454,7 @@ export default function ChatRoomScreen() {
 
           {/* 텍스트 입력 */}
           <TextInput
+            ref={inputRef}
             style={[styles.textInput, {
               backgroundColor: colors.surface,
               color: colors.foreground,
@@ -465,6 +466,7 @@ export default function ChatRoomScreen() {
             value={inputText}
             onChangeText={setInputText}
             multiline
+            blurOnSubmit={false}
             maxLength={1000}
             returnKeyType="default"
           />

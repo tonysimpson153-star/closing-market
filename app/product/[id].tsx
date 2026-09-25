@@ -29,7 +29,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const router = useRouter();
   const { token, user } = useAuthStore();
@@ -38,7 +38,12 @@ export default function ProductDetailScreen() {
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState<number | null>(null);
+  const [fullscreenViewportHeight, setFullscreenViewportHeight] = useState(screenHeight);
   const productImageHeight = Math.min(Math.max(Math.round(screenWidth * 0.9), 320), 420);
+
+  useEffect(() => {
+    setFullscreenViewportHeight(screenHeight);
+  }, [screenHeight]);
 
   const { data: product, isLoading } = trpc.products.detail.useQuery(
     { id: productId },
@@ -395,9 +400,11 @@ export default function ProductDetailScreen() {
           {fullscreenImageIndex !== null && (
             <FlatList
               data={images}
+              style={styles.fullscreenList}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              onLayout={(event) => setFullscreenViewportHeight(event.nativeEvent.layout.height)}
               initialScrollIndex={fullscreenImageIndex}
               getItemLayout={(_, index) => ({ length: screenWidth, offset: screenWidth * index, index })}
               onMomentumScrollEnd={(e) => {
@@ -406,7 +413,7 @@ export default function ProductDetailScreen() {
               }}
               keyExtractor={(uri, index) => `${uri}-${index}`}
               renderItem={({ item: uri }) => (
-                <View style={{ width: screenWidth, flex: 1, justifyContent: "center" }}>
+                <View style={{ width: screenWidth, height: fullscreenViewportHeight, justifyContent: "center" }}>
                   <Image source={{ uri }} style={styles.fullscreenImage} resizeMode="contain" />
                 </View>
               )}
@@ -472,6 +479,9 @@ const styles = StyleSheet.create({
   fullscreenImage: {
     width: "100%",
     height: "100%",
+  },
+  fullscreenList: {
+    flex: 1,
   },
   fullscreenHint: {
     color: "rgba(255, 255, 255, 0.8)",
