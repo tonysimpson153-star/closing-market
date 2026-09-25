@@ -19,6 +19,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
+import type { ChatMessage } from "@/drizzle/schema";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
@@ -39,6 +40,24 @@ function isSameDay(a: Date | string, b: Date | string) {
   return da.getFullYear() === db.getFullYear() &&
     da.getMonth() === db.getMonth() &&
     da.getDate() === db.getDate();
+}
+
+function createOptimisticMessage(
+  roomId: number,
+  senderId: number,
+  temporaryId: number,
+  content?: string,
+  imageUrl?: string,
+): ChatMessage {
+  return {
+    id: temporaryId,
+    roomId,
+    senderId,
+    content: content ?? null,
+    imageUrl: imageUrl ?? null,
+    isRead: false,
+    createdAt: new Date(),
+  };
 }
 
 export default function ChatRoomScreen() {
@@ -101,15 +120,51 @@ export default function ChatRoomScreen() {
 
   // 메시지 전송
   const sendMutation = trpc.chats.send.useMutation({
-    onSuccess: () => {
-      utils.chats.messages.invalidate({ roomId });
-      utils.chats.list.invalidate();
-      setInputText("");
+    onMutate: async (input) => {
+      const queryInput = { roomId: input.roomId, limit: 100 };
+      await utils.chats.messages.cancel(queryInput);
+
+      const temporaryId = -Date.now();
+      const optimisticMessage = createOptimisticMessage(
+        input.roomId,
+        user?.id ?? 0,
+        temporaryId,
+        input.content,
+        input.imageUrl,
+      );
+
+      utils.chats.messages.setData(queryInput, (current) => [
+        ...(current ?? []),
+        optimisticMessage,
+      ]);
       scrollToLatest(true);
-      requestAnimationFrame(() => inputRef.current?.focus());
+
+      return { queryInput, temporaryId };
     },
-    onError: (err) => {
+    onSuccess: (message, _input, context) => {
+      if (!context) return;
+
+      utils.chats.messages.setData(context.queryInput, (current) => [
+        ...(current ?? []).filter((item) => item.id !== context.temporaryId && item.id !== message.id),
+        message,
+      ]);
+      scrollToLatest(true);
+    },
+    onError: (err, input, context) => {
+      if (context) {
+        utils.chats.messages.setData(context.queryInput, (current) =>
+          (current ?? []).filter((item) => item.id !== context.temporaryId),
+        );
+      }
+      if (input.content) {
+        setInputText((current) => current || input.content || "");
+      }
+      requestAnimationFrame(() => inputRef.current?.focus());
       Alert.alert("오류", err.message);
+    },
+    onSettled: (_message, _error, input) => {
+      utils.chats.messages.invalidate({ roomId: input.roomId, limit: 100 });
+      utils.chats.list.invalidate();
     },
   });
 
@@ -139,18 +194,13 @@ export default function ChatRoomScreen() {
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
-    if (!text || isSending) return;
-    setIsSending(true);
-    sendMutation.mutate(
-      { roomId, content: text },
-      {
-        onSettled: () => {
-          setIsSending(false);
-          requestAnimationFrame(() => inputRef.current?.focus());
-        },
-      }
-    );
-  }, [inputText, isSending, roomId, sendMutation]);
+    if (!text) return;
+
+    // 네트워크 응답을 기다리지 않고 입력칸을 비운 뒤, 키보드 포커스를 그대로 유지한다.
+    setInputText("");
+    sendMutation.mutate({ roomId, content: text });
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [inputText, roomId, sendMutation]);
 
   const uploadImageMutation = trpc.upload.chatImage.useMutation();
 
@@ -485,13 +535,9 @@ export default function ChatRoomScreen() {
               },
             ]}
             onPress={handleSend}
-            disabled={isSending || !inputText.trim()}
+            disabled={!inputText.trim()}
           >
-            {isSending ? (
-              <ActivityIndicator size="small" color="#000000" />
-            ) : (
-              <IconSymbol name="paperplane.fill" size={18} color="#000000" />
-            )}
+            <IconSymbol name="paperplane.fill" size={18} color="#000000" />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
