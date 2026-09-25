@@ -70,17 +70,9 @@ export default function ChatRoomScreen() {
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
 
   const utils = trpc.useUtils();
-
-  const scrollToLatest = useCallback((animated: boolean) => {
-    requestAnimationFrame(() => {
-      // inverted FlatList의 offset 0은 항상 가장 최근 메시지 위치다.
-      flatListRef.current?.scrollToOffset({ offset: 0, animated });
-    });
-  }, []);
 
   // 채팅방 정보
   const { data: room, isLoading: roomLoading } = trpc.chats.room.useQuery(
@@ -129,7 +121,6 @@ export default function ChatRoomScreen() {
         ...(current ?? []),
         optimisticMessage,
       ]);
-      scrollToLatest(true);
 
       return { queryInput, temporaryId };
     },
@@ -140,7 +131,6 @@ export default function ChatRoomScreen() {
         ...(current ?? []).filter((item) => item.id !== context.temporaryId && item.id !== message.id),
         message,
       ]);
-      scrollToLatest(true);
     },
     onError: (err, input, context) => {
       if (context) {
@@ -398,10 +388,13 @@ export default function ChatRoomScreen() {
       >
 
         <FlatList
-          ref={flatListRef}
           data={displayMessages}
           inverted
           keyExtractor={(item) => item.id.toString()}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 0,
+          }}
           contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
