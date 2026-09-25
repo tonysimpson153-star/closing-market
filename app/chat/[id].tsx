@@ -73,6 +73,7 @@ export default function ChatRoomScreen() {
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   const hasScrolledToLatestOnOpenRef = useRef(false);
+  const initialScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -85,12 +86,18 @@ export default function ChatRoomScreen() {
   const scrollToInitialLatest = useCallback(() => {
     if (hasScrolledToLatestOnOpenRef.current) return;
 
-    requestAnimationFrame(() => {
-      flatListRef.current?.scrollToEnd({ animated: false });
-      // 첫 스크롤 뒤 한 프레임 더 실행해 이미지·날짜 구분선 렌더링 이후에도 최신 위치를 보장한다.
-      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: false }));
-      hasScrolledToLatestOnOpenRef.current = true;
-    });
+    // FlatList는 메시지를 나누어 그리므로, 마지막 콘텐츠 크기 변경 뒤에만 맨 아래로 이동한다.
+    if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
+    initialScrollTimerRef.current = setTimeout(() => {
+      requestAnimationFrame(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+        requestAnimationFrame(() => {
+          flatListRef.current?.scrollToEnd({ animated: false });
+          hasScrolledToLatestOnOpenRef.current = true;
+          initialScrollTimerRef.current = null;
+        });
+      });
+    }, 250);
   }, []);
 
   // 채팅방 정보
@@ -180,6 +187,11 @@ export default function ChatRoomScreen() {
   // 이후 폴링으로 목록이 갱신돼도 위로 올려 본 이전 대화 위치는 유지한다.
   useEffect(() => {
     hasScrolledToLatestOnOpenRef.current = false;
+    if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
+
+    return () => {
+      if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
+    };
   }, [roomId]);
 
   useEffect(() => {
