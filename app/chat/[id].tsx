@@ -93,11 +93,14 @@ export default function ChatRoomScreen() {
         flatListRef.current?.scrollToEnd({ animated: false });
         requestAnimationFrame(() => {
           flatListRef.current?.scrollToEnd({ animated: false });
-          hasScrolledToLatestOnOpenRef.current = true;
-          initialScrollTimerRef.current = null;
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: false });
+            hasScrolledToLatestOnOpenRef.current = true;
+            initialScrollTimerRef.current = null;
+          }, 100);
         });
       });
-    }, 250);
+    }, 450);
   }, []);
 
   // 채팅방 정보
@@ -427,10 +430,15 @@ export default function ChatRoomScreen() {
           ref={flatListRef}
           data={messages ?? []}
           keyExtractor={(item) => item.id.toString()}
+          disableVirtualization
+          removeClippedSubviews={false}
           initialNumToRender={Math.max(messages?.length ?? 0, 10)}
           maxToRenderPerBatch={Math.max(messages?.length ?? 0, 10)}
           windowSize={Math.max(messages?.length ?? 0, 21)}
           contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+          onLayout={() => {
+            if (messages?.length) scrollToInitialLatest();
+          }}
           onContentSizeChange={() => {
             if (messages?.length) scrollToInitialLatest();
           }}
