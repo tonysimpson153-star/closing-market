@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  InteractionManager,
   Platform,
   StyleSheet,
 } from "react-native";
@@ -52,8 +53,31 @@ export default function ChatRoomScreen() {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const hasScrolledToLatestOnOpenRef = useRef(false);
+  const isInitialScrollScheduledRef = useRef(false);
 
   const utils = trpc.useUtils();
+
+  const scrollToLatest = useCallback((animated: boolean) => {
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        flatListRef.current?.scrollToEnd({ animated });
+      });
+    });
+  }, []);
+
+  const scrollToInitialLatest = useCallback(() => {
+    if (hasScrolledToLatestOnOpenRef.current || isInitialScrollScheduledRef.current) return;
+
+    isInitialScrollScheduledRef.current = true;
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+        hasScrolledToLatestOnOpenRef.current = true;
+        isInitialScrollScheduledRef.current = false;
+      });
+    });
+  }, []);
 
   // 채팅방 정보
   const { data: room, isLoading: roomLoading } = trpc.chats.room.useQuery(
@@ -86,7 +110,7 @@ export default function ChatRoomScreen() {
       utils.chats.messages.invalidate({ roomId });
       utils.chats.list.invalidate();
       setInputText("");
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      scrollToLatest(true);
     },
     onError: (err) => {
       Alert.alert("오류", err.message);
@@ -101,13 +125,22 @@ export default function ChatRoomScreen() {
     },
   });
 
-  // 새 메시지 도착 시 읽음 처리 및 스크롤
+  // 방에 처음 들어올 때만 최신 메시지로 이동한다.
+  // 이후 폴링으로 목록이 갱신돼도 위로 올려 본 이전 대화 위치는 유지한다.
   useEffect(() => {
-    if (messages && messages.length > 0) {
+    hasScrolledToLatestOnOpenRef.current = false;
+    isInitialScrollScheduledRef.current = false;
+  }, [roomId]);
+
+  useEffect(() => {
+    const hasUnreadIncomingMessage = messages?.some(
+      (message) => message.senderId !== user?.id && !message.isRead,
+    );
+
+    if (hasUnreadIncomingMessage) {
       markReadMutation.mutate({ roomId });
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: false }), 50);
     }
-  }, [messages?.length, markReadMutation, roomId]);
+  }, [messages, markReadMutation, roomId, user?.id]);
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
@@ -117,7 +150,7 @@ export default function ChatRoomScreen() {
       { roomId, content: text },
       { onSettled: () => setIsSending(false) }
     );
-  }, [inputText, isSending, roomId]);
+  }, [inputText, isSending, roomId, sendMutation]);
 
   const uploadImageMutation = trpc.upload.chatImage.useMutation();
 
@@ -155,7 +188,7 @@ export default function ChatRoomScreen() {
     } finally {
       setIsSending(false);
     }
-  }, [roomId]);
+  }, [roomId, sendMutation, uploadImageMutation]);
 
   const handleTradeAction = () => {
     Alert.alert(
@@ -333,7 +366,9 @@ export default function ChatRoomScreen() {
           data={messages ?? []}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          onContentSizeChange={() => {
+            if (messages?.length) scrollToInitialLatest();
+          }}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
               <LucideIcon name="message-circle" size={32} color={colors.muted} strokeWidth={1.5} />

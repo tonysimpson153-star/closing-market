@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share, useWindowDimensions} from "react-native";
+import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, StyleSheet, Share, useWindowDimensions, Modal, FlatList} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -37,9 +37,10 @@ export default function ProductDetailScreen() {
   const productId = Number(id);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState<number | null>(null);
+  const productImageHeight = Math.min(Math.max(Math.round(screenWidth * 0.9), 320), 420);
 
-  const { data: product, isLoading, refetch } = trpc.products.detail.useQuery(
+  const { data: product, isLoading } = trpc.products.detail.useQuery(
     { id: productId },
     { enabled: !!productId }
   );
@@ -122,20 +123,10 @@ export default function ProductDetailScreen() {
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
-              </View>
-
-      {/* 사진 확대보기 */}
-      {fullscreenImage && (
-        <Pressable
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000F0", justifyContent: "center", alignItems: "center", zIndex: 999 }}
-          onPress={() => setFullscreenImage(null)}
-        >
-          <Image source={{ uri: fullscreenImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
-        </Pressable>
-      )}
-    </ScreenContainer>
-  );
-}
+        </View>
+      </ScreenContainer>
+    );
+  }
 
 
   if (!product) {
@@ -213,10 +204,15 @@ export default function ProductDetailScreen() {
                 }}
               >
                 {images.map((uri: string, index: number) => (
-                  <Pressable key={index} onPress={() => setFullscreenImage(uri)}>
+                  <Pressable
+                    key={index}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${index + 1}번 상품 사진 크게 보기`}
+                    onPress={() => setFullscreenImageIndex(index)}
+                  >
                     <Image
                       source={{ uri }}
-                      style={{ width: screenWidth, height: 280 }}
+                      style={{ width: screenWidth, height: productImageHeight }}
                       resizeMode="cover"
                     />
                   </Pressable>
@@ -236,9 +232,13 @@ export default function ProductDetailScreen() {
                   ))}
                 </View>
               )}
+              <View pointerEvents="none" style={styles.imageExpandHint}>
+                <LucideIcon name="maximize" size={15} color="#FFFFFF" strokeWidth={2} />
+                <Text style={styles.imageExpandHintText}>사진 크게 보기</Text>
+              </View>
             </>
           ) : (
-            <View style={{ width: "100%", height: 280, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: "100%", height: productImageHeight, alignItems: "center", justifyContent: "center" }}>
               <LucideIcon name="image" size={40} color={colors.muted} strokeWidth={1.5} />
             </View>
           )}
@@ -276,7 +276,7 @@ export default function ProductDetailScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/seller/profile" as any,
-                  params: { userId: String(product.sellerId), userName: product.sellerName ?? "판매자" },
+                  params: { userId: String(product.userId), userName: product.sellerName ?? "판매자" },
                 })
               }
             >
@@ -293,7 +293,7 @@ export default function ProductDetailScreen() {
                 <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
                   {product.sellerName ?? "판매자"}
                 </Text>
-                {product.sellerIsVerified && (
+                {product.isSellerVerified && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
                     <LucideIcon name="check-circle" size={11} color={colors.primary} strokeWidth={2} />
                     <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "600" }}>인증판매자</Text>
@@ -369,6 +369,57 @@ export default function ProductDetailScreen() {
           </>
         )}
       </View>
+
+      <Modal
+        visible={fullscreenImageIndex !== null}
+        transparent={false}
+        animationType="fade"
+        onRequestClose={() => setFullscreenImageIndex(null)}
+        statusBarTranslucent
+      >
+        <View style={styles.fullscreenViewer}>
+          <View style={[styles.fullscreenHeader, { paddingTop: Math.max(insets.top, 18) }]}>
+            <Text style={styles.fullscreenCounter}>
+              {(fullscreenImageIndex ?? 0) + 1} / {images.length}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="사진 전체보기 닫기"
+              style={({ pressed }) => [styles.fullscreenCloseButton, { opacity: pressed ? 0.65 : 1 }]}
+              onPress={() => setFullscreenImageIndex(null)}
+            >
+              <LucideIcon name="x" size={26} color="#FFFFFF" strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          {fullscreenImageIndex !== null && (
+            <FlatList
+              data={images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={fullscreenImageIndex}
+              getItemLayout={(_, index) => ({ length: screenWidth, offset: screenWidth * index, index })}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+                setFullscreenImageIndex(index);
+              }}
+              keyExtractor={(uri, index) => `${uri}-${index}`}
+              renderItem={({ item: uri }) => (
+                <View style={{ width: screenWidth, flex: 1, justifyContent: "center" }}>
+                  <Image source={{ uri }} style={styles.fullscreenImage} resizeMode="contain" />
+                </View>
+              )}
+            />
+          )}
+
+          {images.length > 1 && (
+            <Text style={[styles.fullscreenHint, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+              좌우로 넘겨서 모든 사진을 볼 수 있어요
+            </Text>
+          )}
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -376,6 +427,58 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
   imageArea: {
     width: "100%",
+  },
+  imageExpandHint: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.58)",
+  },
+  imageExpandHintText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  fullscreenViewer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  fullscreenHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    paddingBottom: 10,
+  },
+  fullscreenCounter: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  fullscreenCloseButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullscreenImage: {
+    width: "100%",
+    height: "100%",
+  },
+  fullscreenHint: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingTop: 16,
   },
   favBtn: {
     flexDirection: "row",
