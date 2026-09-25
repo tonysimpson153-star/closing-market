@@ -277,7 +277,7 @@ var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
 
 // server/db.ts
 init_env();
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
@@ -1552,6 +1552,7 @@ async function savePushToken(userId, token) {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+    await db.update(users).set({ expoPushToken: null }).where(and(eq(users.expoPushToken, token), ne(users.id, userId)));
     await db.update(users).set({ expoPushToken: token }).where(eq(users.id, userId));
     return true;
   } catch (error) {

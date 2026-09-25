@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
@@ -1661,6 +1661,14 @@ export async function savePushToken(userId: number, token: string) {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+
+    // 하나의 휴대폰 토큰은 현재 로그인한 계정 하나에만 연결한다.
+    // 계정을 바꾼 뒤 이전 계정 채팅 알림이 같은 폰으로 오는 것을 막는다.
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(and(eq(users.expoPushToken, token), ne(users.id, userId)));
+
     await db
       .update(users)
       .set({ expoPushToken: token })

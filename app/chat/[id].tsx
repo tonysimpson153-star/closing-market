@@ -12,7 +12,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LucideIcon } from "@/components/ui/icon-lucide";
@@ -72,35 +72,14 @@ export default function ChatRoomScreen() {
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
-  const hasScrolledToLatestOnOpenRef = useRef(false);
-  const initialScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const utils = trpc.useUtils();
 
   const scrollToLatest = useCallback((animated: boolean) => {
     requestAnimationFrame(() => {
-      flatListRef.current?.scrollToEnd({ animated });
+      // inverted FlatList의 offset 0은 항상 가장 최근 메시지 위치다.
+      flatListRef.current?.scrollToOffset({ offset: 0, animated });
     });
-  }, []);
-
-  const scrollToInitialLatest = useCallback(() => {
-    if (hasScrolledToLatestOnOpenRef.current) return;
-
-    // FlatList는 메시지를 나누어 그리므로, 마지막 콘텐츠 크기 변경 뒤에만 맨 아래로 이동한다.
-    if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
-    initialScrollTimerRef.current = setTimeout(() => {
-      requestAnimationFrame(() => {
-        flatListRef.current?.scrollToEnd({ animated: false });
-        requestAnimationFrame(() => {
-          flatListRef.current?.scrollToEnd({ animated: false });
-          setTimeout(() => {
-            flatListRef.current?.scrollToEnd({ animated: false });
-            hasScrolledToLatestOnOpenRef.current = true;
-            initialScrollTimerRef.current = null;
-          }, 100);
-        });
-      });
-    }, 450);
   }, []);
 
   // 채팅방 정보
@@ -117,6 +96,9 @@ export default function ChatRoomScreen() {
       refetchInterval: 3000,
     }
   );
+  // FlatList를 inverted로 사용하면 첫 화면이 항상 아래(최신 메시지)에 고정된다.
+  // 서버 응답은 오래된 순서이므로 렌더링용 배열만 뒤집는다.
+  const displayMessages = useMemo(() => [...(messages ?? [])].reverse(), [messages]);
 
   // 읽음 처리
   const markReadMutation = trpc.chats.markRead.useMutation({
@@ -185,17 +167,6 @@ export default function ChatRoomScreen() {
       Alert.alert("완료", "거래 상태가 변경되었습니다.");
     },
   });
-
-  // 방에 처음 들어올 때만 최신 메시지로 이동한다.
-  // 이후 폴링으로 목록이 갱신돼도 위로 올려 본 이전 대화 위치는 유지한다.
-  useEffect(() => {
-    hasScrolledToLatestOnOpenRef.current = false;
-    if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
-
-    return () => {
-      if (initialScrollTimerRef.current) clearTimeout(initialScrollTimerRef.current);
-    };
-  }, [roomId]);
 
   useEffect(() => {
     const hasUnreadIncomingMessage = messages?.some(
@@ -428,20 +399,10 @@ export default function ChatRoomScreen() {
 
         <FlatList
           ref={flatListRef}
-          data={messages ?? []}
+          data={displayMessages}
+          inverted
           keyExtractor={(item) => item.id.toString()}
-          disableVirtualization
-          removeClippedSubviews={false}
-          initialNumToRender={Math.max(messages?.length ?? 0, 10)}
-          maxToRenderPerBatch={Math.max(messages?.length ?? 0, 10)}
-          windowSize={Math.max(messages?.length ?? 0, 21)}
-          contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
-          onLayout={() => {
-            if (messages?.length) scrollToInitialLatest();
-          }}
-          onContentSizeChange={() => {
-            if (messages?.length) scrollToInitialLatest();
-          }}
+          contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
               <LucideIcon name="message-circle" size={32} color={colors.muted} strokeWidth={1.5} />
@@ -452,8 +413,8 @@ export default function ChatRoomScreen() {
           }
           renderItem={({ item, index }) => {
             const isMine = item.senderId === myId;
-            const prevMsg = messages?.[index - 1];
-            const showDate = !prevMsg || !isSameDay(prevMsg.createdAt, item.createdAt);
+            const olderMessage = displayMessages[index + 1];
+            const showDate = !olderMessage || !isSameDay(olderMessage.createdAt, item.createdAt);
 
             return (
               <View>
