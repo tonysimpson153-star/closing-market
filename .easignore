@@ -1,0 +1,18 @@
+# Source-control metadata and local tooling
+.git
+.node_modules
+node_modules
+
+# Expo and development caches
+.expo
+.manus-logs
+
+# Generated build outputs
+dist
+android
+ios
+coverage
+
+# Local logs and editor files
+*.log
+.DS_Store

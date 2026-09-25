@@ -22,5 +22,12 @@
         "EXPO_PUBLIC_API_BASE_URL": "https://closing-market.onrender.com"
       }
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6802008480"
+      }
+    }
   }
 }

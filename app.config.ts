@@ -110,6 +110,7 @@ const config: ExpoConfig = {
     "expo-font",
     "expo-web-browser",
     "expo-apple-authentication",
+    "./plugins/with-kakao-maven-repository.cjs",
     [
       "expo-audio",
       {
