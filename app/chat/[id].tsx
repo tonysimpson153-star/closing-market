@@ -365,6 +365,9 @@ export default function ChatRoomScreen() {
           ref={flatListRef}
           data={messages ?? []}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={Math.max(messages?.length ?? 0, 10)}
+          maxToRenderPerBatch={Math.max(messages?.length ?? 0, 10)}
+          windowSize={Math.max(messages?.length ?? 0, 21)}
           contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
           onContentSizeChange={() => {
             if (messages?.length) scrollToInitialLatest();
