@@ -281,6 +281,11 @@ export const appRouter = router({
         await db.savePushToken(ctx.user.id, input.token);
         return { success: true };
       }),
+
+    removePushToken: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.removePushToken(ctx.user.id);
+      return { success: true };
+    }),
   }),
 
   // ─── 사용자 설정 ───

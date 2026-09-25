@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
@@ -1670,6 +1670,13 @@ export async function savePushToken(userId: number, token: string) {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+
+    // A device token belongs to the currently signed-in account only.
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(and(eq(users.expoPushToken, token), ne(users.id, userId)));
+
     await db
       .update(users)
       .set({ expoPushToken: token })
@@ -1677,6 +1684,21 @@ export async function savePushToken(userId: number, token: string) {
     return true;
   } catch (error) {
     console.error("푸시 토큰 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function removePushToken(userId: number) {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("푸시 토큰 삭제 실패:", error);
     return false;
   }
 }
