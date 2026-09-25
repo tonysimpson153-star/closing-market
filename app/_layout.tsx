@@ -37,6 +37,7 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+  const authToken = useAuthStore((state) => state.token);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
@@ -60,8 +61,7 @@ export default function RootLayout() {
 
         // 기기 토큰 가져오기 및 서버에 등록
         const deviceToken = await getDeviceToken();
-        const { token } = useAuthStore.getState();
-        if (deviceToken && token) {
+        if (deviceToken && authToken) {
           try {
             const client = createTRPCClient();
             await client.auth.savePushToken.mutate({ token: deviceToken });
@@ -76,11 +76,14 @@ export default function RootLayout() {
     };
 
     setupNotifications();
-  }, []);
+  }, [authToken]);
 
   // 포그라운드 알림 핸들러
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
+      // 로그아웃된 상태에서는 이전 계정의 지연 도착 알림을 다시 표시하지 않는다.
+      if (!useAuthStore.getState().token) return;
+
       const data = notification.request.content.data;
       if (data.type === "chat_message" && data.senderName && data.messagePreview) {
         sendChatNotification(

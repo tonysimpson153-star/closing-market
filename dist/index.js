@@ -1559,6 +1559,17 @@ async function savePushToken(userId, token) {
     return false;
   }
 }
+async function removePushToken(userId) {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db.update(users).set({ expoPushToken: null }).where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("\uD478\uC2DC \uD1A0\uD070 \uC0AD\uC81C \uC2E4\uD328:", error);
+    return false;
+  }
+}
 async function updateNotificationSettings(userId, data) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2707,6 +2718,10 @@ var appRouter = router({
       token: z.string()
     })).mutation(async ({ ctx, input }) => {
       await savePushToken(ctx.user.id, input.token);
+      return { success: true };
+    }),
+    removePushToken: protectedProcedure.mutation(async ({ ctx }) => {
+      await removePushToken(ctx.user.id);
       return { success: true };
     })
   }),

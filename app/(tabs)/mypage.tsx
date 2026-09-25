@@ -7,6 +7,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
+import { clearDeviceNotifications } from "@/lib/chat-notifications";
 
 const BASE_MENU_ITEMS = [
   { id: "products", label: "내 상품", icon: "tag.fill" as const },
@@ -42,6 +43,7 @@ export default function MyPageScreen() {
   const { data: sellerApplication } = trpc.seller.myApplication.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const removePushTokenMutation = trpc.auth.removePushToken.useMutation();
 
   const isVerifiedSeller = sellerProfile?.isVerified && sellerProfile?.sellerStatus === "approved";
   const isPendingSeller = sellerProfile?.sellerStatus === "pending";
@@ -50,13 +52,24 @@ export default function MyPageScreen() {
 
   const MENU_ITEMS = isApprovedCompany ? [...COMPANY_MENU_ITEMS, ...BASE_MENU_ITEMS] : BASE_MENU_ITEMS;
 
+  const completeLogout = async () => {
+    if (Platform.OS !== "web") {
+      // 인증 정보가 지워지기 전에 서버 토큰과 기기 알림·배지를 함께 해제한다.
+      await Promise.allSettled([
+        removePushTokenMutation.mutateAsync(),
+        clearDeviceNotifications(),
+      ]);
+    }
+
+    await clearAuth();
+    queryClient.clear();
+    router.replace("/" as any);
+  };
+
   const handleLogout = () => {
     if (Platform.OS === "web") {
       if (window.confirm("정말 로그아웃하시겠습니까?")) {
-        clearAuth().then(() => {
-          queryClient.clear();
-          router.replace("/" as any);
-        });
+        void completeLogout();
       }
       return;
     }
@@ -66,9 +79,7 @@ export default function MyPageScreen() {
         text: "로그아웃",
         style: "destructive",
         onPress: async () => {
-          await clearAuth();
-          queryClient.clear();
-          router.replace("/" as any);
+          await completeLogout();
         },
       },
     ]);
@@ -469,11 +480,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 10,
   },
-    actionButtonsContainer: {
-    paddingHorizontal: 16,
-    marginTop: 16,
-    gap: 10,
-  },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -482,10 +488,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 8,
   },
-  actionButtonIcon: {
-    fontSize: 18,
-  },
-
   actionButtonIcon: {
     fontSize: 18,
   },

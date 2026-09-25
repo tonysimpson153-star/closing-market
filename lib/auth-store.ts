@@ -9,6 +9,7 @@ export interface AuthUser {
   isVerified: boolean;
   sellerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
   companyStatus?: "pending" | "approved" | "rejected" | "suspended" | null;
+  companyRejectionReason?: string | null;
   profileImageUrl: string | null;
   phone?: string | null;
   loginMethod?: string | null;

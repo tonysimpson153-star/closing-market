@@ -1672,6 +1672,21 @@ export async function savePushToken(userId: number, token: string) {
   }
 }
 
+export async function removePushToken(userId: number) {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("푸시 토큰 삭제 실패:", error);
+    return false;
+  }
+}
+
 export async function updateNotificationSettings(userId: number, data: {
   notifChat?: boolean;
   notifPriceDrop?: boolean;

@@ -52,6 +52,16 @@ export async function sendChatNotification(
   }
 }
 
+// 로그아웃·계정 전환 시 이전 계정의 알림과 앱 배지를 기기에서 지운다.
+export async function clearDeviceNotifications() {
+  try {
+    await Notifications.dismissAllNotificationsAsync();
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    console.error("기기 알림 정리 실패:", error);
+  }
+}
+
 // 기기 토큰 가져오기 (FCM용)
 export async function getDeviceToken(): Promise<string | null> {
   try {
