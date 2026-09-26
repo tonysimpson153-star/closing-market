@@ -47,15 +47,6 @@ export default function CompaniesEntryScreen() {
             description="업종별 업체를 직접 살펴보고, 필요한 업체를 하나씩 비교해 보세요."
             onPress={() => router.push("/company/directory" as any)}
           />
-          <SearchModeCard
-            colors={colors}
-            icon="layers"
-            eyebrow="여러 분야 함께 보기"
-            title="통합찾기"
-            description="창업과 사업 정리에 필요한 업체를 한곳에서 찾아보세요."
-            featured
-            onPress={() => router.push("/company/integrated" as any)}
-          />
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -68,7 +59,6 @@ type SearchModeCardProps = {
   eyebrow: string;
   title: string;
   description: string;
-  featured?: boolean;
   onPress: () => void;
 };
 
@@ -78,7 +68,6 @@ function SearchModeCard({
   eyebrow,
   title,
   description,
-  featured = false,
   onPress,
 }: SearchModeCardProps) {
   return (
@@ -88,8 +77,8 @@ function SearchModeCard({
         minHeight: 236,
         borderRadius: 22,
         borderWidth: 1,
-        borderColor: featured ? colors.primary + "70" : colors.border,
-        backgroundColor: featured ? colors.primary + "0A" : colors.surface,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
         padding: 28,
         opacity: pressed ? 0.82 : 1,
       })}
@@ -102,15 +91,15 @@ function SearchModeCard({
             borderRadius: 17,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: featured ? colors.primary : colors.background,
-            borderWidth: featured ? 0 : 1,
+            backgroundColor: colors.background,
+            borderWidth: 1,
             borderColor: colors.border,
           }}
         >
           <LucideIcon
             name={icon}
             size={30}
-            color={featured ? "#FFFFFF" : colors.primary}
+            color={colors.primary}
             strokeWidth={1.8}
           />
         </View>
