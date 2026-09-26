@@ -12,6 +12,7 @@ dist
 android
 ios
 coverage
+releases
 
 # Local logs and editor files
 *.log
