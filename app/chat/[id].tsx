@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   StyleSheet,
 } from "react-native";
@@ -60,6 +61,13 @@ function createOptimisticMessage(
   };
 }
 
+type PendingChatImage = {
+  uri: string;
+  base64: string;
+  mimeType?: string | null;
+  fileName?: string | null;
+};
+
 function ChatInputLayout({ children }: { children: React.ReactNode }) {
   // 웹 미리보기와 Android는 화면 자체가 resize되므로 별도 보정을 하면 입력창이 두 번 움직인다.
   if (Platform.OS !== "ios") {
@@ -83,6 +91,8 @@ export default function ChatRoomScreen() {
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [pendingChatImage, setPendingChatImage] = useState<PendingChatImage | null>(null);
+  const [fullscreenChatImage, setFullscreenChatImage] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   const utils = trpc.useUtils();
@@ -213,21 +223,35 @@ export default function ChatRoomScreen() {
       return;
     }
 
+    // 갤러리에서 고른 즉시 전송하지 않고, 미리보기에서 사용자가 전송을 확정한다.
+    setPendingChatImage({
+      uri: asset.uri,
+      base64: asset.base64,
+      mimeType: asset.mimeType,
+      fileName: asset.fileName,
+    });
+  }, []);
+
+  const handleSendPendingImage = useCallback(async () => {
+    if (!pendingChatImage || isSending) return;
+
     try {
       setIsSending(true);
       const uploadResult = await uploadImageMutation.mutateAsync({
-        base64: asset.base64,
-        mimeType: asset.mimeType ?? "image/jpeg",
-        fileName: asset.fileName ?? "photo.jpg",
+        base64: pendingChatImage.base64,
+        mimeType: pendingChatImage.mimeType ?? "image/jpeg",
+        fileName: pendingChatImage.fileName ?? "photo.jpg",
       });
       sendMutation.mutate({ roomId, imageUrl: uploadResult.url });
+      setPendingChatImage(null);
     } catch {
       // 업로드 실패 시 로컬 URI로 전송 (오프라인 폴백)
-      sendMutation.mutate({ roomId, imageUrl: asset.uri });
+      sendMutation.mutate({ roomId, imageUrl: pendingChatImage.uri });
+      setPendingChatImage(null);
     } finally {
       setIsSending(false);
     }
-  }, [roomId, sendMutation, uploadImageMutation]);
+  }, [isSending, pendingChatImage, roomId, sendMutation, uploadImageMutation]);
 
   const handleTradeAction = () => {
     Alert.alert(
@@ -449,11 +473,18 @@ export default function ChatRoomScreen() {
                   <View style={[styles.msgContent, isMine ? styles.msgContentMine : styles.msgContentOther, { backgroundColor: isMine ? colors.primary : colors.surface, borderColor: isMine ? colors.primary : colors.border, borderWidth: 1 }]}>
                     {/* 이미지 메시지 */}
                     {item.imageUrl ? (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.msgImage}
-                        resizeMode="cover"
-                      />
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="채팅 사진 전체 화면으로 보기"
+                        style={({ pressed }) => [styles.chatImageButton, { opacity: pressed ? 0.82 : 1 }]}
+                        onPress={() => setFullscreenChatImage(item.imageUrl)}
+                      >
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.msgImage}
+                          resizeMode="cover"
+                        />
+                      </Pressable>
                     ) : (
                       <Text style={[
                         styles.msgText,
@@ -526,6 +557,68 @@ export default function ChatRoomScreen() {
           </Pressable>
         </View>
       </ChatInputLayout>
+
+      <Modal
+        visible={fullscreenChatImage !== null}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => setFullscreenChatImage(null)}
+        statusBarTranslucent
+      >
+        <View style={styles.fullscreenPhotoViewer}>
+          <View style={[styles.fullscreenPhotoHeader, { paddingTop: Math.max(insets.top, 18) }]}>
+            <Text style={styles.fullscreenPhotoTitle}>사진 전체 보기</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="사진 전체 보기 닫기"
+              style={({ pressed }) => [styles.fullscreenCloseButton, { opacity: pressed ? 0.65 : 1 }]}
+              onPress={() => setFullscreenChatImage(null)}
+            >
+              <LucideIcon name="x" size={26} color="#FFFFFF" strokeWidth={2} />
+            </Pressable>
+          </View>
+          {fullscreenChatImage ? (
+            <Image source={{ uri: fullscreenChatImage }} style={styles.fullscreenChatImage} resizeMode="contain" />
+          ) : null}
+        </View>
+      </Modal>
+
+      <Modal
+        visible={pendingChatImage !== null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => !isSending && setPendingChatImage(null)}
+      >
+        <View style={[styles.imagePreviewOverlay, { paddingTop: Math.max(insets.top, 24), paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={[styles.imagePreviewCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Text style={[styles.imagePreviewTitle, { color: colors.foreground }]}>선택한 사진</Text>
+            <Text style={[styles.imagePreviewDescription, { color: colors.muted }]}>확인 후 사진 보내기를 누르면 전송됩니다.</Text>
+            {pendingChatImage ? (
+              <Image source={{ uri: pendingChatImage.uri }} style={styles.imagePreview} resizeMode="contain" />
+            ) : null}
+            <View style={styles.imagePreviewActions}>
+              <Pressable
+                style={({ pressed }) => [styles.imagePreviewCancelButton, { borderColor: colors.border, opacity: pressed || isSending ? 0.6 : 1 }]}
+                onPress={() => setPendingChatImage(null)}
+                disabled={isSending}
+              >
+                <Text style={[styles.imagePreviewCancelText, { color: colors.foreground }]}>취소</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.imagePreviewSendButton, { backgroundColor: colors.primary, opacity: pressed || isSending ? 0.78 : 1 }]}
+                onPress={handleSendPendingImage}
+                disabled={isSending}
+              >
+                {isSending ? (
+                  <ActivityIndicator color="#000000" size="small" />
+                ) : (
+                  <Text style={styles.imagePreviewSendText}>사진 보내기</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -627,6 +720,10 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 10,
   },
+  chatImageButton: {
+    borderRadius: 10,
+    overflow: "hidden",
+  },
   msgMeta: {
     marginHorizontal: 6,
     alignItems: "center",
@@ -664,5 +761,89 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+  },
+  fullscreenPhotoViewer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  fullscreenPhotoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    paddingBottom: 10,
+  },
+  fullscreenPhotoTitle: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  fullscreenCloseButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullscreenChatImage: {
+    flex: 1,
+    width: "100%",
+  },
+  imagePreviewOverlay: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.68)",
+  },
+  imagePreviewCard: {
+    maxHeight: "100%",
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+  },
+  imagePreviewTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  imagePreviewDescription: {
+    fontSize: 13,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 340,
+    borderRadius: 12,
+    backgroundColor: "#000000",
+  },
+  imagePreviewActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
+  imagePreviewCancelButton: {
+    flex: 1,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  imagePreviewCancelText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  imagePreviewSendButton: {
+    flex: 1.25,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+  },
+  imagePreviewSendText: {
+    color: "#000000",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });
