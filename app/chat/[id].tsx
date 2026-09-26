@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -75,7 +76,7 @@ function ChatInputLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={100}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
       {children}
     </KeyboardAvoidingView>
   );
@@ -91,11 +92,24 @@ export default function ChatRoomScreen() {
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [pendingChatImage, setPendingChatImage] = useState<PendingChatImage | null>(null);
   const [fullscreenChatImage, setFullscreenChatImage] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+
+    const showSubscription = Keyboard.addListener("keyboardWillShow", () => setIsKeyboardOpen(true));
+    const hideSubscription = Keyboard.addListener("keyboardWillHide", () => setIsKeyboardOpen(false));
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // 채팅방 정보
   const { data: room, isLoading: roomLoading } = trpc.chats.room.useQuery(
@@ -511,7 +525,17 @@ export default function ChatRoomScreen() {
         />
 
         {/* 입력창 */}
-        <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom }]}>
+        <View
+          style={[
+            styles.inputBar,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+              // 키보드가 열린 iPhone에서는 안전 여백을 빼서 전송칸 하단을 키보드에 바로 붙인다.
+              paddingBottom: Platform.OS === "ios" && isKeyboardOpen ? 0 : insets.bottom,
+            },
+          ]}
+        >
           {/* 이미지 버튼 */}
           <Pressable
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
