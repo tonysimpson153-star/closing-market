@@ -397,6 +397,8 @@ export default function ChatRoomScreen() {
       <ChatInputLayout>
 
         <FlatList
+          // 목록이 남은 화면 높이를 모두 차지해야 입력창이 키보드 바로 위에 고정된다.
+          style={styles.messageList}
           data={displayMessages}
           inverted
           keyExtractor={(item) => item.id.toString()}
@@ -529,6 +531,9 @@ export default function ChatRoomScreen() {
 }
 
 const styles = StyleSheet.create({
+  messageList: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
