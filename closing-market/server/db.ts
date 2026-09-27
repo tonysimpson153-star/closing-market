@@ -1,4 +1,4 @@
-import { eq, ne, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, inArray, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
@@ -79,7 +79,13 @@ export async function getProducts(input?: {
 
   const conditions = [];
   if (input?.category) conditions.push(eq(products.category, input.category));
-  if (input?.status) conditions.push(eq(products.status, input.status));
+  // 공개 목록에서 '판매중' 필터는 예약중 매물도 함께 보여준다.
+  // 예약중은 거래 진행 상태일 뿐 등록 상품을 숨기면 안 된다.
+  if (input?.status === "selling") {
+    conditions.push(inArray(products.status, ["selling", "reserved"]));
+  } else if (input?.status) {
+    conditions.push(eq(products.status, input.status));
+  }
 
   const query = db
     .select()
