@@ -22,7 +22,7 @@ const CATEGORY_GROUPS: Array<{ id: string; label: string; icon: string; types: s
   { id: "consulting", label: "창업 컨설팅", icon: "trending-up", types: ["consulting"] },
 ];
 
-export default function CompanyDirectoryScreen() {
+export function CompanyDirectoryScreen({ showBackButton = true }: { showBackButton?: boolean }) {
   const colors = useColors();
   const router = useRouter();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -42,12 +42,14 @@ export default function CompanyDirectoryScreen() {
   return (
     <ScreenContainer edges={["top", "left", "right"]}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}>
-        <Pressable
-          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 12 }]}
-          onPress={() => router.back()}
-        >
-          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
-        </Pressable>
+        {showBackButton ? (
+          <Pressable
+            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1, marginRight: 12 }]}
+            onPress={() => router.back()}
+          >
+            <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
+          </Pressable>
+        ) : null}
         <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground, flex: 1, letterSpacing: 0.3 }}>
           업체 찾기
         </Text>
@@ -179,3 +181,5 @@ export default function CompanyDirectoryScreen() {
     </ScreenContainer>
   );
 }
+
+export default CompanyDirectoryScreen;
