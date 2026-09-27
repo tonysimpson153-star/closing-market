@@ -19,7 +19,6 @@ import { useColors } from "@/hooks/use-colors";
 import { LucideIcon } from "@/components/ui/icon-lucide";
 import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
-import { startOAuthLogin } from "@/constants/oauth";
 import * as AppleAuthentication from "expo-apple-authentication";
 
 export default function LoginScreen() {
@@ -341,7 +340,13 @@ export default function LoginScreen() {
               opacity: pressed ? 0.85 : 1,
             },
           ]}
-          onPress={() => startOAuthLogin()}
+          onPress={() => {
+            if (!agreedToTerms) {
+              Alert.alert("동의 필요", "이용약관 및 운영정책에 동의해주세요.");
+              return;
+            }
+            router.push("/auth/kakao" as any);
+          }}
         >
           <Text style={{ color: "#000000", fontWeight: "700", fontSize: 15 }}>
             카카오로 로그인

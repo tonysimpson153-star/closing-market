@@ -25,6 +25,7 @@ const bundleId =
 // e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
 const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
+const optionalEnv = (value: string | undefined) => value?.trim() || undefined;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
@@ -37,8 +38,8 @@ const env = {
   iosBundleId: bundleId,
   androidPackage: bundleId,
   // 카카오 OAuth 설정
-  kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
-  kakaoClientSecret: process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET,
+  kakaoAppId: optionalEnv(process.env.EXPO_PUBLIC_KAKAO_APP_ID),
+  kakaoClientSecret: optionalEnv(process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET),
   kakaoRedirectUri: `${schemeFromBundleId}://oauth/kakao`,
 };
 
@@ -50,21 +51,12 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
-  deepLinking: {
-    enabled: true,
-    prefixes: [env.scheme + "://"],
-    config: {
-      screens: {
-        oauth: "oauth/:provider",
-      },
-    },
-  },
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "13",
+    buildNumber: "14",
     entitlements: {
       "com.apple.developer.applesignin": ["Default"],
     },
@@ -84,7 +76,7 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: "resize",
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 14,
+    versionCode: 15,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
@@ -157,7 +149,7 @@ const config: ExpoConfig = {
       projectId: "f1ec9191-65d3-4c0d-af6c-5cee3adab8e3",
     },
     // 카카오 로그인 REST API 키
-    kakaoAppId: process.env.EXPO_PUBLIC_KAKAO_APP_ID,
+    kakaoAppId: env.kakaoAppId,
   },
 };
 

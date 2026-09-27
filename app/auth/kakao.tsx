@@ -9,15 +9,19 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import Constants from "expo-constants";
 import { ScreenContainer } from "@/components/screen-container";
+import { useAuthStore } from "@/lib/auth-store";
+import { trpc } from "@/lib/trpc";
 
 // 카카오 OAuth 설정
-const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID;
-const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET;
-const SCHEME = Constants.expoConfig?.scheme || "manus";
+const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID?.trim();
+const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET?.trim();
+const configuredScheme = Constants.expoConfig?.scheme;
+const SCHEME = (Array.isArray(configuredScheme) ? configuredScheme[0] : configuredScheme) || "manus";
 
 // 카카오 OAuth 엔드포인트
 const KAKAO_OAUTH_URL = "https://kauth.kakao.com/oauth/authorize";
@@ -33,7 +37,10 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function KakaoLoginScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const kakaoLoginMutation = trpc.auth.kakaoLogin.useMutation();
 
   // 카카오 로그인 시작
   const handleKakaoLogin = async () => {
@@ -63,11 +70,12 @@ export default function KakaoLoginScreen() {
         const url = new URL(result.url);
         const code = url.searchParams.get("code");
 
-        if (code) {
-          await exchangeCodeForToken(code);
-        }
+        if (!code) throw new Error("카카오 인증 코드를 확인할 수 없습니다.");
+        await exchangeCodeForToken(code);
       } else if (result.type === "cancel") {
         Alert.alert("취소됨", "카카오 로그인이 취소되었습니다.");
+        setIsLoading(false);
+      } else {
         setIsLoading(false);
       }
     } catch (error) {
@@ -105,17 +113,18 @@ export default function KakaoLoginScreen() {
         throw new Error("액세스 토큰을 받지 못했습니다.");
       }
 
-      // 성공 메시지
-      Alert.alert("성공", "카카오 로그인이 완료되었습니다!");
+      // 카카오 토큰을 운영 API에서 검증한 뒤 앱 로그인 세션으로 저장한다.
+      const login = await kakaoLoginMutation.mutateAsync({ accessToken });
+      queryClient.clear();
+      await setAuth(login.token, login.user);
       setIsLoading(false);
-      
-      // 홈 화면으로 이동
-      setTimeout(() => {
-        router.replace("/(tabs)/" as any);
-      }, 1000);
+      Alert.alert("로그인 완료", `${login.user.name || "회원"}님, 환영합니다.`, [
+        { text: "확인", onPress: () => router.replace("/(tabs)/" as any) },
+      ]);
     } catch (error) {
       console.error("토큰 교환 오류:", error);
-      Alert.alert("오류", "토큰 발급 중 오류가 발생했습니다.");
+      const message = error instanceof Error ? error.message : "카카오 로그인 처리 중 오류가 발생했습니다.";
+      Alert.alert("로그인 실패", message);
       setIsLoading(false);
     }
   };
