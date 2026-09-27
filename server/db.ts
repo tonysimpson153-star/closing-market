@@ -223,13 +223,11 @@ export async function deleteOwnedProduct(id: number, userId: number) {
 
     if (!existing[0]) return { success: false, reason: "not_found" as const };
 
-    await Promise.all([
-      tx.delete(productImages).where(eq(productImages.productId, id)),
-      tx.delete(favorites).where(eq(favorites.productId, id)),
-      tx.delete(recentViews).where(eq(recentViews.productId, id)),
-      tx.delete(comments).where(eq(comments.productId, id)),
-      tx.delete(businessTransfers).where(eq(businessTransfers.productId, id)),
-    ]);
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.delete(favorites).where(eq(favorites.productId, id));
+    await tx.delete(recentViews).where(eq(recentViews.productId, id));
+    await tx.delete(comments).where(eq(comments.productId, id));
+    await tx.delete(businessTransfers).where(eq(businessTransfers.productId, id));
     await tx.delete(products).where(eq(products.id, id));
     return { success: true as const };
   });

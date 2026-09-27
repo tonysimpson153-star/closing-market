@@ -64,7 +64,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "12",
+    buildNumber: "13",
     entitlements: {
       "com.apple.developer.applesignin": ["Default"],
     },
@@ -84,7 +84,7 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: "resize",
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 13,
+    versionCode: 14,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
