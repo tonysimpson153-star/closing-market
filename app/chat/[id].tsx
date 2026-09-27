@@ -8,7 +8,6 @@ import {
   Alert,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   StyleSheet,
@@ -69,17 +68,10 @@ type PendingChatImage = {
   fileName?: string | null;
 };
 
-function ChatInputLayout({ children }: { children: React.ReactNode }) {
-  // 웹 미리보기와 Android는 화면 자체가 resize되므로 별도 보정을 하면 입력창이 두 번 움직인다.
-  if (Platform.OS !== "ios") {
-    return <View style={{ flex: 1 }}>{children}</View>;
-  }
-
-  return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
-      {children}
-    </KeyboardAvoidingView>
-  );
+function ChatInputLayout({ children, keyboardHeight }: { children: React.ReactNode; keyboardHeight: number }) {
+  // Android와 웹은 네이티브 화면 resize를 사용한다. iOS는 KeyboardAvoidingView에 맡기지 않고,
+  // 실제 키보드 높이만큼 채팅 영역에 하단 여백을 직접 줘서 입력창을 키보드 바로 위에 배치한다.
+  return <View style={{ flex: 1, paddingBottom: Platform.OS === "ios" ? keyboardHeight : 0 }}>{children}</View>;
 }
 
 export default function ChatRoomScreen() {
@@ -92,7 +84,7 @@ export default function ChatRoomScreen() {
   const isAuthenticated = !!token;
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [pendingChatImage, setPendingChatImage] = useState<PendingChatImage | null>(null);
   const [fullscreenChatImage, setFullscreenChatImage] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -102,11 +94,16 @@ export default function ChatRoomScreen() {
   useEffect(() => {
     if (Platform.OS !== "ios") return;
 
-    const showSubscription = Keyboard.addListener("keyboardWillShow", () => setIsKeyboardOpen(true));
-    const hideSubscription = Keyboard.addListener("keyboardWillHide", () => setIsKeyboardOpen(false));
+    const updateKeyboardHeight = (event: { endCoordinates: { height: number } }) => {
+      setKeyboardHeight(Math.max(0, event.endCoordinates.height));
+    };
+    const showSubscription = Keyboard.addListener("keyboardWillShow", updateKeyboardHeight);
+    const frameSubscription = Keyboard.addListener("keyboardWillChangeFrame", updateKeyboardHeight);
+    const hideSubscription = Keyboard.addListener("keyboardWillHide", () => setKeyboardHeight(0));
 
     return () => {
       showSubscription.remove();
+      frameSubscription.remove();
       hideSubscription.remove();
     };
   }, []);
@@ -432,7 +429,7 @@ export default function ChatRoomScreen() {
       )}
 
       {/* 메시지 목록 */}
-      <ChatInputLayout>
+      <ChatInputLayout keyboardHeight={keyboardHeight}>
 
         <FlatList
           // 목록이 남은 화면 높이를 모두 차지해야 입력창이 키보드 바로 위에 고정된다.
@@ -531,8 +528,9 @@ export default function ChatRoomScreen() {
             {
               backgroundColor: colors.background,
               borderTopColor: colors.border,
-              // 키보드가 열린 iPhone에서는 안전 여백을 빼서 전송칸 하단을 키보드에 바로 붙인다.
-              paddingBottom: Platform.OS === "ios" && isKeyboardOpen ? 0 : insets.bottom,
+              // 키보드가 열릴 때는 ChatInputLayout이 키보드 높이만큼 위로 밀기 때문에
+              // 전송칸의 자체 하단 여백만 남긴다. 키보드를 닫으면 홈 인디케이터 여백을 유지한다.
+              paddingBottom: Platform.OS === "ios" && keyboardHeight > 0 ? 8 : insets.bottom,
             },
           ]}
         >
