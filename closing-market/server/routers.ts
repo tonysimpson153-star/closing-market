@@ -431,6 +431,39 @@ export const appRouter = router({
         return db.updateProductStatus(input.id, input.status, ctx.user.id);
       }),
 
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          title: z.string().min(1).max(255),
+          description: z.string().max(5000).optional(),
+          price: z.number().min(0),
+          quantity: z.number().min(1),
+          category: z.enum(["cafe", "pcroom", "restaurant", "gym", "office", "warehouse", "transfer"]),
+          tradeType: z.enum(["direct", "delivery", "negotiable"]),
+          location: z.string().max(255).optional(),
+          images: z.array(z.string()).min(1, "이미지를 1장 이상 등록해주세요.").max(10),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { id, images, ...fields } = input;
+        const result = await db.updateOwnedProduct(id, ctx.user.id, fields, images);
+        if (!result.success) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "수정할 수 있는 상품을 찾을 수 없습니다." });
+        }
+        return result;
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.deleteOwnedProduct(input.id, ctx.user.id);
+        if (!result.success) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "삭제할 수 있는 상품을 찾을 수 없습니다." });
+        }
+        return result;
+      }),
+
     myProducts: protectedProcedure.query(({ ctx }) => {
       return db.getMyProducts(ctx.user.id);
     }),

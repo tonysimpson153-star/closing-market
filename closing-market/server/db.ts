@@ -7,6 +7,8 @@ import {
   users,
   products,
   productImages,
+  businessTransfers,
+  comments,
   companyImages,
   businesses,
   favorites,
@@ -159,6 +161,76 @@ export async function updateProductStatus(
     .set({ status })
     .where(and(eq(products.id, id), eq(products.userId, userId)));
   return { success: true };
+}
+
+type EditableProductFields = {
+  title: string;
+  description?: string;
+  price: number;
+  quantity: number;
+  category: "cafe" | "pcroom" | "restaurant" | "gym" | "office" | "warehouse" | "transfer";
+  tradeType: "direct" | "delivery" | "negotiable";
+  location?: string;
+};
+
+/** Updates only the seller's own listing and replaces its ordered image set. */
+export async function updateOwnedProduct(
+  id: number,
+  userId: number,
+  fields: EditableProductFields,
+  images: string[],
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .limit(1);
+
+    if (!existing[0]) return { success: false, reason: "not_found" as const };
+
+    await tx
+      .update(products)
+      .set({
+        ...fields,
+        description: fields.description ?? null,
+        location: fields.location ?? null,
+        mainImageUrl: images[0],
+      })
+      .where(eq(products.id, id));
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.insert(productImages).values(
+      images.map((imageUrl, sortOrder) => ({ productId: id, imageUrl, sortOrder })),
+    );
+    return { success: true as const };
+  });
+}
+
+/** Removes a listing without deleting associated chat rooms, messages, or reviews. */
+export async function deleteOwnedProduct(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .limit(1);
+
+    if (!existing[0]) return { success: false, reason: "not_found" as const };
+
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.delete(favorites).where(eq(favorites.productId, id));
+    await tx.delete(recentViews).where(eq(recentViews.productId, id));
+    await tx.delete(comments).where(eq(comments.productId, id));
+    await tx.delete(businessTransfers).where(eq(businessTransfers.productId, id));
+    await tx.delete(products).where(eq(products.id, id));
+    return { success: true as const };
+  });
 }
 
 export async function getMyProducts(userId: number) {
