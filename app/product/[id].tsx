@@ -85,6 +85,19 @@ export default function ProductDetailScreen() {
       Alert.alert("오류", err.message);
     },
   });
+  const utils = trpc.useUtils();
+  const deleteMutation = trpc.products.delete.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.products.list.invalidate(),
+        utils.products.myProducts.invalidate(),
+      ]);
+      Alert.alert("삭제 완료", "상품이 삭제되었습니다.", [
+        { text: "확인", onPress: () => router.replace("/seller/products" as any) },
+      ]);
+    },
+    onError: (error) => Alert.alert("삭제 실패", error.message || "상품을 삭제하지 못했습니다."),
+  });
 
   const handleFavorite = () => {
     if (!isAuthenticated) {
@@ -109,6 +122,18 @@ export default function ProductDetailScreen() {
       return;
     }
     getOrCreateChatMutation.mutate({ sellerId: product.userId, productId: product.id });
+  };
+
+  const handleDelete = () => {
+    if (!product) return;
+    Alert.alert(
+      "상품 삭제",
+      `‘${product.title}’ 상품을 삭제할까요?\n삭제하면 상품 정보와 사진, 찜·최근 본 기록은 사라집니다. 기존 채팅과 후기는 유지됩니다.`,
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: () => deleteMutation.mutate({ id: product.id }) },
+      ]
+    );
   };
 
 
@@ -150,7 +175,8 @@ export default function ProductDetailScreen() {
     );
   }
 
-    const images = product.images && product.images.length > 0
+  const isOwner = product.userId === user?.id;
+  const images = product.images && product.images.length > 0
     ? product.images.map((img: any) => typeof img === "string" ? img : img.imageUrl)
     : [];
 
@@ -174,6 +200,14 @@ export default function ProductDetailScreen() {
         <Pressable
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
           onPress={() => {
+            if (isOwner) {
+              Alert.alert("상품 관리", undefined, [
+                { text: "상품 수정", onPress: () => router.push(`/product/edit/${product.id}` as any) },
+                { text: "상품 삭제", style: "destructive", onPress: handleDelete },
+                { text: "취소", style: "cancel" },
+              ]);
+              return;
+            }
             Alert.alert("신고하기", "이 상품을 신고하시겠습니까?", [
               { text: "취소", style: "cancel" },
               {
@@ -336,7 +370,7 @@ export default function ProductDetailScreen() {
           backgroundColor: colors.background,
         }}
       >
-                {product.userId !== user?.id && (
+                {!isOwner && (
 
           <>
             <Pressable
@@ -370,6 +404,41 @@ export default function ProductDetailScreen() {
               ) : (
                 <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>채팅으로 문의하기</Text>
               )}
+            </Pressable>
+          </>
+        )}
+        {isOwner && (
+          <>
+            <Pressable
+              style={({ pressed }) => [
+                styles.ownerEditBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.primary,
+                  opacity: pressed ? 0.75 : 1,
+                },
+              ]}
+              onPress={() => router.push(`/product/edit/${product.id}` as any)}
+            >
+              <LucideIcon name="edit" size={18} color={colors.primary} strokeWidth={1.8} />
+              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.primary, marginLeft: 7 }}>수정</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.ownerDeleteBtn,
+                {
+                  backgroundColor: colors.error + "12",
+                  borderColor: colors.error,
+                  opacity: pressed || deleteMutation.isPending ? 0.7 : 1,
+                },
+              ]}
+              onPress={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <ActivityIndicator color={colors.error} size="small" /> : <>
+                <LucideIcon name="trash" size={18} color={colors.error} strokeWidth={1.8} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: colors.error, marginLeft: 7 }}>삭제</Text>
+              </>}
             </Pressable>
           </>
         )}
@@ -504,5 +573,23 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
+  },
+  ownerEditBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+  },
+  ownerDeleteBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 14,
+    borderWidth: 1.5,
   },
 });

@@ -44,16 +44,35 @@ export default function MyProductsScreen() {
   const { data: myProducts, isLoading, refetch } = trpc.products.myProducts.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const utils = trpc.useUtils();
 
   const updateStatusMutation = trpc.products.updateStatus.useMutation({
     onSuccess: () => refetch(),
     onError: () => Alert.alert("오류", "상태 변경에 실패했습니다."),
+  });
+  const deleteMutation = trpc.products.delete.useMutation({
+    onSuccess: async () => {
+      await Promise.all([refetch(), utils.products.list.invalidate()]);
+      Alert.alert("삭제 완료", "상품이 삭제되었습니다.");
+    },
+    onError: (error) => Alert.alert("삭제 실패", error.message || "상품을 삭제하지 못했습니다."),
   });
 
   const cycleStatus = (id: number, current: string) => {
     const idx = STATUS_ORDER.indexOf(current as any);
     const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
     updateStatusMutation.mutate({ id, status: next });
+  };
+
+  const confirmDelete = (id: number, title: string) => {
+    Alert.alert(
+      "상품 삭제",
+      `‘${title}’ 상품을 삭제할까요?\n삭제하면 상품 정보와 사진, 찜·최근 본 기록은 사라집니다. 기존 채팅과 후기는 유지됩니다.`,
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: () => deleteMutation.mutate({ id }) },
+      ]
+    );
   };
 
   return (
@@ -145,30 +164,54 @@ export default function MyProductsScreen() {
                   </Text>
                 </View>
               </Pressable>
-              <Pressable
-                onPress={() => cycleStatus(item.id, item.status)}
+              <View
                 style={{
+                  width: 92,
                   justifyContent: "center",
                   alignItems: "center",
-                  paddingHorizontal: 12,
+                  paddingHorizontal: 8,
                   borderLeftWidth: 1,
                   borderLeftColor: colors.border,
                 }}
               >
-                <View
-                  style={{
-                    backgroundColor: STATUS_COLORS[item.status] + "20",
-                    paddingHorizontal: 8,
-                    paddingVertical: 6,
-                    borderRadius: 6,
-                  }}
+                <Pressable
+                  onPress={() => cycleStatus(item.id, item.status)}
+                  style={({ pressed }) => [{ alignItems: "center", opacity: pressed ? 0.65 : 1 }]}
                 >
-                  <Text style={{ fontSize: 11, color: STATUS_COLORS[item.status], fontWeight: "700" }}>
-                    {STATUS_LABELS[item.status]}
-                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: STATUS_COLORS[item.status] + "20",
+                      paddingHorizontal: 8,
+                      paddingVertical: 6,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, color: STATUS_COLORS[item.status], fontWeight: "700" }}>
+                      {STATUS_LABELS[item.status]}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 9, color: colors.muted, marginTop: 4 }}>탭하여 변경</Text>
+                </Pressable>
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 9, gap: 12 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title} 수정`}
+                    onPress={() => router.push(`/product/edit/${item.id}` as any)}
+                    style={({ pressed }) => [{ opacity: pressed ? 0.55 : 1 }]}
+                  >
+                    <LucideIcon name="edit" size={16} color={colors.primary} strokeWidth={1.8} />
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title} 삭제`}
+                    onPress={() => confirmDelete(item.id, item.title)}
+                    disabled={deleteMutation.isPending}
+                    style={({ pressed }) => [{ opacity: pressed || deleteMutation.isPending ? 0.45 : 1 }]}
+                  >
+                    <LucideIcon name="trash" size={16} color={colors.error} strokeWidth={1.8} />
+                  </Pressable>
                 </View>
-                <Text style={{ fontSize: 9, color: colors.muted, marginTop: 4 }}>탭하여 변경</Text>
-              </Pressable>
+              </View>
             </View>
           )}
         />
