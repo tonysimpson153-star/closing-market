@@ -16,7 +16,6 @@ const CATEGORY_GROUPS: Array<{ id: string; label: string; icon: string; types: s
   { id: "pos", label: "POS·키오스크", icon: "monitor", types: ["pos"] },
   { id: "signage", label: "간판·사인", icon: "signpost", types: ["signage"] },
   { id: "cctv", label: "CCTV·보안", icon: "camera", types: ["cctv"] },
-  { id: "kitchen", label: "주방기기", icon: "utensils", types: ["kitchen"] },
   { id: "cleaning", label: "청소·방역", icon: "waves", types: ["cleaning"] },
   { id: "consult", label: "전문 상담", icon: "file", types: ["tax", "labor"] },
   { id: "consulting", label: "창업 컨설팅", icon: "trending-up", types: ["consulting"] },
