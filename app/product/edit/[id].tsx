@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   Text,
@@ -57,6 +58,19 @@ export default function EditProductScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const hydratedProductId = useRef<number | null>(null);
+  const formScrollRef = useRef<ScrollView>(null);
+  const fieldPositions = useRef<Record<string, number>>({});
+
+  const scrollFocusedFieldIntoView = useCallback((field: string) => {
+    requestAnimationFrame(() => {
+      const y = fieldPositions.current[field];
+      if (typeof y !== "number") return;
+      formScrollRef.current?.scrollTo({
+        y: Math.max(0, y - 24),
+        animated: true,
+      });
+    });
+  }, []);
 
   const { data: product, isLoading } = trpc.products.detail.useQuery(
     { id: productId },
@@ -296,10 +310,17 @@ export default function EditProductScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, paddingBottom: 44 }}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        <ScrollView
+          ref={formScrollRef}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          contentContainerStyle={{ padding: 16, paddingBottom: 168 }}
+        >
         <Text
           style={{
             fontSize: 14,
@@ -419,13 +440,20 @@ export default function EditProductScreen() {
         </Text>
 
         <FormLabel label="상품명" required colors={colors} />
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="상품명을 입력하세요"
-          placeholderTextColor={colors.muted}
-          style={inputStyle(colors)}
-        />
+          <View
+            onLayout={(event) => {
+              fieldPositions.current.title = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              onFocus={() => scrollFocusedFieldIntoView("title")}
+              placeholder="상품명을 입력하세요"
+              placeholderTextColor={colors.muted}
+              style={inputStyle(colors)}
+            />
+          </View>
 
         <FormLabel label="업종" required colors={colors} />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -471,40 +499,52 @@ export default function EditProductScreen() {
         </View>
 
         <FormLabel label="가격" required colors={colors} />
-        <View style={inputRowStyle(colors)}>
-          <TextInput
-            value={price}
-            onChangeText={setPrice}
-            keyboardType="numeric"
-            placeholder="0"
-            placeholderTextColor={colors.muted}
-            style={{
-              flex: 1,
-              paddingVertical: 14,
-              color: colors.foreground,
-              fontSize: 15,
+          <View
+            onLayout={(event) => {
+              fieldPositions.current.price = event.nativeEvent.layout.y;
             }}
-          />
-          <Text style={{ color: colors.muted, fontWeight: "600" }}>원</Text>
-        </View>
+            style={inputRowStyle(colors)}
+          >
+            <TextInput
+              value={price}
+              onChangeText={setPrice}
+              onFocus={() => scrollFocusedFieldIntoView("price")}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor={colors.muted}
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                color: colors.foreground,
+                fontSize: 15,
+              }}
+            />
+            <Text style={{ color: colors.muted, fontWeight: "600" }}>원</Text>
+          </View>
 
         <FormLabel label="수량" colors={colors} />
-        <View style={inputRowStyle(colors)}>
-          <TextInput
-            value={quantity}
-            onChangeText={setQuantity}
-            keyboardType="numeric"
-            placeholder="1"
-            placeholderTextColor={colors.muted}
-            style={{
-              flex: 1,
-              paddingVertical: 14,
-              color: colors.foreground,
-              fontSize: 15,
+          <View
+            onLayout={(event) => {
+              fieldPositions.current.quantity = event.nativeEvent.layout.y;
             }}
-          />
-          <Text style={{ color: colors.muted, fontWeight: "600" }}>개</Text>
-        </View>
+            style={inputRowStyle(colors)}
+          >
+            <TextInput
+              value={quantity}
+              onChangeText={setQuantity}
+              onFocus={() => scrollFocusedFieldIntoView("quantity")}
+              keyboardType="numeric"
+              placeholder="1"
+              placeholderTextColor={colors.muted}
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                color: colors.foreground,
+                fontSize: 15,
+              }}
+            />
+            <Text style={{ color: colors.muted, fontWeight: "600" }}>개</Text>
+          </View>
 
         <FormLabel label="거래 유형" colors={colors} />
         <View style={{ flexDirection: "row", gap: 8 }}>
@@ -541,25 +581,39 @@ export default function EditProductScreen() {
         </View>
 
         <FormLabel label="거래 지역" colors={colors} />
-        <TextInput
-          value={location}
-          onChangeText={setLocation}
-          placeholder="예) 서울 강남구, 경기 성남시"
-          placeholderTextColor={colors.muted}
-          style={inputStyle(colors)}
-        />
+          <View
+            onLayout={(event) => {
+              fieldPositions.current.location = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextInput
+              value={location}
+              onChangeText={setLocation}
+              onFocus={() => scrollFocusedFieldIntoView("location")}
+              placeholder="예) 서울 강남구, 경기 성남시"
+              placeholderTextColor={colors.muted}
+              style={inputStyle(colors)}
+            />
+          </View>
 
         <FormLabel label="상세 설명" colors={colors} />
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="상품 상태, 구매 시기, 특이사항 등을 입력하세요"
-          placeholderTextColor={colors.muted}
-          multiline
-          numberOfLines={5}
-          textAlignVertical="top"
-          style={[inputStyle(colors), { minHeight: 120 }]}
-        />
+          <View
+            onLayout={(event) => {
+              fieldPositions.current.description = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              onFocus={() => scrollFocusedFieldIntoView("description")}
+              placeholder="상품 상태, 구매 시기, 특이사항 등을 입력하세요"
+              placeholderTextColor={colors.muted}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+              style={[inputStyle(colors), { minHeight: 120 }]}
+            />
+          </View>
 
         <Pressable
           disabled={updateMutation.isPending}
@@ -585,7 +639,8 @@ export default function EditProductScreen() {
             </Text>
           )}
         </Pressable>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

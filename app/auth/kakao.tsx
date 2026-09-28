@@ -18,7 +18,10 @@ import { useAuthStore } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 
 // 카카오 OAuth 설정
-const KAKAO_APP_ID = process.env.EXPO_PUBLIC_KAKAO_APP_ID?.trim();
+const KAKAO_APP_ID = (
+  process.env.EXPO_PUBLIC_KAKAO_APP_ID ??
+  (Constants.expoConfig?.extra?.kakaoAppId as string | undefined)
+)?.trim();
 const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET?.trim();
 const configuredScheme = Constants.expoConfig?.scheme;
 const SCHEME = (Array.isArray(configuredScheme) ? configuredScheme[0] : configuredScheme) || "manus";
@@ -57,7 +60,6 @@ export default function KakaoLoginScreen() {
       authUrl.searchParams.append("client_id", KAKAO_APP_ID);
       authUrl.searchParams.append("redirect_uri", redirectUrl);
       authUrl.searchParams.append("response_type", "code");
-      authUrl.searchParams.append("scope", "profile_image,profile_nickname,account_email");
 
       // 웹 브라우저에서 카카오 로그인 페이지 열기
       const result = await WebBrowser.openAuthSessionAsync(
@@ -88,18 +90,22 @@ export default function KakaoLoginScreen() {
   // 인증 코드를 액세스 토큰으로 교환
   const exchangeCodeForToken = async (code: string) => {
     try {
+      const tokenParams = new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: KAKAO_APP_ID!,
+        redirect_uri: redirectUrl,
+        code,
+      });
+      if (KAKAO_CLIENT_SECRET) {
+        tokenParams.append("client_secret", KAKAO_CLIENT_SECRET);
+      }
+
       const tokenResponse = await fetch(KAKAO_TOKEN_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          client_id: KAKAO_APP_ID!,
-          redirect_uri: redirectUrl,
-          code,
-          client_secret: KAKAO_CLIENT_SECRET || "",
-        }).toString(),
+        body: tokenParams.toString(),
       });
 
       if (!tokenResponse.ok) {

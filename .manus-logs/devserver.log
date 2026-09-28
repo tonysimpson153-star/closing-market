@@ -4880,3 +4880,26 @@
 [2026-09-28T08:05:51.713Z] [0] pnpm dev:server exited with code SIGTERM
 [2026-09-28T08:05:51.720Z] ELIFECYCLE  Command failed with exit code 1.
 [2026-09-28T08:05:51.755Z] Dev server exited with code 1
+[2026-09-28T18:54:26.696Z] Starting dev server with command: pnpm run dev
+[2026-09-28T18:54:28.072Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-09-28T18:54:28.072Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-09-28T18:54:28.939Z] [0]
+[2026-09-28T18:54:28.939Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-09-28T18:54:28.939Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-09-28T18:54:28.939Z] [0]
+[2026-09-28T18:54:28.989Z] [1]
+[2026-09-28T18:54:28.989Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-09-28T18:54:28.989Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-09-28T18:54:28.989Z] [1]
+[2026-09-28T18:54:30.011Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-09-28T18:54:30.442Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-09-28T18:54:30.655Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.163Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.163Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.165Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.552Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.552Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.553Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:31.554Z] [1] React Compiler enabled
+[2026-09-28T18:54:31.751Z] [1] Starting Metro Bundler
+[2026-09-28T18:54:31.791Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
