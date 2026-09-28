@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   View,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -17,6 +18,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { useAuthStore } from "@/lib/auth-store";
+import { prepareProductImageForUpload } from "@/lib/product-image-upload";
 import { trpc } from "@/lib/trpc";
 
 const MAX_IMAGES = 10;
@@ -115,30 +117,36 @@ export default function EditProductScreen() {
       quality: 0.8,
       allowsMultipleSelection: true,
       selectionLimit: MAX_IMAGES - images.length,
-      base64: true,
+      base64: Platform.OS === "web",
     });
     if (result.canceled || result.assets.length === 0) return;
 
     setIsUploadingImage(true);
     try {
       const uploadedUrls: string[] = [];
+      let failedCount = 0;
+      let firstFailureMessage: string | undefined;
       for (const asset of result.assets) {
-        if (!asset.base64) continue;
         try {
+          const uploadImage = await prepareProductImageForUpload(asset);
           const uploaded = await uploadImageMutation.mutateAsync({
-            base64: asset.base64,
-            mimeType: asset.mimeType ?? "image/jpeg",
-            fileName: asset.fileName ?? "photo.jpg",
+            ...uploadImage,
           });
           uploadedUrls.push(uploaded.url);
-        } catch {
-          // Continue uploading the remaining selected images.
+        } catch (error) {
+          failedCount += 1;
+          firstFailureMessage =
+            firstFailureMessage ??
+            (error instanceof Error ? error.message : undefined);
+          console.warn("[product.image.upload.failed]", {
+            message: error instanceof Error ? error.message : "unknown",
+          });
         }
       }
-      if (uploadedUrls.length !== result.assets.length) {
+      if (failedCount > 0) {
         Alert.alert(
-          "일부 실패",
-          "일부 사진 업로드에 실패했습니다. 업로드된 사진만 추가합니다.",
+          uploadedUrls.length > 0 ? "일부 사진 업로드 실패" : "사진 업로드 실패",
+          `${failedCount}장 업로드에 실패했습니다.${firstFailureMessage ? `\n\n원인: ${firstFailureMessage}` : ""}\n\n사진은 자동으로 줄여서 전송됩니다. 네트워크를 확인한 뒤 다시 시도해주세요.`,
         );
       }
       setImages((current) =>

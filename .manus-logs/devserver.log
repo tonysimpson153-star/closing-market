@@ -4854,3 +4854,29 @@
 [2026-09-27T10:54:33.186Z] [1] }
 [2026-09-27T10:54:33.363Z] [1] Web Bundled 138ms node_modules/.pnpm/expo-router@6.0.24_@expo+metro-runtime@6.1.2_@types+react@19.1.17_expo-constants@18.0.13_expo_edxwqmne46jtjgwrii6mequ6ry/node_modules/expo-router/entry.js (1 module)
 [2026-09-27T10:54:34.179Z] [1]  LOG  [web] Logs will appear in the browser console
+[2026-09-28T08:05:47.453Z] Starting dev server with command: pnpm run dev
+[2026-09-28T08:05:48.948Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-09-28T08:05:48.948Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-09-28T08:05:49.932Z] [0]
+[2026-09-28T08:05:49.932Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-09-28T08:05:49.932Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-09-28T08:05:49.932Z] [0]
+[2026-09-28T08:05:49.932Z] [1]
+[2026-09-28T08:05:49.932Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-09-28T08:05:49.932Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-09-28T08:05:49.932Z] [1]
+[2026-09-28T08:05:50.930Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-09-28T08:05:51.534Z] [1] › Port 8081 is running this app in another window
+[2026-09-28T08:05:51.534Z] [1]   /home/ubuntu/closing-market (pid 305564)
+[2026-09-28T08:05:51.535Z] [1] Input is required, but 'npx expo' is in non-interactive mode.
+[2026-09-28T08:05:51.535Z] [1] Required input:
+[2026-09-28T08:05:51.535Z] [1] > Use port 8082 instead?
+[2026-09-28T08:05:51.535Z] [1] › Skipping dev server
+[2026-09-28T08:05:51.561Z] [1]  ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T08:05:51.584Z] [1] pnpm dev:metro exited with code 1
+[2026-09-28T08:05:51.585Z] --> Sending SIGTERM to other processes..
+[2026-09-28T08:05:51.660Z] [0]  ELIFECYCLE  Command failed.
+[2026-09-28T08:05:51.695Z] [0] 8:05:51 AM [tsx] Previous process hasn't exited yet. Force killing...
+[2026-09-28T08:05:51.713Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-09-28T08:05:51.720Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T08:05:51.755Z] Dev server exited with code 1
