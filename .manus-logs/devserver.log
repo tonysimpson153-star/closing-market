@@ -4970,3 +4970,37 @@
 [2026-09-28T19:05:25.837Z] [1] React Compiler enabled
 [2026-09-28T19:05:26.023Z] [1] Starting Metro Bundler
 [2026-09-28T19:05:26.066Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:05:36.376Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-09-28T19:05:36.388Z] [0] [api] server listening on port 3000
+[2026-09-28T19:05:41.204Z] [1] CommandError: "expo-image-manipulator" is added as a dependency in your project's package.json but it doesn't seem to be installed. Run "npm install", or the equivalent for your package manager, and try again.
+[2026-09-28T19:05:41.305Z] [1]  ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T19:05:41.331Z] [1] pnpm dev:metro exited with code 1
+[2026-09-28T19:05:41.332Z] --> Sending SIGTERM to other processes..
+[2026-09-28T19:05:41.399Z] [0]  ELIFECYCLE  Command failed.
+[2026-09-28T19:05:41.419Z] [0] 7:05:41 PM [tsx] Previous process hasn't exited yet. Force killing...
+[2026-09-28T19:05:41.431Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-09-28T19:05:41.439Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T19:05:41.482Z] Dev server exited with code 1
+[2026-09-28T19:20:07.594Z] Starting dev server with command: pnpm run dev
+[2026-09-28T19:20:08.906Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-09-28T19:20:08.906Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-09-28T19:20:09.783Z] [1]
+[2026-09-28T19:20:09.783Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-09-28T19:20:09.783Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-09-28T19:20:09.783Z] [1]
+[2026-09-28T19:20:09.788Z] [0]
+[2026-09-28T19:20:09.788Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-09-28T19:20:09.788Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-09-28T19:20:09.788Z] [0]
+[2026-09-28T19:20:10.907Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-09-28T19:20:11.311Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-09-28T19:20:11.599Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.076Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.076Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.077Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.504Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.504Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.505Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T19:20:12.506Z] [1] React Compiler enabled
+[2026-09-28T19:20:12.713Z] [1] Starting Metro Bundler
+[2026-09-28T19:20:12.756Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
