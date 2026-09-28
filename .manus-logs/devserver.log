@@ -4903,3 +4903,36 @@
 [2026-09-28T18:54:31.554Z] [1] React Compiler enabled
 [2026-09-28T18:54:31.751Z] [1] Starting Metro Bundler
 [2026-09-28T18:54:31.791Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:54:41.463Z] [0] [schema] users 스키마 호환성 확인 완료
+[2026-09-28T18:54:41.471Z] [0] [api] server listening on port 3000
+[2026-09-28T18:54:46.429Z] [1] CommandError: "expo-image-manipulator" is added as a dependency in your project's package.json but it doesn't seem to be installed. Run "npm install", or the equivalent for your package manager, and try again.
+[2026-09-28T18:54:46.511Z] [1]  ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T18:54:46.536Z] [1] pnpm dev:metro exited with code 1
+[2026-09-28T18:54:46.537Z] --> Sending SIGTERM to other processes..
+[2026-09-28T18:54:46.603Z] [0]  ELIFECYCLE  Command failed.
+[2026-09-28T18:54:46.624Z] [0] pnpm dev:server exited with code SIGTERM
+[2026-09-28T18:54:46.632Z] ELIFECYCLE  Command failed with exit code 1.
+[2026-09-28T18:54:46.676Z] Dev server exited with code 1
+[2026-09-28T18:59:39.439Z] Starting dev server with command: pnpm run dev
+[2026-09-28T18:59:40.908Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-09-28T18:59:40.908Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-09-28T18:59:41.859Z] [1]
+[2026-09-28T18:59:41.859Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-09-28T18:59:41.860Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-09-28T18:59:41.860Z] [1]
+[2026-09-28T18:59:41.862Z] [0]
+[2026-09-28T18:59:41.862Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-09-28T18:59:41.863Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-09-28T18:59:41.863Z] [0]
+[2026-09-28T18:59:42.922Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-09-28T18:59:43.582Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-09-28T18:59:43.634Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.161Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.162Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.163Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.609Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.609Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.610Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-28T18:59:44.611Z] [1] React Compiler enabled
+[2026-09-28T18:59:44.863Z] [1] Starting Metro Bundler
+[2026-09-28T18:59:44.914Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
