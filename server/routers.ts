@@ -14,6 +14,28 @@ function createRandomSocialNickname() {
   return `클로징${suffix}`;
 }
 
+async function createUniqueRandomSocialNickname() {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const nickname = createRandomSocialNickname();
+    if (!(await db.getUserByNickname(nickname))) return nickname;
+  }
+  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "닉네임을 생성하지 못했습니다. 잠시 후 다시 시도해주세요." });
+}
+
+function isDuplicateEntryError(err: unknown) {
+  const candidate = err as { code?: string; message?: string } | null;
+  return candidate?.code === "ER_DUP_ENTRY" || /Duplicate entry/i.test(candidate?.message ?? "");
+}
+
+function isNicknameDuplicateError(err: unknown) {
+  const candidate = err as { message?: string } | null;
+  return /nickname|users_nickname|nickname_unique/i.test(candidate?.message ?? "");
+}
+
+function nicknameConflictError() {
+  return new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요." });
+}
+
 function toAuthUser(user: NonNullable<Awaited<ReturnType<typeof db.getUserById>>>) {
   return {
     id: user.id,
@@ -41,7 +63,7 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string().min(6),
         name: z.string().min(1).max(50),
-        nickname: z.string().min(1).max(50),
+        nickname: z.string().trim().min(1).max(50),
         phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -56,6 +78,8 @@ export const appRouter = router({
         if (existing) {
           throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
         }
+        const existingNickname = await db.getUserByNickname(input.nickname);
+        if (existingNickname) throw nicknameConflictError();
         const hashedPassword = await bcrypt.hash(input.password, 10);
         const openId = `email_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         let user;
@@ -70,7 +94,10 @@ export const appRouter = router({
             loginMethod: "email",
           });
         } catch (err: any) {
-          if (err?.code === "ER_DUP_ENTRY" || /Duplicate entry/i.test(err?.message ?? "")) {
+          if (isDuplicateEntryError(err) && isNicknameDuplicateError(err)) {
+            throw nicknameConflictError();
+          }
+          if (isDuplicateEntryError(err)) {
             throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
           }
           throw err;
@@ -206,14 +233,14 @@ export const appRouter = router({
             email: email || null,
             password: null,
             name,
-            nickname: createRandomSocialNickname(),
+            nickname: await createUniqueRandomSocialNickname(),
             phone: null,
             loginMethod: "kakao",
             kakaoId,
             profileImageUrl: profileImageUrl || null,
           });
         } else if (!user.nickname?.trim()) {
-          await db.updateUserProfile(user.id, { nickname: createRandomSocialNickname() });
+          await db.updateUserProfile(user.id, { nickname: await createUniqueRandomSocialNickname() });
           const refreshedUser = await db.getUserById(user.id);
           if (refreshedUser) user = refreshedUser;
         }
@@ -293,12 +320,25 @@ export const appRouter = router({
     updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(50).optional(),
-        nickname: z.string().min(1).max(50).optional(),
+        nickname: z.string().trim().min(1).max(50).optional(),
         phone: z.string().optional(),
         profileImageUrl: z.string().url().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const updated = await db.updateUserProfile(ctx.user.id, input);
+        if (input.nickname) {
+          const existingNickname = await db.getUserByNickname(input.nickname, ctx.user.id);
+          if (existingNickname) throw nicknameConflictError();
+        }
+
+        let updated;
+        try {
+          updated = await db.updateUserProfile(ctx.user.id, input);
+        } catch (err) {
+          if (isDuplicateEntryError(err) && isNicknameDuplicateError(err)) {
+            throw nicknameConflictError();
+          }
+          throw err;
+        }
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
         return {
           id: updated.id,

@@ -69,5 +69,25 @@ export async function ensureUsersSchemaCompatibility() {
     }
   }
 
+  // 닉네임은 NULL은 허용하되, 실제로 입력된 값은 한 계정만 사용할 수 있게 합니다.
+  // 기존 데이터에 중복이 있으면 자동으로 이름을 바꾸지 않고 배포를 중단해
+  // 기존 회원 정보가 조용히 변경되지 않도록 합니다.
+  const duplicateNicknames = await db.execute(sql.raw(
+    "SELECT `nickname`, COUNT(*) AS `count` FROM `users` WHERE `nickname` IS NOT NULL AND TRIM(`nickname`) <> '' GROUP BY `nickname` HAVING COUNT(*) > 1 LIMIT 1",
+  ));
+  const duplicateRows = Array.isArray(duplicateNicknames) ? duplicateNicknames[0] : [];
+  if (Array.isArray(duplicateRows) && duplicateRows.length > 0) {
+    throw new Error("닉네임 중복 데이터가 있어 users_nickname_unique 인덱스를 적용할 수 없습니다. 기존 중복 닉네임을 먼저 정리해주세요.");
+  }
+
+  const indexResult = await db.execute(sql.raw(
+    "SELECT COUNT(*) AS `count` FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND INDEX_NAME = 'users_nickname_unique'",
+  ));
+  const indexRows = Array.isArray(indexResult) ? indexResult[0] : [];
+  const indexCount = Number((Array.isArray(indexRows) ? indexRows[0] as { count?: number | string } | undefined : undefined)?.count ?? 0);
+  if (indexCount === 0) {
+    await db.execute(sql.raw("ALTER TABLE `users` ADD CONSTRAINT `users_nickname_unique` UNIQUE (`nickname`)"));
+  }
+
   console.log("[schema] users 스키마 호환성 확인 완료");
 }

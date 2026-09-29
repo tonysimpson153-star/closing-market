@@ -1368,6 +1368,22 @@ export async function getUserByEmail(email: string) {
   return (rows[0] ?? null) as unknown as User | null;
 }
 
+export async function getUserByNickname(nickname: string, excludeUserId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const conditions = [eq(users.nickname, nickname)];
+  if (excludeUserId !== undefined) conditions.push(ne(users.id, excludeUserId));
+
+  const rows = await db
+    .select({ id: users.id, nickname: users.nickname })
+    .from(users)
+    .where(and(...conditions))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
 export async function getUserByKakaoId(kakaoId: string) {
   const db = await getDb();
   if (!db) return null;
