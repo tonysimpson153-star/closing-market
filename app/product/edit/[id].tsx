@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -60,17 +61,33 @@ export default function EditProductScreen() {
   const hydratedProductId = useRef<number | null>(null);
   const formScrollRef = useRef<ScrollView>(null);
   const fieldPositions = useRef<Record<string, number>>({});
+  const activeFieldRef = useRef<string | null>(null);
 
   const scrollFocusedFieldIntoView = useCallback((field: string) => {
+    activeFieldRef.current = field;
     requestAnimationFrame(() => {
       const y = fieldPositions.current[field];
       if (typeof y !== "number") return;
       formScrollRef.current?.scrollTo({
-        y: Math.max(0, y - 24),
+        y: Math.max(0, y - 72),
         animated: true,
       });
     });
   }, []);
+
+  useEffect(() => {
+    const eventName = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const subscription = Keyboard.addListener(eventName, () => {
+      const field = activeFieldRef.current;
+      if (!field) return;
+
+      // 키보드로 화면 높이가 실제로 줄어든 뒤 한 번 더 위치를 맞춘다.
+      // iOS에서 포커스 시점만으로 스크롤하면 입력칸이 키보드에 가려질 수 있다.
+      setTimeout(() => scrollFocusedFieldIntoView(field), Platform.OS === "ios" ? 80 : 0);
+    });
+
+    return () => subscription.remove();
+  }, [scrollFocusedFieldIntoView]);
 
   const { data: product, isLoading } = trpc.products.detail.useQuery(
     { id: productId },

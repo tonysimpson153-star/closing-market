@@ -39,9 +39,21 @@ const env = {
   androidPackage: bundleId,
   // 카카오 OAuth 설정
   kakaoAppId: optionalEnv(process.env.EXPO_PUBLIC_KAKAO_APP_ID),
+  kakaoNativeAppKey: optionalEnv(process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY),
   kakaoClientSecret: optionalEnv(process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET),
   kakaoRedirectUri: `${schemeFromBundleId}://oauth/kakao`,
 };
+
+const kakaoNativePlugin: [string, any] | null = env.kakaoNativeAppKey
+  ? [
+      "@react-native-kakao/core",
+      {
+        nativeAppKey: env.kakaoNativeAppKey,
+        android: { authCodeHandlerActivity: true },
+        ios: { handleKakaoOpenUrl: true },
+      },
+    ]
+  : null;
 
 const config: ExpoConfig = {
   name: env.appName,
@@ -56,7 +68,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "14",
+    buildNumber: "15",
     entitlements: {
       "com.apple.developer.applesignin": ["Default"],
     },
@@ -76,7 +88,7 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: "resize",
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 15,
+    versionCode: 16,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
@@ -102,6 +114,7 @@ const config: ExpoConfig = {
     "expo-font",
     "expo-web-browser",
     "expo-apple-authentication",
+    ...(kakaoNativePlugin ? [kakaoNativePlugin] : []),
     "./plugins/with-kakao-maven-repository.cjs",
     [
       "expo-audio",

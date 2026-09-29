@@ -6,12 +6,14 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
+import { login as loginWithKakao } from "@react-native-kakao/user";
 import Constants from "expo-constants";
 import { ScreenContainer } from "@/components/screen-container";
 import { useAuthStore } from "@/lib/auth-store";
@@ -47,7 +49,7 @@ export default function KakaoLoginScreen() {
 
   // 카카오 로그인 시작
   const handleKakaoLogin = async () => {
-    if (!KAKAO_APP_ID) {
+    if (Platform.OS === "web" && !KAKAO_APP_ID) {
       Alert.alert("오류", "카카오 앱 ID가 설정되지 않았습니다.");
       return;
     }
@@ -55,6 +57,14 @@ export default function KakaoLoginScreen() {
     setIsLoading(true);
 
     try {
+      if (Platform.OS !== "web") {
+        // Native SDK uses the Native App Key configured through the Expo plugin.
+        // It returns to the app via kakao{NativeAppKey}://oauth automatically.
+        const kakaoToken = await loginWithKakao();
+        await completeKakaoLogin(kakaoToken.accessToken);
+        return;
+      }
+
       // 카카오 OAuth 인증 URL 구성
       const authUrl = new URL(KAKAO_OAUTH_URL);
       authUrl.searchParams.append("client_id", KAKAO_APP_ID);
@@ -85,6 +95,16 @@ export default function KakaoLoginScreen() {
       Alert.alert("오류", "카카오 로그인 중 오류가 발생했습니다.");
       setIsLoading(false);
     }
+  };
+
+  const completeKakaoLogin = async (accessToken: string) => {
+    const login = await kakaoLoginMutation.mutateAsync({ accessToken });
+    queryClient.clear();
+    await setAuth(login.token, login.user);
+    setIsLoading(false);
+    Alert.alert("로그인 완료", `${login.user.name || "회원"}님, 환영합니다.`, [
+      { text: "확인", onPress: () => router.replace("/(tabs)/" as any) },
+    ]);
   };
 
   // 인증 코드를 액세스 토큰으로 교환
@@ -120,13 +140,7 @@ export default function KakaoLoginScreen() {
       }
 
       // 카카오 토큰을 운영 API에서 검증한 뒤 앱 로그인 세션으로 저장한다.
-      const login = await kakaoLoginMutation.mutateAsync({ accessToken });
-      queryClient.clear();
-      await setAuth(login.token, login.user);
-      setIsLoading(false);
-      Alert.alert("로그인 완료", `${login.user.name || "회원"}님, 환영합니다.`, [
-        { text: "확인", onPress: () => router.replace("/(tabs)/" as any) },
-      ]);
+      await completeKakaoLogin(accessToken);
     } catch (error) {
       console.error("토큰 교환 오류:", error);
       const message = error instanceof Error ? error.message : "카카오 로그인 처리 중 오류가 발생했습니다.";

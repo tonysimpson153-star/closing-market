@@ -5004,3 +5004,26 @@
 [2026-09-28T19:20:12.506Z] [1] React Compiler enabled
 [2026-09-28T19:20:12.713Z] [1] Starting Metro Bundler
 [2026-09-28T19:20:12.756Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:17.344Z] Starting dev server with command: pnpm run dev
+[2026-09-29T02:25:18.622Z] > app-template@1.0.0 dev /home/ubuntu/closing-market
+[2026-09-29T02:25:18.622Z] > concurrently -k "pnpm dev:server" "pnpm dev:metro"
+[2026-09-29T02:25:19.509Z] [0]
+[2026-09-29T02:25:19.509Z] [0] > app-template@1.0.0 dev:server /home/ubuntu/closing-market
+[2026-09-29T02:25:19.509Z] [0] > cross-env NODE_ENV=development tsx watch server/_core/index.ts
+[2026-09-29T02:25:19.509Z] [0]
+[2026-09-29T02:25:19.510Z] [1]
+[2026-09-29T02:25:19.510Z] [1] > app-template@1.0.0 dev:metro /home/ubuntu/closing-market
+[2026-09-29T02:25:19.510Z] [1] > cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 npx expo start --web --port ${EXPO_PORT:-8081}
+[2026-09-29T02:25:19.510Z] [1]
+[2026-09-29T02:25:20.352Z] [1] Starting project at /home/ubuntu/closing-market
+[2026-09-29T02:25:20.910Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.185Z] [0] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-09-29T02:25:21.316Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.316Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.317Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.726Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.726Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.727Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
+[2026-09-29T02:25:21.728Z] [1] React Compiler enabled
+[2026-09-29T02:25:21.924Z] [1] Starting Metro Bundler
+[2026-09-29T02:25:21.966Z] [1] EXPO_USE_METRO_WORKSPACE_ROOT is enabled by default, use EXPO_NO_METRO_WORKSPACE_ROOT instead to disable.
