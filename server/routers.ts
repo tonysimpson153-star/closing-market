@@ -9,6 +9,26 @@ import { ENV } from "./_core/env";
 
 const JWT_SECRET = ENV.jwtSecret;
 
+function createRandomSocialNickname() {
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(-10);
+  return `클로징${suffix}`;
+}
+
+function toAuthUser(user: NonNullable<Awaited<ReturnType<typeof db.getUserById>>>) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    nickname: user.nickname,
+    role: user.role,
+    isVerified: user.isVerified,
+    sellerStatus: user.sellerStatus,
+    companyStatus: user.companyStatus,
+    profileImageUrl: user.profileImageUrl,
+    phone: user.phone,
+  };
+}
+
 export const appRouter = router({
   // Public routes
   health: publicProcedure.query(() => ({ status: "ok" })),
@@ -56,7 +76,7 @@ export const appRouter = router({
           throw err;
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 이메일 로그인
@@ -101,7 +121,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 비밀번호 찾기 - 재설정 링크 이메일 발송
@@ -156,7 +176,7 @@ export const appRouter = router({
           const decoded = jwt.verify(input.token, JWT_SECRET) as { userId: number };
           const user = await db.getUserById(decoded.userId);
           if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-          return { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
+          return toAuthUser(user);
         } catch {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "유효하지 않은 토큰입니다." });
         }
@@ -186,11 +206,16 @@ export const appRouter = router({
             email: email || null,
             password: null,
             name,
+            nickname: createRandomSocialNickname(),
             phone: null,
             loginMethod: "kakao",
             kakaoId,
             profileImageUrl: profileImageUrl || null,
           });
+        } else if (!user.nickname?.trim()) {
+          await db.updateUserProfile(user.id, { nickname: createRandomSocialNickname() });
+          const refreshedUser = await db.getUserById(user.id);
+          if (refreshedUser) user = refreshedUser;
         }
         if (user.suspendedAt) {
           throw new TRPCError({
@@ -201,7 +226,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // Apple 로그인
@@ -244,7 +269,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 푸시 토큰 저장
@@ -268,13 +293,21 @@ export const appRouter = router({
     updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(50).optional(),
+        nickname: z.string().min(1).max(50).optional(),
         phone: z.string().optional(),
         profileImageUrl: z.string().url().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const updated = await db.updateUserProfile(ctx.user.id, input);
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-        return { id: updated.id, name: updated.name, phone: updated.phone, email: updated.email, profileImageUrl: updated.profileImageUrl };
+        return {
+          id: updated.id,
+          name: updated.name,
+          nickname: updated.nickname,
+          phone: updated.phone,
+          email: updated.email,
+          profileImageUrl: updated.profileImageUrl,
+        };
       }),
     changePassword: protectedProcedure
       .input(z.object({
@@ -720,7 +753,7 @@ export const appRouter = router({
             if (recipient?.expoPushToken) {
               const delivered = await sendChatPushNotification(
                 recipient.expoPushToken,
-                sender?.name ?? "새 메시지",
+                sender?.nickname?.trim() || sender?.name || "새 메시지",
                 input.content ?? "사진을 보냈습니다.",
                 input.roomId,
               );

@@ -5,6 +5,7 @@ export interface AuthUser {
   id: number;
   email: string | null;
   name: string | null;
+  nickname?: string | null;
   role: "user" | "seller" | "company" | "admin";
   isVerified: boolean;
   sellerStatus: "pending" | "approved" | "rejected" | "suspended" | null;

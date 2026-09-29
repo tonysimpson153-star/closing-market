@@ -198,7 +198,7 @@ export default function MyPageScreen() {
               {isAuthenticated && user ? (
                 <>
                   <Text style={[styles.profileName, { color: colors.foreground }]}>
-                    {user.name ?? "사용자"}
+                    {user.nickname?.trim() || user.name || "사용자"}
                   </Text>
                   <Text style={[styles.profileEmail, { color: colors.muted }]}>
                     {user.email ?? ""}

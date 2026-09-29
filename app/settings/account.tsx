@@ -71,7 +71,13 @@ export default function AccountSettingsScreen() {
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: (data) => {
       if (token && user) {
-        setAuth(token, { ...user, name: data.name ?? user.name, phone: data.phone ?? user.phone, profileImageUrl: data.profileImageUrl ?? user.profileImageUrl });
+        setAuth(token, {
+          ...user,
+          name: data.name ?? user.name,
+          nickname: data.nickname ?? user.nickname,
+          phone: data.phone ?? user.phone,
+          profileImageUrl: data.profileImageUrl ?? user.profileImageUrl,
+        });
       }
       Alert.alert("저장 완료", "프로필이 업데이트되었습니다.");
     },
@@ -110,9 +116,13 @@ export default function AccountSettingsScreen() {
       Alert.alert("입력 오류", "이름을 입력해주세요.");
       return;
     }
+    if (!nickname.trim()) {
+      Alert.alert("입력 오류", "닉네임을 입력해주세요.");
+      return;
+    }
     updateProfileMutation.mutate({
       name: name.trim(),
-      nickname: nickname.trim() || undefined,
+      nickname: nickname.trim(),
       phone: phone.trim() || undefined,
     });
   };
@@ -208,10 +218,10 @@ export default function AccountSettingsScreen() {
             returnKeyType="next"
           />
 
-          <Text style={[styles.label, { color: colors.foreground }]}>닉네임</Text>
+          <Text style={[styles.label, { color: colors.foreground }]}>닉네임 <Text style={styles.required}>*</Text></Text>
           <TextInput
             style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
-            placeholder="닉네임을 입력하세요 (선택사항)"
+            placeholder="앱에 표시할 닉네임을 입력하세요"
             placeholderTextColor={colors.muted}
             value={nickname}
             onChangeText={setNickname}

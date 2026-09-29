@@ -61,13 +61,6 @@ function createOptimisticMessage(
   };
 }
 
-type PendingChatImage = {
-  uri: string;
-  base64: string;
-  mimeType?: string | null;
-  fileName?: string | null;
-};
-
 function ChatInputLayout({ children, keyboardHeight }: { children: React.ReactNode; keyboardHeight: number }) {
   // Android와 웹은 네이티브 화면 resize를 사용한다. iOS는 KeyboardAvoidingView에 맡기지 않고,
   // 실제 키보드 높이만큼 채팅 영역에 하단 여백을 직접 줘서 입력창을 키보드 바로 위에 배치한다.
@@ -85,7 +78,6 @@ export default function ChatRoomScreen() {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [pendingChatImage, setPendingChatImage] = useState<PendingChatImage | null>(null);
   const [fullscreenChatImage, setFullscreenChatImage] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
@@ -215,6 +207,8 @@ export default function ChatRoomScreen() {
   const uploadImageMutation = trpc.upload.chatImage.useMutation();
 
   const handleImagePick = useCallback(async () => {
+    if (isSending) return;
+
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("권한 필요", "사진 전송을 위해 갤러리 접근 권한이 필요합니다.");
@@ -224,45 +218,44 @@ export default function ChatRoomScreen() {
       mediaTypes: ["images"],
       quality: 0.7,
       allowsEditing: false,
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
       base64: true,
     });
-    if (result.canceled || !result.assets[0]) return;
+    if (result.canceled || result.assets.length === 0) return;
 
-    const asset = result.assets[0];
-    if (!asset.base64) {
+    const selectedAssets = result.assets.filter((asset) => asset.base64);
+    if (selectedAssets.length === 0) {
       Alert.alert("오류", "이미지를 읽을 수 없습니다.");
       return;
     }
 
-    // 갤러리에서 고른 즉시 전송하지 않고, 미리보기에서 사용자가 전송을 확정한다.
-    setPendingChatImage({
-      uri: asset.uri,
-      base64: asset.base64,
-      mimeType: asset.mimeType,
-      fileName: asset.fileName,
-    });
-  }, []);
-
-  const handleSendPendingImage = useCallback(async () => {
-    if (!pendingChatImage || isSending) return;
-
+    // 휴대폰의 기본 사진 선택 화면에서 체크 후 완료하면 바로 전송한다.
+    // 앱 안에서 별도의 사진 보내기 확인창은 띄우지 않는다.
     try {
       setIsSending(true);
-      const uploadResult = await uploadImageMutation.mutateAsync({
-        base64: pendingChatImage.base64,
-        mimeType: pendingChatImage.mimeType ?? "image/jpeg",
-        fileName: pendingChatImage.fileName ?? "photo.jpg",
-      });
-      sendMutation.mutate({ roomId, imageUrl: uploadResult.url });
-      setPendingChatImage(null);
-    } catch {
-      // 업로드 실패 시 로컬 URI로 전송 (오프라인 폴백)
-      sendMutation.mutate({ roomId, imageUrl: pendingChatImage.uri });
-      setPendingChatImage(null);
+      let failedCount = result.assets.length - selectedAssets.length;
+      for (const asset of selectedAssets) {
+        try {
+          const uploadResult = await uploadImageMutation.mutateAsync({
+            base64: asset.base64!,
+            mimeType: asset.mimeType ?? "image/jpeg",
+            fileName: asset.fileName ?? "photo.jpg",
+          });
+          sendMutation.mutate({ roomId, imageUrl: uploadResult.url });
+        } catch {
+          failedCount += 1;
+        }
+      }
+      if (failedCount > 0) {
+        Alert.alert("일부 사진 전송 실패", `${failedCount}장의 사진을 전송하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해주세요.`);
+      }
+    } catch (error) {
+      Alert.alert("사진 전송 실패", error instanceof Error ? error.message : "사진을 전송하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해주세요.");
     } finally {
       setIsSending(false);
     }
-  }, [isSending, pendingChatImage, roomId, sendMutation, uploadImageMutation]);
+  }, [isSending, roomId, sendMutation, uploadImageMutation]);
 
   const handleTradeAction = () => {
     Alert.alert(
@@ -605,42 +598,6 @@ export default function ChatRoomScreen() {
         </View>
       </Modal>
 
-      <Modal
-        visible={pendingChatImage !== null}
-        animationType="fade"
-        transparent
-        onRequestClose={() => !isSending && setPendingChatImage(null)}
-      >
-        <View style={[styles.imagePreviewOverlay, { paddingTop: Math.max(insets.top, 24), paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <View style={[styles.imagePreviewCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <Text style={[styles.imagePreviewTitle, { color: colors.foreground }]}>선택한 사진</Text>
-            <Text style={[styles.imagePreviewDescription, { color: colors.muted }]}>확인 후 사진 보내기를 누르면 전송됩니다.</Text>
-            {pendingChatImage ? (
-              <Image source={{ uri: pendingChatImage.uri }} style={styles.imagePreview} resizeMode="contain" />
-            ) : null}
-            <View style={styles.imagePreviewActions}>
-              <Pressable
-                style={({ pressed }) => [styles.imagePreviewCancelButton, { borderColor: colors.border, opacity: pressed || isSending ? 0.6 : 1 }]}
-                onPress={() => setPendingChatImage(null)}
-                disabled={isSending}
-              >
-                <Text style={[styles.imagePreviewCancelText, { color: colors.foreground }]}>취소</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.imagePreviewSendButton, { backgroundColor: colors.primary, opacity: pressed || isSending ? 0.78 : 1 }]}
-                onPress={handleSendPendingImage}
-                disabled={isSending}
-              >
-                {isSending ? (
-                  <ActivityIndicator color="#000000" size="small" />
-                ) : (
-                  <Text style={styles.imagePreviewSendText}>사진 보내기</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ScreenContainer>
   );
 }
