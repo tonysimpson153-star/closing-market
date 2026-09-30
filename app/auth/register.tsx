@@ -10,9 +10,12 @@ import {
   ActivityIndicator,
   StyleSheet,
   Pressable,
+  Platform,
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/lib/auth-store";
@@ -22,6 +25,7 @@ import { LucideIcon } from "@/components/ui/icon-lucide";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const colors = useColors();
   const { setAuth } = useAuthStore();
   const [name, setName] = useState("");
@@ -44,6 +48,17 @@ export default function RegisterScreen() {
     },
     onError: (err) => {
       Alert.alert("가입 실패", err.message);
+    },
+  });
+
+  const appleLoginMutation = trpc.auth.appleLogin.useMutation({
+    onSuccess: (data) => {
+      queryClient.clear();
+      setAuth(data.token, data.user);
+      router.replace("/(tabs)/" as any);
+    },
+    onError: (err) => {
+      Alert.alert("Apple 로그인 실패", err.message);
     },
   });
 
@@ -311,6 +326,68 @@ export default function RegisterScreen() {
             )}
           </Pressable>
 
+          {/* 소셜 가입/로그인 */}
+          <View style={styles.socialDivider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.muted }]}>또는</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.socialBtn,
+              { backgroundColor: "#FEE500", opacity: pressed ? 0.85 : 1 },
+            ]}
+            onPress={() => {
+              if (!agreedToPrivacy) {
+                Alert.alert("동의 필요", "이용약관 및 개인정보처리방침에 동의해주세요.");
+                return;
+              }
+              router.push("/auth/kakao" as any);
+            }}
+          >
+            <Text style={styles.kakaoText}>카카오로 가입/로그인</Text>
+          </Pressable>
+
+          {Platform.OS === "ios" && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialBtn,
+                styles.appleBtn,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              disabled={appleLoginMutation.isPending}
+              onPress={async () => {
+                if (!agreedToPrivacy) {
+                  Alert.alert("동의 필요", "이용약관 및 개인정보처리방침에 동의해주세요.");
+                  return;
+                }
+                try {
+                  const credential = await AppleAuthentication.signInAsync({
+                    requestedScopes: [
+                      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                    ],
+                  });
+                  if (!credential.identityToken) {
+                    throw new Error("Apple 인증 토큰을 받지 못했습니다.");
+                  }
+                  appleLoginMutation.mutate({ identityToken: credential.identityToken });
+                } catch (e: any) {
+                  if (e.code !== "ERR_REQUEST_CANCELED" && e.code !== "ERR_CANCELED") {
+                    Alert.alert("Apple 로그인 실패", e.message || "Apple 로그인 중 오류가 발생했습니다.");
+                  }
+                }
+              }}
+            >
+              {appleLoginMutation.isPending ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.appleText}>Apple로 가입/로그인</Text>
+              )}
+            </Pressable>
+          )}
+
           {/* 로그인 링크 */}
           <View style={styles.loginRow}>
             <Text style={[styles.loginText, { color: colors.muted }]}>이미 계정이 있으신가요?</Text>
@@ -427,5 +504,39 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     fontWeight: "700",
+  },
+  socialDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 28,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+  },
+  socialBtn: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginBottom: 12,
+  },
+  kakaoText: {
+    color: "#000000",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  appleBtn: {
+    backgroundColor: "#000000",
+  },
+  appleText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
