@@ -67,6 +67,7 @@ export default function AccountSettingsScreen() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showDeleteSection, setShowDeleteSection] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const isSocialLogin = user?.loginMethod === "kakao" || user?.loginMethod === "apple";
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: (data) => {
@@ -144,7 +145,7 @@ export default function AccountSettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    if (user?.loginMethod !== "kakao" && !deletePassword) {
+    if (!isSocialLogin && !deletePassword) {
       Alert.alert("입력 오류", "비밀번호를 입력해주세요.");
       return;
     }
@@ -259,7 +260,7 @@ export default function AccountSettingsScreen() {
         </View>
 
         {/* 비밀번호 변경 */}
-        {user?.loginMethod !== "kakao" && (
+        {!isSocialLogin && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 16 }]}>
             <TouchableOpacity
               style={styles.passwordToggleRow}
@@ -342,7 +343,7 @@ export default function AccountSettingsScreen() {
                 다만 등록한 상품, 채팅 내역, 거래 후기 등 다른 이용자와 연결된 기록은 서비스 신뢰도 유지를 위해 보존됩니다.
               </Text>
 
-              {user?.loginMethod !== "kakao" && (
+              {!isSocialLogin && (
                 <>
                   <Text style={[styles.label, { color: colors.foreground }]}>비밀번호 확인</Text>
                   <TextInput
