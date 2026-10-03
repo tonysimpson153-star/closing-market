@@ -60,7 +60,10 @@ export default function KakaoLoginScreen() {
       if (Platform.OS !== "web") {
         // Native SDK uses the Native App Key configured through the Expo plugin.
         // It returns to the app via kakao{NativeAppKey}://oauth automatically.
-        const kakaoToken = await loginWithKakao();
+        // Use Kakao Account login explicitly instead of KakaoTalk login. This
+        // avoids iOS KakaoTalk handoff failures while keeping the native SDK
+        // and the existing server-side token validation unchanged.
+        const kakaoToken = await loginWithKakao({ useKakaoAccountLogin: true });
         await completeKakaoLogin(kakaoToken.accessToken);
         return;
       }
