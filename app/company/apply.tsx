@@ -20,18 +20,15 @@ import { trpc } from "@/lib/trpc";
 const COMPANY_TYPES = [
   { id: "demolition" as const, label: "철거업체", icon: "hammer", desc: "건물 및 시설 철거 전문" },
   { id: "interior" as const, label: "인테리어업체", icon: "palette", desc: "인테리어 시공 및 리모델링" },
-  { id: "waste" as const, label: "폐기물처리업체", icon: "recycle", desc: "산업·생활 폐기물 처리" },
   { id: "signage" as const, label: "간판·사인업체", icon: "signpost", desc: "간판 제작 및 철거" },
   { id: "pos" as const, label: "POS·키오스크업체", icon: "monitor", desc: "POS·키오스크 시스템 구매·판매" },
   { id: "cctv" as const, label: "CCTV·보안업체", icon: "camera", desc: "CCTV 및 보안 시스템 설치" },
-  { id: "kitchen" as const, label: "주방기기업체", icon: "utensils", desc: "주방기기 판매 및 설치" },
   { id: "cleaning" as const, label: "청소·방역업체", icon: "waves", desc: "사업장 청소 및 방역" },
-  { id: "tax" as const, label: "세무사 (전문 상담)", icon: "file", desc: "세무·회계 전문 서비스" },
-  { id: "labor" as const, label: "노무사 (전문 상담)", icon: "scale", desc: "노무·인사 전문 서비스" },
+  { id: "tax" as const, label: "전문 상담", icon: "file", desc: "노무·세무·회계 전문 서비스" },
   { id: "consulting" as const, label: "창업 컨설팅", icon: "trending-up", desc: "창업 전략 및 컨설팅 서비스" },
 ];
 
-type CompanyType = "demolition" | "interior" | "waste" | "signage" | "pos" | "cctv" | "kitchen" | "cleaning" | "tax" | "labor" | "consulting";
+type CompanyType = "demolition" | "interior" | "signage" | "pos" | "cctv" | "cleaning" | "tax" | "consulting";
 
 export default function CompanyApplyScreen() {
   const colors = useColors();
