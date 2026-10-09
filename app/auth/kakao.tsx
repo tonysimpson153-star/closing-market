@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
+import { initializeKakaoSDK } from "@react-native-kakao/core";
 import { login as loginWithKakao } from "@react-native-kakao/user";
 import Constants from "expo-constants";
 import { ScreenContainer } from "@/components/screen-container";
@@ -25,6 +26,10 @@ const KAKAO_APP_ID = (
   (Constants.expoConfig?.extra?.kakaoAppId as string | undefined)
 )?.trim();
 const KAKAO_CLIENT_SECRET = process.env.EXPO_PUBLIC_KAKAO_CLIENT_SECRET?.trim();
+const KAKAO_NATIVE_APP_KEY = (
+  process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY ??
+  (Constants.expoConfig?.extra?.kakaoNativeAppKey as string | undefined)
+)?.trim();
 const configuredScheme = Constants.expoConfig?.scheme;
 const SCHEME = (Array.isArray(configuredScheme) ? configuredScheme[0] : configuredScheme) || "manus";
 
@@ -58,6 +63,12 @@ export default function KakaoLoginScreen() {
 
     try {
       if (Platform.OS !== "web") {
+        if (!KAKAO_NATIVE_APP_KEY) {
+          throw new Error("카카오 네이티브 앱 키가 설정되지 않았습니다.");
+        }
+        // The config plugin registers the callback URL, while the SDK still
+        // must be initialized at runtime before invoking the native login API.
+        await initializeKakaoSDK(KAKAO_NATIVE_APP_KEY);
         // Native SDK uses the Native App Key configured through the Expo plugin.
         // It returns to the app via kakao{NativeAppKey}://oauth automatically.
         // Use Kakao Account login explicitly instead of KakaoTalk login. This

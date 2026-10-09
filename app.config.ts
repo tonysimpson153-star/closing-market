@@ -59,7 +59,7 @@ const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
   owner: "mm328i",
-  version: "1.0.4",
+  version: "1.0.5",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
@@ -68,7 +68,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "17",
+    buildNumber: "18",
     entitlements: {
       "com.apple.developer.applesignin": ["Default"],
     },
@@ -88,7 +88,7 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: "resize",
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 18,
+    versionCode: 19,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
@@ -163,6 +163,8 @@ const config: ExpoConfig = {
     },
     // 카카오 로그인 REST API 키
     kakaoAppId: env.kakaoAppId,
+    // 카카오 네이티브 SDK 초기화에 필요한 공개 Native App Key
+    kakaoNativeAppKey: env.kakaoNativeAppKey,
   },
 };
 
