@@ -59,7 +59,7 @@ const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
   owner: "mm328i",
-  version: "1.0.5",
+  version: "1.0.6",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
@@ -68,7 +68,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "19",
+    buildNumber: "20",
     entitlements: {
       "com.apple.developer.applesignin": ["Default"],
     },
@@ -88,7 +88,7 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: "resize",
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 20,
+    versionCode: 21,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
