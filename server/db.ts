@@ -1351,6 +1351,7 @@ export async function getUserByEmail(email: string) {
       nickname: users.nickname,
       email: users.email,
       password: users.password,
+      loginMethod: users.loginMethod,
       role: users.role,
       isVerified: users.isVerified,
       sellerStatus: users.sellerStatus,

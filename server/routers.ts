@@ -47,13 +47,20 @@ function nicknameConflictError() {
   return new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요." });
 }
 
+function getLoginMethod(user: { loginMethod?: string | null; kakaoId?: string | null; appleId?: string | null }) {
+  if (user.loginMethod === "kakao" || user.loginMethod === "apple") return user.loginMethod;
+  if (user.kakaoId) return "kakao";
+  if (user.appleId) return "apple";
+  return user.loginMethod ?? "email";
+}
+
 function toAuthUser(user: NonNullable<Awaited<ReturnType<typeof db.getUserById>>>) {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
     nickname: user.nickname,
-    loginMethod: user.loginMethod,
+    loginMethod: getLoginMethod(user),
     role: user.role,
     isVerified: user.isVerified,
     sellerStatus: user.sellerStatus,
@@ -231,10 +238,10 @@ export const appRouter = router({
         if (!kakaoRes.ok) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "카카오 인증에 실패했습니다." });
         }
-        const kakaoData = await kakaoRes.json() as { id: number; kakao_account?: { email?: string; profile?: { nickname?: string; profile_image_url?: string } } };
+        const kakaoData = await kakaoRes.json() as { id: number; properties?: { nickname?: string; profile_image?: string }; kakao_account?: { email?: string; profile?: { nickname?: string; profile_image_url?: string } } };
         const kakaoId = String(kakaoData.id);
         const email = kakaoData.kakao_account?.email;
-        const name = kakaoData.kakao_account?.profile?.nickname || "카카오 사용자";
+        const name = kakaoData.kakao_account?.profile?.nickname?.trim() || kakaoData.properties?.nickname?.trim() || "카카오 사용자";
         const profileImageUrl = kakaoData.kakao_account?.profile?.profile_image_url;
 
         let user = await db.getUserByKakaoId(kakaoId);
@@ -251,7 +258,7 @@ export const appRouter = router({
             kakaoId,
             profileImageUrl: profileImageUrl || null,
           });
-        } else if (!user.nickname?.trim() || user.nickname.startsWith("클로징")) {
+        } else if (!user.nickname?.trim()) {
           await db.updateUserProfile(user.id, {
             nickname: await createUniqueSocialNickname(name, user.id),
           });
@@ -354,6 +361,9 @@ export const appRouter = router({
           throw err;
         }
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
+        if (input.nickname !== undefined && updated.nickname !== input.nickname) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "닉네임 저장 결과를 확인하지 못했습니다. 입력한 닉네임은 지우지 말고 다시 시도해주세요." });
+        }
         return {
           id: updated.id,
           name: updated.name,
@@ -361,6 +371,7 @@ export const appRouter = router({
           phone: updated.phone,
           email: updated.email,
           profileImageUrl: updated.profileImageUrl,
+          loginMethod: getLoginMethod(updated),
         };
       }),
     changePassword: protectedProcedure
@@ -383,7 +394,9 @@ export const appRouter = router({
         const user = await db.getUserById(ctx.user.id);
         if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
 
-        if (user.password) {
+        const loginMethod = getLoginMethod(user);
+        const isSocialLogin = loginMethod === "kakao" || loginMethod === "apple";
+        if (!isSocialLogin && user.password) {
           if (!input.password) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "비밀번호를 입력해주세요." });
           }

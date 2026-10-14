@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -22,11 +22,26 @@ export default function AccountSettingsScreen() {
   const router = useRouter();
   const colors = useColors();
   const { user, setAuth, token, clearAuth } = useAuthStore();
+  const utils = trpc.useUtils();
+  const dirtyFields = useRef({ name: false, nickname: false, phone: false });
+  const profileQuery = trpc.auth.me.useQuery({ token: token ?? "" }, {
+    enabled: !!token,
+    refetchOnMount: "always",
+    retry: false,
+  });
 
   const [name, setName] = useState(user?.name ?? "");
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(user?.profileImageUrl ?? null);
+  useEffect(() => {
+    const latest = profileQuery.data;
+    if (!latest || latest.id !== user?.id) return;
+    if (!dirtyFields.current.name) setName(latest.name ?? "");
+    if (!dirtyFields.current.nickname) setNickname(latest.nickname ?? "");
+    if (!dirtyFields.current.phone) setPhone(latest.phone ?? "");
+  }, [profileQuery.data, user?.id]);
+
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const uploadPhotoMutation = trpc.upload.profilePhoto.useMutation();
 
@@ -67,22 +82,40 @@ export default function AccountSettingsScreen() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showDeleteSection, setShowDeleteSection] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
-  const isSocialLogin = user?.loginMethod === "kakao" || user?.loginMethod === "apple";
+  const loginMethod = profileQuery.data?.loginMethod ?? user?.loginMethod;
+  const isSocialLogin = loginMethod === "kakao" || loginMethod === "apple";
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
-    onSuccess: (data) => {
-      setName(data.name ?? "");
-      setNickname(data.nickname ?? "");
-      setPhone(data.phone ?? "");
-      if (token && user) {
-        setAuth(token, {
-          ...user,
-          name: data.name ?? "",
-          nickname: data.nickname ?? "",
-          phone: data.phone ?? "",
-          profileImageUrl: data.profileImageUrl ?? user.profileImageUrl,
+    onSuccess: async (data, submitted) => {
+      // A response without the submitted nickname is not a successful save.
+      // Keep the user's draft instead of clearing it with an incomplete response.
+      if (submitted.nickname !== undefined && data.nickname !== submitted.nickname) {
+        throw new Error("서버에서 닉네임 저장을 확인하지 못했습니다. 입력값은 유지되며, 다시 저장해주세요.");
+      }
+      if (submitted.name !== undefined) {
+        setName(data.name ?? "");
+        dirtyFields.current.name = false;
+      }
+      if (submitted.nickname !== undefined) {
+        setNickname(data.nickname ?? "");
+        dirtyFields.current.nickname = false;
+      }
+      if (submitted.phone !== undefined) {
+        setPhone(data.phone ?? "");
+        dirtyFields.current.phone = false;
+      }
+      const current = useAuthStore.getState();
+      if (token && current.token === token && current.user?.id === data.id) {
+        await setAuth(token, {
+          ...current.user,
+          name: submitted.name !== undefined ? data.name : current.user.name,
+          nickname: submitted.nickname !== undefined ? data.nickname : current.user.nickname,
+          phone: submitted.phone !== undefined ? data.phone : current.user.phone,
+          loginMethod: data.loginMethod ?? loginMethod ?? current.user.loginMethod,
+          profileImageUrl: data.profileImageUrl,
         });
       }
+      if (token) void utils.auth.me.invalidate({ token });
       Alert.alert("저장 완료", "프로필이 업데이트되었습니다.");
     },
     onError: (err) => {
@@ -161,7 +194,7 @@ export default function AccountSettingsScreen() {
           text: "탈퇴하기",
           style: "destructive",
           onPress: () => {
-            deleteAccountMutation.mutate({ password: deletePassword || undefined });
+            deleteAccountMutation.mutate({ password: isSocialLogin ? undefined : deletePassword || undefined });
           },
         },
       ]
@@ -218,7 +251,7 @@ export default function AccountSettingsScreen() {
             placeholder="이름을 입력하세요"
             placeholderTextColor={colors.muted}
             value={name}
-            onChangeText={setName}
+            onChangeText={(value) => { dirtyFields.current.name = true; setName(value); }}
             returnKeyType="next"
           />
 
@@ -228,7 +261,8 @@ export default function AccountSettingsScreen() {
             placeholder="앱에 표시할 닉네임을 입력하세요"
             placeholderTextColor={colors.muted}
             value={nickname}
-            onChangeText={setNickname}
+            onChangeText={(value) => { dirtyFields.current.nickname = true; setNickname(value); }}
+            maxLength={50}
             returnKeyType="next"
           />
 
@@ -239,7 +273,7 @@ export default function AccountSettingsScreen() {
             placeholderTextColor={colors.muted}
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={(value) => { dirtyFields.current.phone = true; setPhone(value); }}
             returnKeyType="done"
           />
 

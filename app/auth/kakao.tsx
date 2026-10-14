@@ -71,17 +71,16 @@ export default function KakaoLoginScreen() {
         await initializeKakaoSDK(KAKAO_NATIVE_APP_KEY);
         // Native SDK uses the Native App Key configured through the Expo plugin.
         // It returns to the app via kakao{NativeAppKey}://oauth automatically.
-        // Use Kakao Account login explicitly instead of KakaoTalk login. This
-        // avoids iOS KakaoTalk handoff failures while keeping the native SDK
-        // and the existing server-side token validation unchanged.
-        const kakaoToken = await loginWithKakao({ useKakaoAccountLogin: true });
+        // Prefer KakaoTalk when installed; the SDK uses account login only
+        // when KakaoTalk login is unavailable.
+        const kakaoToken = await loginWithKakao({ useKakaoAccountLogin: false });
         await completeKakaoLogin(kakaoToken.accessToken);
         return;
       }
 
       // 카카오 OAuth 인증 URL 구성
       const authUrl = new URL(KAKAO_OAUTH_URL);
-      authUrl.searchParams.append("client_id", KAKAO_APP_ID);
+      authUrl.searchParams.append("client_id", KAKAO_APP_ID!);
       authUrl.searchParams.append("redirect_uri", redirectUrl);
       authUrl.searchParams.append("response_type", "code");
 
@@ -116,7 +115,7 @@ export default function KakaoLoginScreen() {
     queryClient.clear();
     await setAuth(login.token, login.user);
     setIsLoading(false);
-    Alert.alert("로그인 완료", `${login.user.name || "회원"}님, 환영합니다.`, [
+    Alert.alert("로그인 완료", `${login.user.nickname?.trim() || login.user.name || "회원"}님, 환영합니다.`, [
       { text: "확인", onPress: () => router.replace("/(tabs)/" as any) },
     ]);
   };

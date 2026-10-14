@@ -1,4 +1,5 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, inArray, sql } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "./_core/env";
@@ -6,6 +7,8 @@ import {
   users,
   products,
   productImages,
+  businessTransfers,
+  comments,
   companyImages,
   businesses,
   favorites,
@@ -19,11 +22,16 @@ import {
   InsertProduct,
   InsertUser,
   InsertSellerApplication,
+  User,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-async function getDb() {
+function getPublicDisplayName(user: { nickname?: string | null; name?: string | null }) {
+  return user.nickname?.trim() || user.name || "사용자";
+}
+
+export async function getDb() {
   if (_db) return _db;
   if (!ENV.databaseUrl) return null;
   try {
@@ -75,7 +83,13 @@ export async function getProducts(input?: {
 
   const conditions = [];
   if (input?.category) conditions.push(eq(products.category, input.category));
-  if (input?.status) conditions.push(eq(products.status, input.status));
+  // 공개 목록에서 '판매중' 필터는 예약중 매물도 함께 보여준다.
+  // 예약중은 거래 진행 상태일 뿐 등록 상품을 숨기면 안 된다.
+  if (input?.status === "selling") {
+    conditions.push(inArray(products.status, ["selling", "reserved"]));
+  } else if (input?.status) {
+    conditions.push(eq(products.status, input.status));
+  }
 
   const query = db
     .select()
@@ -104,7 +118,7 @@ export async function getProductDetail(id: number) {
       .where(eq(productImages.productId, id))
       .orderBy(productImages.sortOrder),
     db
-      .select({ id: users.id, name: users.name, isVerified: users.isVerified })
+      .select({ id: users.id, name: users.name, nickname: users.nickname, isVerified: users.isVerified })
       .from(users)
       .where(eq(users.id, rows[0].userId))
       .limit(1),
@@ -116,7 +130,7 @@ export async function getProductDetail(id: number) {
   return {
     ...rows[0],
     images,
-    sellerName: seller[0]?.name ?? null,
+    sellerName: seller[0] ? getPublicDisplayName(seller[0]) : null,
     isSellerVerified: seller[0]?.isVerified ?? false,
   };
 }
@@ -159,6 +173,76 @@ export async function updateProductStatus(
   return { success: true };
 }
 
+type EditableProductFields = {
+  title: string;
+  description?: string;
+  price: number;
+  quantity: number;
+  category: "cafe" | "pcroom" | "restaurant" | "gym" | "office" | "warehouse" | "transfer";
+  tradeType: "direct" | "delivery" | "negotiable";
+  location?: string;
+};
+
+/** Updates only the seller's own listing and replaces its ordered image set. */
+export async function updateOwnedProduct(
+  id: number,
+  userId: number,
+  fields: EditableProductFields,
+  images: string[],
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .limit(1);
+
+    if (!existing[0]) return { success: false, reason: "not_found" as const };
+
+    await tx
+      .update(products)
+      .set({
+        ...fields,
+        description: fields.description ?? null,
+        location: fields.location ?? null,
+        mainImageUrl: images[0],
+      })
+      .where(eq(products.id, id));
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.insert(productImages).values(
+      images.map((imageUrl, sortOrder) => ({ productId: id, imageUrl, sortOrder })),
+    );
+    return { success: true as const };
+  });
+}
+
+/** Removes a listing without deleting associated chat rooms, messages, or reviews. */
+export async function deleteOwnedProduct(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
+      .limit(1);
+
+    if (!existing[0]) return { success: false, reason: "not_found" as const };
+
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.delete(favorites).where(eq(favorites.productId, id));
+    await tx.delete(recentViews).where(eq(recentViews.productId, id));
+    await tx.delete(comments).where(eq(comments.productId, id));
+    await tx.delete(businessTransfers).where(eq(businessTransfers.productId, id));
+    await tx.delete(products).where(eq(products.id, id));
+    return { success: true as const };
+  });
+}
+
 export async function getMyProducts(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -199,6 +283,10 @@ export async function getBusinessDetail(id: number) {
 // ─── 업체회원 (실제 가입한 업체) ────────────────────────────────
 // businesses 테이블과 달리, 회원가입 후 관리자 승인을 받은 실제 "업체회원" 계정을 조회합니다.
 
+// Temporary moderation hide-list. The account and all related data remain intact.
+// Remove the ID after the owner confirms the account should be visible again.
+const HIDDEN_COMPANY_IDS = [390001] as const;
+
 const COMPANY_SELECT_FIELDS = {
   id: users.id,
   name: users.companyName,
@@ -214,7 +302,11 @@ export async function getApprovedCompanies(input?: { type?: string }) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [eq(users.role, "company"), eq(users.companyStatus, "approved")];
+  const conditions = [
+    eq(users.role, "company"),
+    eq(users.companyStatus, "approved"),
+    sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
+  ];
   if (input?.type) conditions.push(eq(users.companyType, input.type as any));
 
   return db
@@ -231,7 +323,14 @@ export async function getApprovedCompanyById(id: number) {
   const rows = await db
     .select(COMPANY_SELECT_FIELDS)
     .from(users)
-    .where(and(eq(users.id, id), eq(users.role, "company"), eq(users.companyStatus, "approved")))
+    .where(
+      and(
+        eq(users.id, id),
+        eq(users.role, "company"),
+        eq(users.companyStatus, "approved"),
+        sql`${users.id} NOT IN (${sql.join(HIDDEN_COMPANY_IDS.map((id) => sql`${id}`), sql`, `)})`,
+      ),
+    )
     .limit(1);
   const company = rows[0];
   if (!company) return null;
@@ -623,7 +722,7 @@ export async function getChatList(userId: number) {
       const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
 
       const [otherUser, unreadRows, product] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -640,7 +739,9 @@ export async function getChatList(userId: number) {
 
       return {
         ...room,
-        otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null },
+        otherUser: otherUser[0]
+          ? { ...otherUser[0], name: getPublicDisplayName(otherUser[0]) }
+          : { id: otherUserId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
         product: (product as any[])[0] ?? null,
       };
@@ -664,7 +765,7 @@ export async function getCompanyInquiryChats(userId: number) {
   const result = await Promise.all(
     rooms.map(async (room) => {
       const [buyer, unreadRows] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, room.buyerId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -677,7 +778,9 @@ export async function getCompanyInquiryChats(userId: number) {
 
       return {
         ...room,
-        otherUser: buyer[0] ?? { id: room.buyerId, name: "사용자", profileImageUrl: null },
+        otherUser: buyer[0]
+          ? { ...buyer[0], name: getPublicDisplayName(buyer[0]) }
+          : { id: room.buyerId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
       };
     })
@@ -724,7 +827,7 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
 
   const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
   const [otherUser, product] = await Promise.all([
-    db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
+    db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
       .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
     room.productId
       ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl, price: productsTable.price, status: productsTable.status })
@@ -734,7 +837,9 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
 
   return {
     ...room,
-    otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
+    otherUser: otherUser[0]
+      ? { ...otherUser[0], name: getPublicDisplayName(otherUser[0]) }
+      : { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
     product: (product as any[])[0] ?? null,
     myRole: room.buyerId === userId ? "buyer" : "seller",
   };
@@ -762,33 +867,67 @@ export async function getChatMessages(roomId: number, userId: number, limit = 50
   return messages.reverse();
 }
 
-export async function sendChatMessage(roomId: number, senderId: number, content?: string, imageUrl?: string) {
+export async function sendChatMessage(
+  roomId: number,
+  senderId: number,
+  content?: string,
+  imageUrl?: string,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const startedAt = Date.now();
 
-  // 접근 권한 확인
-  const rooms = await db.select().from(chatRooms).where(eq(chatRooms.id, roomId)).limit(1);
-  const room = rooms[0];
-  if (!room || (room.buyerId !== senderId && room.sellerId !== senderId)) {
+  // 권한 확인과 메시지 저장을 하나의 INSERT ... SELECT로 수행한다.
+  // 기존에는 권한 확인, INSERT, 채팅방 갱신, 메시지 재조회가 순차 실행되어
+  // TiDB와의 왕복 지연이 전송 응답에 누적됐다.
+  const writeResult = await db.execute(sql`
+    INSERT INTO chat_messages (
+      \`roomId\`, \`senderId\`, \`content\`, \`imageUrl\`, \`isRead\`
+    )
+    SELECT \`id\`, ${senderId}, ${content ?? null}, ${imageUrl ?? null}, false
+    FROM chat_rooms
+    WHERE \`id\` = ${roomId}
+      AND (\`buyerId\` = ${senderId} OR \`sellerId\` = ${senderId})
+  `);
+  const writeHeader = Array.isArray(writeResult) ? writeResult[0] : writeResult;
+  const insertedId = Number((writeHeader as { insertId?: number }).insertId ?? 0);
+  if (!insertedId) {
     throw new Error("채팅방에 접근할 수 없습니다.");
   }
 
-  const result = await db.insert(chatMessages).values({
+  const createdAt = new Date();
+  const lastMessage = content ?? (imageUrl ? "[사진]" : "");
+
+  // 채팅 목록의 마지막 메시지 갱신은 전송 성공 응답을 지연시키지 않도록 분리한다.
+  // 실패해도 메시지 본문은 이미 보존되며, 오류는 운영 로그에서 확인한다.
+  void db
+    .update(chatRooms)
+    .set({ lastMessage, lastMessageAt: createdAt })
+    .where(eq(chatRooms.id, roomId))
+    .then(() => {
+      console.info("[chat.send.room-updated]", {
+        roomId,
+        elapsedMs: Date.now() - startedAt,
+      });
+    })
+    .catch((err) => {
+      console.error("채팅방 마지막 메시지 갱신 중 오류:", err);
+    });
+
+  console.info("[chat.send.persisted]", {
+    roomId,
+    senderId,
+    writeMs: Date.now() - startedAt,
+  });
+  return {
+    id: insertedId,
     roomId,
     senderId,
     content: content ?? null,
     imageUrl: imageUrl ?? null,
     isRead: false,
-  });
-
-  // 채팅방 마지막 메시지 업데이트
-  await db.update(chatRooms).set({
-    lastMessage: content ?? (imageUrl ? "[사진]" : ""),
-    lastMessageAt: new Date(),
-  }).where(eq(chatRooms.id, roomId));
-
-  const newMsg = await db.select().from(chatMessages).where(eq(chatMessages.id, result[0].insertId)).limit(1);
-  return newMsg[0];
+    createdAt,
+  };
 }
 
 export async function getChatRoomParticipants(roomId: number) {
@@ -887,6 +1026,7 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
       createdAt: reviews.createdAt,
       productId: reviews.productId,
       reviewerName: users.name,
+      reviewerNickname: users.nickname,
       reviewerProfileUrl: users.profileImageUrl,
     })
     .from(reviews)
@@ -896,7 +1036,10 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
     .limit(limit)
     .offset(offset);
 
-  return rows;
+  return rows.map(({ reviewerNickname, reviewerName, ...review }) => ({
+    ...review,
+    reviewerName: getPublicDisplayName({ nickname: reviewerNickname, name: reviewerName }),
+  }));
 }
 
 export async function getSellerRatingSummary(targetUserId: number) {
@@ -1206,7 +1349,48 @@ export async function answerInquiry(id: number, adminId: number, answerContent: 
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+  // 구버전 운영 DB에서도 로그인에 필요한 컬럼만 조회하되, 권한과 계정 상태도 포함합니다.
+  // 누락 컬럼은 서버 시작 시 schemaCompat가 비파괴적으로 보정합니다.
+  const rows = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      name: users.name,
+      nickname: users.nickname,
+      email: users.email,
+      password: users.password,
+      loginMethod: users.loginMethod,
+      role: users.role,
+      isVerified: users.isVerified,
+      sellerStatus: users.sellerStatus,
+      companyStatus: users.companyStatus,
+      profileImageUrl: users.profileImageUrl,
+      phone: users.phone,
+      deletedAt: users.deletedAt,
+      suspendedAt: users.suspendedAt,
+      suspendedReason: users.suspendedReason,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  return (rows[0] ?? null) as unknown as User | null;
+}
+
+export async function getUserByNickname(nickname: string, excludeUserId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const conditions = [eq(users.nickname, nickname)];
+  if (excludeUserId !== undefined) conditions.push(ne(users.id, excludeUserId));
+
+  const rows = await db
+    .select({ id: users.id, nickname: users.nickname })
+    .from(users)
+    .where(and(...conditions))
+    .limit(1);
+
   return rows[0] ?? null;
 }
 
@@ -1217,14 +1401,75 @@ export async function getUserByKakaoId(kakaoId: string) {
   return rows[0] ?? null;
 }
 
+export async function getUserByAppleId(appleId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Apple 로그인 조회는 운영 레거시 DB에서 필요한 컬럼만 읽습니다.
+  const rows = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      name: users.name,
+      nickname: users.nickname,
+      email: users.email,
+      loginMethod: users.loginMethod,
+      role: users.role,
+      isVerified: users.isVerified,
+      sellerStatus: users.sellerStatus,
+      companyStatus: users.companyStatus,
+      profileImageUrl: users.profileImageUrl,
+      phone: users.phone,
+      appleId: users.appleId,
+      suspendedAt: users.suspendedAt,
+      suspendedReason: users.suspendedReason,
+    })
+    .from(users)
+    .where(eq(users.appleId, appleId))
+    .limit(1);
+  return (rows[0] ?? null) as unknown as User | null;
+}
+
+export async function createAppleUserLegacySafe(data: {
+  openId: string;
+  email: string | null;
+  name: string;
+  appleId: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // openId는 구버전 운영 DB의 varchar(64) 제한을 넘지 않도록 안정적인 짧은 값으로 만듭니다.
+  const openId = data.openId.length <= 64
+    ? data.openId
+    : `apple_${createHash("sha256").update(data.appleId).digest("hex").slice(0, 58)}`;
+
+  // Drizzle insert(users).values()가 스키마의 모든 컬럼을 INSERT에 포함해
+  // 구버전 운영 DB의 누락 컬럼에서 실패하지 않도록 핵심 컬럼만 저장합니다.
+  // 이미 같은 openId 또는 이메일이 있으면 Apple ID를 연결해 재시도에도 중복 오류가 나지 않게 합니다.
+  await db.execute(sql`
+    INSERT INTO users (\`openId\`, \`email\`, \`name\`, \`loginMethod\`, \`appleId\`)
+    VALUES (${openId}, ${data.email}, ${data.name}, 'apple', ${data.appleId})
+    ON DUPLICATE KEY UPDATE
+      \`appleId\` = VALUES(\`appleId\`),
+      \`loginMethod\` = 'apple'
+  `);
+
+  const newUser = await getUserByAppleId(data.appleId);
+  if (!newUser) throw new Error("Failed to create Apple user");
+  return newUser;
+}
+
 export async function createUserByEmail(data: {
   openId: string;
   email: string | null;
   password: string | null;
   name: string;
+  nickname?: string | null;
   phone?: string | null;
   loginMethod: string;
   kakaoId?: string | null;
+  appleId?: string | null;
   profileImageUrl?: string | null;
 }) {
   const db = await getDb();
@@ -1234,9 +1479,11 @@ export async function createUserByEmail(data: {
     email: data.email ?? undefined,
     password: data.password ?? undefined,
     name: data.name,
+    nickname: data.nickname ?? undefined,
     phone: data.phone ?? undefined,
     loginMethod: data.loginMethod,
     kakaoId: data.kakaoId ?? undefined,
+    appleId: data.appleId ?? undefined,
     profileImageUrl: data.profileImageUrl ?? undefined,
     role: "user",
     isVerified: false,
@@ -1285,7 +1532,7 @@ export async function updateCompanyProfile(userId: number, data: {
 
 export async function updateUserCompanyInfo(userId: number, data: {
   companyStatus: "pending" | "approved" | "rejected" | "suspended";
-  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cleaning" | "tax" | "labor";
+  companyType: "demolition" | "interior" | "waste" | "signage" | "pos" | "cctv" | "cleaning" | "tax" | "labor" | "kitchen" | "consulting";
   companyName: string;
   companyPhone: string;
   companyAddress: string;
@@ -1378,7 +1625,7 @@ export async function reviewCompanyApplication(userId: number, action: "approved
   }
   return { success: true };
 }
-export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
+export async function updateUserProfile(userId: number, data: { name?: string; nickname?: string; phone?: string; profileImageUrl?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
@@ -1397,39 +1644,21 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10분
 
 /** 계정이 현재 잠겨있으면 남은 잠금 시간(분)을 반환, 아니면 null */
-export async function getAccountLockStatus(userId: number): Promise<number | null> {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select({ lockedUntil: users.lockedUntil }).from(users).where(eq(users.id, userId)).limit(1);
-  const lockedUntil = rows[0]?.lockedUntil;
-  if (!lockedUntil) return null;
-  const remainingMs = lockedUntil.getTime() - Date.now();
-  if (remainingMs <= 0) return null;
-  return Math.ceil(remainingMs / 60000);
+export async function getAccountLockStatus(_userId: number): Promise<number | null> {
+  // 구버전 운영 DB에 잠금 컬럼이 없을 때도 정상 로그인할 수 있도록 우선 건너뜁니다.
+  return null;
 }
 
 /** 로그인 실패 기록. 5회 누적 시 10분간 잠금 처리 */
-export async function recordFailedLogin(userId: number) {
-  const db = await getDb();
-  if (!db) return;
-  const rows = await db.select({ failedLoginAttempts: users.failedLoginAttempts }).from(users).where(eq(users.id, userId)).limit(1);
-  const nextCount = (rows[0]?.failedLoginAttempts ?? 0) + 1;
-
-  if (nextCount >= MAX_FAILED_ATTEMPTS) {
-    await db.update(users).set({
-      failedLoginAttempts: nextCount,
-      lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS),
-    }).where(eq(users.id, userId));
-  } else {
-    await db.update(users).set({ failedLoginAttempts: nextCount }).where(eq(users.id, userId));
-  }
+export async function recordFailedLogin(_userId: number) {
+  // 구버전 운영 DB 호환을 위해 잠금 컬럼이 준비되기 전에는 건너뜁니다.
+  return;
 }
 
 /** 로그인 성공 시 실패 카운트 초기화 */
-export async function resetFailedLogin(userId: number) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(users.id, userId));
+export async function resetFailedLogin(_userId: number) {
+  // 구버전 운영 DB 호환을 위해 잠금 컬럼이 준비되기 전에는 건너뜁니다.
+  return;
 }
 
 // ─── 비밀번호 재설정 (이메일 로그인 전용) ─────────────────────────
@@ -1552,6 +1781,13 @@ export async function savePushToken(userId: number, token: string) {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+
+    // A device token belongs to the currently signed-in account only.
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(and(eq(users.expoPushToken, token), ne(users.id, userId)));
+
     await db
       .update(users)
       .set({ expoPushToken: token })
@@ -1559,6 +1795,21 @@ export async function savePushToken(userId: number, token: string) {
     return true;
   } catch (error) {
     console.error("푸시 토큰 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function removePushToken(userId: number) {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("푸시 토큰 삭제 실패:", error);
     return false;
   }
 }
