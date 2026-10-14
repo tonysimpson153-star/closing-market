@@ -71,12 +71,15 @@ export default function AccountSettingsScreen() {
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: (data) => {
+      setName(data.name ?? "");
+      setNickname(data.nickname ?? "");
+      setPhone(data.phone ?? "");
       if (token && user) {
         setAuth(token, {
           ...user,
-          name: data.name ?? user.name,
-          nickname: data.nickname ?? user.nickname,
-          phone: data.phone ?? user.phone,
+          name: data.name ?? "",
+          nickname: data.nickname ?? "",
+          phone: data.phone ?? "",
           profileImageUrl: data.profileImageUrl ?? user.profileImageUrl,
         });
       }

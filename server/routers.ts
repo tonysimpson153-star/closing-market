@@ -14,10 +14,21 @@ function createRandomSocialNickname() {
   return `클로징${suffix}`;
 }
 
-async function createUniqueRandomSocialNickname() {
+async function createUniqueSocialNickname(preferredName?: string, excludeUserId?: number) {
+  const preferred = preferredName?.trim().slice(0, 50);
+  if (preferred && !(await db.getUserByNickname(preferred, excludeUserId))) return preferred;
+
+  if (preferred) {
+    for (let suffix = 2; suffix <= 99; suffix += 1) {
+      const suffixText = `_${suffix}`;
+      const nickname = `${preferred.slice(0, 50 - suffixText.length)}${suffixText}`;
+      if (!(await db.getUserByNickname(nickname, excludeUserId))) return nickname;
+    }
+  }
+
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const nickname = createRandomSocialNickname();
-    if (!(await db.getUserByNickname(nickname))) return nickname;
+    if (!(await db.getUserByNickname(nickname, excludeUserId))) return nickname;
   }
   throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "닉네임을 생성하지 못했습니다. 잠시 후 다시 시도해주세요." });
 }
@@ -42,6 +53,7 @@ function toAuthUser(user: NonNullable<Awaited<ReturnType<typeof db.getUserById>>
     email: user.email,
     name: user.name,
     nickname: user.nickname,
+    loginMethod: user.loginMethod,
     role: user.role,
     isVerified: user.isVerified,
     sellerStatus: user.sellerStatus,
@@ -233,14 +245,16 @@ export const appRouter = router({
             email: email || null,
             password: null,
             name,
-            nickname: await createUniqueRandomSocialNickname(),
+            nickname: await createUniqueSocialNickname(name),
             phone: null,
             loginMethod: "kakao",
             kakaoId,
             profileImageUrl: profileImageUrl || null,
           });
-        } else if (!user.nickname?.trim()) {
-          await db.updateUserProfile(user.id, { nickname: await createUniqueRandomSocialNickname() });
+        } else if (!user.nickname?.trim() || user.nickname.startsWith("클로징")) {
+          await db.updateUserProfile(user.id, {
+            nickname: await createUniqueSocialNickname(name, user.id),
+          });
           const refreshedUser = await db.getUserById(user.id);
           if (refreshedUser) user = refreshedUser;
         }
