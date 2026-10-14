@@ -34,6 +34,67 @@ function shouldSkipDuplicateMarkRead(roomId: number, userId: number) {
   return false;
 }
 
+function createRandomSocialNickname() {
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(-10);
+  return `클로징${suffix}`;
+}
+
+async function createUniqueSocialNickname(preferredName?: string, excludeUserId?: number) {
+  const preferred = preferredName?.trim().slice(0, 50);
+  if (preferred && !(await db.getUserByNickname(preferred, excludeUserId))) return preferred;
+
+  if (preferred) {
+    for (let suffix = 2; suffix <= 99; suffix += 1) {
+      const suffixText = `_${suffix}`;
+      const nickname = `${preferred.slice(0, 50 - suffixText.length)}${suffixText}`;
+      if (!(await db.getUserByNickname(nickname, excludeUserId))) return nickname;
+    }
+  }
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const nickname = createRandomSocialNickname();
+    if (!(await db.getUserByNickname(nickname, excludeUserId))) return nickname;
+  }
+  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "닉네임을 생성하지 못했습니다. 잠시 후 다시 시도해주세요." });
+}
+
+function isDuplicateEntryError(err: unknown) {
+  const candidate = err as { code?: string; message?: string } | null;
+  return candidate?.code === "ER_DUP_ENTRY" || /Duplicate entry/i.test(candidate?.message ?? "");
+}
+
+function isNicknameDuplicateError(err: unknown) {
+  const candidate = err as { message?: string } | null;
+  return /nickname|users_nickname|nickname_unique/i.test(candidate?.message ?? "");
+}
+
+function nicknameConflictError() {
+  return new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요." });
+}
+
+function getLoginMethod(user: { loginMethod?: string | null; kakaoId?: string | null; appleId?: string | null }) {
+  if (user.loginMethod === "kakao" || user.loginMethod === "apple") return user.loginMethod;
+  if (user.kakaoId) return "kakao";
+  if (user.appleId) return "apple";
+  return user.loginMethod ?? "email";
+}
+
+function toAuthUser(user: NonNullable<Awaited<ReturnType<typeof db.getUserById>>>) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    nickname: user.nickname,
+    loginMethod: getLoginMethod(user),
+    role: user.role,
+    isVerified: user.isVerified,
+    sellerStatus: user.sellerStatus,
+    companyStatus: user.companyStatus,
+    profileImageUrl: user.profileImageUrl,
+    phone: user.phone,
+  };
+}
+
 export const appRouter = router({
   // Public routes
   health: publicProcedure.query(() => ({ status: "ok" })),
@@ -46,7 +107,7 @@ export const appRouter = router({
         email: z.string().email(),
         password: z.string().min(6),
         name: z.string().min(1).max(50),
-        nickname: z.string().min(1).max(50),
+        nickname: z.string().trim().min(1).max(50),
         phone: z.string().min(9, "전화번호를 입력해주세요.").max(20),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -61,6 +122,8 @@ export const appRouter = router({
         if (existing) {
           throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
         }
+        const existingNickname = await db.getUserByNickname(input.nickname);
+        if (existingNickname) throw nicknameConflictError();
         const hashedPassword = await bcrypt.hash(input.password, 10);
         const openId = `email_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         let user;
@@ -75,13 +138,16 @@ export const appRouter = router({
             loginMethod: "email",
           });
         } catch (err: any) {
-          if (err?.code === "ER_DUP_ENTRY" || /Duplicate entry/i.test(err?.message ?? "")) {
+          if (isDuplicateEntryError(err) && isNicknameDuplicateError(err)) {
+            throw nicknameConflictError();
+          }
+          if (isDuplicateEntryError(err)) {
             throw new TRPCError({ code: "CONFLICT", message: "이미 사용 중인 이메일입니다." });
           }
           throw err;
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 이메일 로그인
@@ -126,7 +192,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 비밀번호 찾기 - 재설정 링크 이메일 발송
@@ -181,7 +247,7 @@ export const appRouter = router({
           const decoded = jwt.verify(input.token, JWT_SECRET) as { userId: number };
           const user = await db.getUserById(decoded.userId);
           if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-          return { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl, phone: user.phone };
+          return toAuthUser(user);
         } catch {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "유효하지 않은 토큰입니다." });
         }
@@ -197,10 +263,10 @@ export const appRouter = router({
         if (!kakaoRes.ok) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "카카오 인증에 실패했습니다." });
         }
-        const kakaoData = await kakaoRes.json() as { id: number; kakao_account?: { email?: string; profile?: { nickname?: string; profile_image_url?: string } } };
+        const kakaoData = await kakaoRes.json() as { id: number; properties?: { nickname?: string; profile_image?: string }; kakao_account?: { email?: string; profile?: { nickname?: string; profile_image_url?: string } } };
         const kakaoId = String(kakaoData.id);
         const email = kakaoData.kakao_account?.email;
-        const name = kakaoData.kakao_account?.profile?.nickname || "카카오 사용자";
+        const name = kakaoData.kakao_account?.profile?.nickname?.trim() || kakaoData.properties?.nickname?.trim() || "카카오 사용자";
         const profileImageUrl = kakaoData.kakao_account?.profile?.profile_image_url;
 
         let user = await db.getUserByKakaoId(kakaoId);
@@ -211,11 +277,18 @@ export const appRouter = router({
             email: email || null,
             password: null,
             name,
+            nickname: await createUniqueSocialNickname(name),
             phone: null,
             loginMethod: "kakao",
             kakaoId,
             profileImageUrl: profileImageUrl || null,
           });
+        } else if (!user.nickname?.trim()) {
+          await db.updateUserProfile(user.id, {
+            nickname: await createUniqueSocialNickname(name, user.id),
+          });
+          const refreshedUser = await db.getUserById(user.id);
+          if (refreshedUser) user = refreshedUser;
         }
         if (user.suspendedAt) {
           throw new TRPCError({
@@ -226,7 +299,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // Apple 로그인
@@ -269,7 +342,7 @@ export const appRouter = router({
           });
         }
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
-        return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified, sellerStatus: user.sellerStatus, companyStatus: user.companyStatus, profileImageUrl: user.profileImageUrl } };
+        return { token, user: toAuthUser(user) };
       }),
 
     // 푸시 토큰 저장
@@ -293,13 +366,38 @@ export const appRouter = router({
     updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(50).optional(),
+        nickname: z.string().trim().min(1).max(50).optional(),
         phone: z.string().optional(),
         profileImageUrl: z.string().url().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const updated = await db.updateUserProfile(ctx.user.id, input);
+        if (input.nickname) {
+          const existingNickname = await db.getUserByNickname(input.nickname, ctx.user.id);
+          if (existingNickname) throw nicknameConflictError();
+        }
+
+        let updated;
+        try {
+          updated = await db.updateUserProfile(ctx.user.id, input);
+        } catch (err) {
+          if (isDuplicateEntryError(err) && isNicknameDuplicateError(err)) {
+            throw nicknameConflictError();
+          }
+          throw err;
+        }
         if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
-        return { id: updated.id, name: updated.name, phone: updated.phone, email: updated.email, profileImageUrl: updated.profileImageUrl };
+        if (input.nickname !== undefined && updated.nickname !== input.nickname) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "닉네임 저장 결과를 확인하지 못했습니다. 입력한 닉네임은 지우지 말고 다시 시도해주세요." });
+        }
+        return {
+          id: updated.id,
+          name: updated.name,
+          nickname: updated.nickname,
+          phone: updated.phone,
+          email: updated.email,
+          profileImageUrl: updated.profileImageUrl,
+          loginMethod: getLoginMethod(updated),
+        };
       }),
     changePassword: protectedProcedure
       .input(z.object({
@@ -321,7 +419,9 @@ export const appRouter = router({
         const user = await db.getUserById(ctx.user.id);
         if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "사용자를 찾을 수 없습니다." });
 
-        if (user.password) {
+        const loginMethod = getLoginMethod(user);
+        const isSocialLogin = loginMethod === "kakao" || loginMethod === "apple";
+        if (!isSocialLogin && user.password) {
           if (!input.password) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "비밀번호를 입력해주세요." });
           }
@@ -745,7 +845,7 @@ export const appRouter = router({
             if (recipient?.expoPushToken) {
               const delivered = await sendChatPushNotification(
                 recipient.expoPushToken,
-                sender?.name ?? "새 메시지",
+                sender?.nickname?.trim() || sender?.name || "새 메시지",
                 input.content ?? "사진을 보냈습니다.",
                 input.roomId,
               );

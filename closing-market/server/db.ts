@@ -27,6 +27,10 @@ import {
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+function getPublicDisplayName(user: { nickname?: string | null; name?: string | null }) {
+  return user.nickname?.trim() || user.name || "사용자";
+}
+
 export async function getDb() {
   if (_db) return _db;
   if (!ENV.databaseUrl) return null;
@@ -114,7 +118,7 @@ export async function getProductDetail(id: number) {
       .where(eq(productImages.productId, id))
       .orderBy(productImages.sortOrder),
     db
-      .select({ id: users.id, name: users.name, isVerified: users.isVerified })
+      .select({ id: users.id, name: users.name, nickname: users.nickname, isVerified: users.isVerified })
       .from(users)
       .where(eq(users.id, rows[0].userId))
       .limit(1),
@@ -126,7 +130,7 @@ export async function getProductDetail(id: number) {
   return {
     ...rows[0],
     images,
-    sellerName: seller[0]?.name ?? null,
+    sellerName: seller[0] ? getPublicDisplayName(seller[0]) : null,
     isSellerVerified: seller[0]?.isVerified ?? false,
   };
 }
@@ -718,7 +722,7 @@ export async function getChatList(userId: number) {
       const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
 
       const [otherUser, unreadRows, product] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -735,7 +739,9 @@ export async function getChatList(userId: number) {
 
       return {
         ...room,
-        otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null },
+        otherUser: otherUser[0]
+          ? { ...otherUser[0], name: getPublicDisplayName(otherUser[0]) }
+          : { id: otherUserId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
         product: (product as any[])[0] ?? null,
       };
@@ -759,7 +765,7 @@ export async function getCompanyInquiryChats(userId: number) {
   const result = await Promise.all(
     rooms.map(async (room) => {
       const [buyer, unreadRows] = await Promise.all([
-        db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl })
+        db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl })
           .from(usersTable).where(eq(usersTable.id, room.buyerId)).limit(1),
         db.select({ id: chatMessages.id })
           .from(chatMessages)
@@ -772,7 +778,9 @@ export async function getCompanyInquiryChats(userId: number) {
 
       return {
         ...room,
-        otherUser: buyer[0] ?? { id: room.buyerId, name: "사용자", profileImageUrl: null },
+        otherUser: buyer[0]
+          ? { ...buyer[0], name: getPublicDisplayName(buyer[0]) }
+          : { id: room.buyerId, name: "사용자", profileImageUrl: null },
         unreadCount: unreadRows.length,
       };
     })
@@ -819,7 +827,7 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
 
   const otherUserId = room.buyerId === userId ? room.sellerId : room.buyerId;
   const [otherUser, product] = await Promise.all([
-    db.select({ id: usersTable.id, name: usersTable.name, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
+    db.select({ id: usersTable.id, name: usersTable.name, nickname: usersTable.nickname, profileImageUrl: usersTable.profileImageUrl, isVerified: usersTable.isVerified })
       .from(usersTable).where(eq(usersTable.id, otherUserId)).limit(1),
     room.productId
       ? db.select({ id: productsTable.id, title: productsTable.title, mainImageUrl: productsTable.mainImageUrl, price: productsTable.price, status: productsTable.status })
@@ -829,7 +837,9 @@ export async function getChatRoomDetail(roomId: number, userId: number) {
 
   return {
     ...room,
-    otherUser: otherUser[0] ?? { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
+    otherUser: otherUser[0]
+      ? { ...otherUser[0], name: getPublicDisplayName(otherUser[0]) }
+      : { id: otherUserId, name: "사용자", profileImageUrl: null, isVerified: false },
     product: (product as any[])[0] ?? null,
     myRole: room.buyerId === userId ? "buyer" : "seller",
   };
@@ -1016,6 +1026,7 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
       createdAt: reviews.createdAt,
       productId: reviews.productId,
       reviewerName: users.name,
+      reviewerNickname: users.nickname,
       reviewerProfileUrl: users.profileImageUrl,
     })
     .from(reviews)
@@ -1025,7 +1036,10 @@ export async function getReviewsByTargetUser(targetUserId: number, limit = 20, o
     .limit(limit)
     .offset(offset);
 
-  return rows;
+  return rows.map(({ reviewerNickname, reviewerName, ...review }) => ({
+    ...review,
+    reviewerName: getPublicDisplayName({ nickname: reviewerNickname, name: reviewerName }),
+  }));
 }
 
 export async function getSellerRatingSummary(targetUserId: number) {
@@ -1343,8 +1357,10 @@ export async function getUserByEmail(email: string) {
       id: users.id,
       openId: users.openId,
       name: users.name,
+      nickname: users.nickname,
       email: users.email,
       password: users.password,
+      loginMethod: users.loginMethod,
       role: users.role,
       isVerified: users.isVerified,
       sellerStatus: users.sellerStatus,
@@ -1360,6 +1376,22 @@ export async function getUserByEmail(email: string) {
     .limit(1);
 
   return (rows[0] ?? null) as unknown as User | null;
+}
+
+export async function getUserByNickname(nickname: string, excludeUserId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const conditions = [eq(users.nickname, nickname)];
+  if (excludeUserId !== undefined) conditions.push(ne(users.id, excludeUserId));
+
+  const rows = await db
+    .select({ id: users.id, nickname: users.nickname })
+    .from(users)
+    .where(and(...conditions))
+    .limit(1);
+
+  return rows[0] ?? null;
 }
 
 export async function getUserByKakaoId(kakaoId: string) {
@@ -1379,6 +1411,7 @@ export async function getUserByAppleId(appleId: string) {
       id: users.id,
       openId: users.openId,
       name: users.name,
+      nickname: users.nickname,
       email: users.email,
       loginMethod: users.loginMethod,
       role: users.role,
@@ -1592,7 +1625,7 @@ export async function reviewCompanyApplication(userId: number, action: "approved
   }
   return { success: true };
 }
-export async function updateUserProfile(userId: number, data: { name?: string; phone?: string; profileImageUrl?: string }) {
+export async function updateUserProfile(userId: number, data: { name?: string; nickname?: string; phone?: string; profileImageUrl?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
